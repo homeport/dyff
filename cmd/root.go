@@ -21,18 +21,19 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var cfgFile string
-
-var from string
-var to string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -43,9 +44,10 @@ examples and usage of using your application.`,
 
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("Ok, we have to find differences going from %s to %s.\n", from, to)
-	},
+	// Run: func(cmd *cobra.Command, args []string) {
+	// 	fmt.Printf("Ok, we have to find differences going from %s to %s.\n", from, to)
+	//
+	// },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -64,13 +66,6 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dyff.yaml)")
-
-	// Cobra local flags ...
-	rootCmd.Flags().StringVarP(&from, "from", "f", "", "text to be defined")
-	rootCmd.MarkFlagRequired("from")
-
-	rootCmd.Flags().StringVarP(&to, "to", "t", "", "text to be defined")
-	rootCmd.MarkFlagRequired("to")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -96,5 +91,85 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func loadFile(location string) (yaml.MapSlice, error) {
+	// TODO Support URIs as loaction
+	// TODO Support STDIN as location
+	// TODO Supprt JSON as additional content format
+	// TODO Generate error if file contains more than one document
+
+	data, ioerr := ioutil.ReadFile(location)
+	if ioerr != nil {
+		return nil, ioerr
+	}
+
+	content := yaml.MapSlice{}
+	if err := yaml.UnmarshalStrict([]byte(data), &content); err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+// ToYAMLString converts the provided YAML MapSlice into a human readable YAML string.
+func ToYAMLString(content yaml.MapSlice) (string, error) {
+	out, err := yaml.Marshal(content)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("---\n%s\n", string(out)), nil
+}
+
+// ToJSONString converts the provided object into a human readable JSON string.
+func ToJSONString(obj interface{}) (string, error) {
+	switch v := obj.(type) {
+
+	case []interface{}:
+		result := make([]string, 0)
+		for _, i := range v {
+			value, err := ToJSONString(i)
+			if err != nil {
+				return "", err
+			}
+			result = append(result, value)
+		}
+
+		return fmt.Sprintf("[%s]", strings.Join(result, ", ")), nil
+
+	case yaml.MapSlice:
+		result := make([]string, 0)
+		for _, i := range v {
+			value, err := ToJSONString(i)
+			if err != nil {
+				return "", err
+			}
+			result = append(result, value)
+		}
+
+		return fmt.Sprintf("{%s}", strings.Join(result, ", ")), nil
+
+	case yaml.MapItem:
+		key, keyError := ToJSONString(v.Key)
+		if keyError != nil {
+			return "", keyError
+		}
+
+		value, valueError := ToJSONString(v.Value)
+		if valueError != nil {
+			return "", valueError
+		}
+
+		return fmt.Sprintf("%s: %s", key, value), nil
+
+	default:
+		bytes, err := json.Marshal(v)
+		if err != nil {
+			return "", err
+		}
+
+		return fmt.Sprintf("%s", string(bytes)), nil
 	}
 }

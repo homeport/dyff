@@ -1,0 +1,110 @@
+---
+name: concourse
+
+director_uuid: YOUR-BOSH-DIRECTOR-UUID-GOES-HERE # REPLACE THIS VALUE WITH YOUR DIRECTOR UUID
+
+releases:
+  - name: concourse
+    version: latest
+  - name: garden-runc
+    version: latest
+
+instance_groups:
+  - name: web
+    instances: 1
+    resource_pool: concourse_resource_pool
+    networks:
+      - name: concourse
+        static_ips: [XX.XX.XX.XX]  # ADD THE STATIC IP ADDRESSES FOR YOUR web INSTACES HERE IF APPLICABLE, OTHERWISE DELETE THIS SECTION
+    jobs:
+      - release: concourse
+        name: atc
+        properties:
+          postgresql_database: &atc-db atc
+          external_url: http://XX.XX.XX.XX:8080  # ADD YOUR web INSTANCE(s) HOSTNAME OR IP ADDRESS HERE
+          development_mode: true   # FOR NON-DEV MODE, CHANGE THIS TO FALSE AND REFER TO CONCOURSE DOCUMENTATION FOR SECURITY CONFIGURATION SETTINGS
+      - release: concourse
+        name: tsa
+        properties: {}
+
+  - name: db
+    instances: 1
+    resource_pool: concourse_resource_pool
+    networks: [{name: concourse}]
+    persistent_disk: 10240
+    jobs:
+      - release: concourse
+        name: postgresql
+        properties:
+          databases:
+          - name: *atc-db
+            role: atc
+            password: YOUR-ATC-DB-PASSWORD-GOES-HERE  # UPDATED WITH YOUR CUSTOM atc db PASSWORD HERE
+
+  - name: worker
+    instances: 1
+    resource_pool: concourse_resource_pool
+    networks: [{name: concourse}]
+    jobs:
+      - release: concourse
+        name: groundcrew
+        properties:
+          http_proxy_url: http://XX.XX.XX.XX:8080   # IF PROXY CONFIG FOR THE workers EXISTS, SETUP IT HERE. OTHERWISE REMOVE IT
+          https_proxy_url: http://XX.XX.XX.XX:8080  # IF PROXY CONFIG FOR THE workers EXISTS, SETUP IT HERE. OTHERWISE REMOVE IT
+          no_proxy: [localhost,127.0.0.1]           # IF PROXY CONFIG FOR THE workers EXISTS, you may add here a list domains and IPs with optional port for which the proxy should be bypassed
+      - release: concourse
+        name: baggageclaim
+        properties: {}
+      - release: garden-runc
+        name: garden
+        properties:
+          garden:
+            listen_network: tcp
+            listen_address: 0.0.0.0:7777
+
+networks:
+  - name: concourse
+    subnets:
+    - range: 10.219.56.0/23  # REPLACE THIS WITH YOUR SUBNET IP RANGE
+      gateway: <YOUR-GATEWAY-IP-ADDRESS-GOES-HERE>  # ADD YOUR GATEWAY IP ADDRESS HERE
+      dns:
+      - <YOUR-DNS-IP-ADDRESS-GOES-HERE>    # ADD YOUR DNS IP ADDRESS HERE
+      static:
+      - XX.XX.XX.XX # ADD STATIC IP ADDRESSES FOR CONCOURSE VMS IF APPLICABLE e.g. web instance(s). IF NONE, THEN REMOVE THIS SECTION
+      reserved:
+      - 10.222.56.0-10.222.56.255   # REPLACE THIS ENTRY WITH YOUR RESERVED IP ADDRESSES FOR THIS NETWORK IF APPLICABLE, OTHERWISE REMOVE THIS SECTION
+      cloud_properties:
+        name: D927_10_222_56_0_23   # IF APPLICABLE, REPLACE THIS ENTRY WITH THE NAME OF YOUR NETWORK e.g. vSphere subnet ID, OTHERWISE REMOVE THIS SECTION
+
+resource_pools:
+- name: concourse_resource_pool
+  stemcell:
+    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent  # UPDATE ACCORDINGLY WITH THE STEMCELL ID FOR THE TARGETED IaaS
+    version: '3232.2'   # UDPATE ACCORDINGLY WITH THE UPLOADED STEMCELL VERSION
+  network: concourse
+  cloud_properties:    # UDPATE THIS SECTION ACCORDINGLY BASED ON YOUR VM DEFINITIONS AND CLUSTER INFO
+    ram: 4096
+    disk: 32768
+    cpu: 2
+    datacenters:
+    - clusters:
+      - CLS_PAAS_SFT_035: {}
+
+compilation:
+  reuse_compilation_vms: true
+  workers: 3
+  network: concourse
+  cloud_properties:   # UDPATE THIS SECTION ACCORDINGLY BASED ON YOUR VM DEFINITIONS AND CLUSTER INFO
+    ram: 4096
+    disk: 32768
+    cpu: 2
+    datacenters:
+    - clusters:
+      - CLS_PAAS_SFT_035: {}
+
+update:
+  canaries: 1
+  max_in_flight: 3
+  serial: false
+  canary_watch_time: 1000-60000
+  update_watch_time: 1000-60000
