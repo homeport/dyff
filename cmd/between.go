@@ -23,7 +23,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/fatih/color"
+	"github.com/HeavyWombat/dyff/core"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -44,10 +44,9 @@ to quickly create a Cobra application.`,
 		from := args[0]
 		to := args[1]
 
-		bold := color.New(color.Bold)
-		fmt.Printf("Difference between %s and %s ...\n", bold.Sprint(from), bold.Sprint(to))
+		fmt.Printf("Difference between %s and %s ...\n", core.Bold(from), core.Bold(to))
 
-		a, err := loadFile(from)
+		a, err := core.LoadFile(from)
 		if err != nil {
 			panic(err)
 		}

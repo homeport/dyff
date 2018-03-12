@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/HeavyWombat/dyff/cmd"
+	. "github.com/HeavyWombat/dyff/core"
 )
 
 var _ = Describe("JSON", func() {

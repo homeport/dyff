@@ -1,7 +1,7 @@
 package main_test
 
 import (
-	. "github.com/HeavyWombat/dyff/cmd"
+	. "github.com/HeavyWombat/dyff/core"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	yaml "gopkg.in/yaml.v2"

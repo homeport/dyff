@@ -23,6 +23,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/HeavyWombat/dyff/core"
 	"github.com/spf13/cobra"
 )
 
@@ -39,12 +40,12 @@ to quickly create a Cobra application.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			a, err := loadFile(x)
+			a, err := core.LoadFile(x)
 			if err != nil {
 				panic(err)
 			}
 
-			output, yamlerr := ToYAMLString(a)
+			output, yamlerr := core.ToYAMLString(a)
 			if yamlerr != nil {
 				panic(yamlerr)
 			}
