@@ -1,21 +1,10 @@
-package main_test
+package core_test
 
 import (
 	. "github.com/HeavyWombat/dyff/core"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	yaml "gopkg.in/yaml.v2"
 )
-
-func getYamlFromString(input string) (yaml.MapSlice, error) {
-	content := yaml.MapSlice{}
-	err := yaml.UnmarshalStrict([]byte(input), &content)
-	if err != nil {
-		return nil, err
-	}
-
-	return content, nil
-}
 
 var _ = Describe("YAML", func() {
 	Describe("Getting JSON input", func() {

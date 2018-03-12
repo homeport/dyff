@@ -1,10 +1,9 @@
-package main_test
+package core_test
 
 import (
+	. "github.com/HeavyWombat/dyff/core"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	. "github.com/HeavyWombat/dyff/core"
 )
 
 var _ = Describe("JSON", func() {
