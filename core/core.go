@@ -52,7 +52,7 @@ func Bold(text string) string {
 	return bold.Sprint(text)
 }
 
-// Compare returns a list of differences between `from` and `to`
+// CompareObjects returns a list of differences between `from` and `to`
 func CompareObjects(from interface{}, to interface{}) []Diff {
 	result := make([]Diff, 0)
 
@@ -66,12 +66,29 @@ func CompareObjects(from interface{}, to interface{}) []Diff {
 
 		}
 
+	case []interface{}:
+		switch to.(type) {
+		case []interface{}:
+			result = append(result, compareLists(from.([]interface{}), to.([]interface{}))...)
+		}
+
 	case string:
 		switch to.(type) {
 		case string:
 			result = append(result, compareStrings(from.(string), to.(string))...)
 
 		}
+
+	case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
+		switch to.(type) {
+		case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
+			if from != to {
+				result = append(result, Diff{Kind: MODIFICATION, From: from, To: to})
+			}
+		}
+
+	default:
+		panic(fmt.Sprintf("Unsupported type %s", reflect.TypeOf(from)))
 	}
 
 	return result
@@ -106,7 +123,26 @@ func compareMaps(from map[interface{}]interface{}, to map[interface{}]interface{
 }
 
 func compareLists(from []interface{}, to []interface{}) []Diff {
-	panic("not implemented yet")
+	result := make([]Diff, 0)
+
+	fromLookup := createLookUpMap(from)
+	toLookup := createLookUpMap(to)
+
+	for fromValue, _ := range fromLookup {
+		if _, ok := toLookup[fromValue]; !ok {
+			// `from` entry does not exist in `to` list
+			result = append(result, Diff{Kind: REMOVAL, From: fromValue, To: nil})
+		}
+	}
+
+	for toValue, _ := range toLookup {
+		if _, ok := fromLookup[toValue]; !ok {
+			// `to` entry does not exist in `from` list
+			result = append(result, Diff{Kind: ADDITION, From: nil, To: toValue})
+		}
+	}
+
+	return result
 }
 
 func compareStrings(from string, to string) []Diff {
@@ -117,6 +153,15 @@ func compareStrings(from string, to string) []Diff {
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
 		result = append(result, Diff{Kind: MODIFICATION, From: from, To: to})
+	}
+
+	return result
+}
+
+func createLookUpMap(list []interface{}) map[interface{}]struct{} {
+	result := make(map[interface{}]struct{}, len(list))
+	for _, entry := range list {
+		result[entry] = struct{}{}
 	}
 
 	return result

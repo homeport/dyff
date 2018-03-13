@@ -9,15 +9,21 @@ import (
 var _ = Describe("Compare", func() {
 	Describe("Difference between YAMLs", func() {
 		Context("Given two simple YAML structures", func() {
-			It("should return that one value was modified", func() {
+			It("should return that a string value was modified", func() {
 				from := getYamlFromString(`---
-name: foobar
-version: v1
+some:
+  yaml:
+    structure:
+      name: foobar
+      version: v1
 `)
 
 				to := getYamlFromString(`---
-name: fOObAr
-version: v1
+some:
+  yaml:
+    structure:
+      name: fOObAr
+      version: v1
 `)
 
 				result := CompareObjects(from, to)
@@ -30,14 +36,101 @@ version: v1
 				Expect(difference.To).To(BeIdenticalTo("fOObAr"))
 			})
 
-			It("should return that one value was added", func() {
+			It("should return that an integer was modified", func() {
 				from := getYamlFromString(`---
-name: foobar
+some:
+  yaml:
+    structure:
+      name: 1
+      version: v1
 `)
 
 				to := getYamlFromString(`---
-name: foobar
-version: v1
+some:
+  yaml:
+    structure:
+      name: 2
+      version: v1
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				difference := result[0]
+				Expect(difference.Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(difference.From).To(BeIdenticalTo(1))
+				Expect(difference.To).To(BeIdenticalTo(2))
+			})
+
+			It("should return that a float was modified", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+      level: 3.14159265359
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+      level: 2.7182818284
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				difference := result[0]
+				Expect(difference.Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(difference.From).To(BeNumerically("~", 3.14, 3.15))
+				Expect(difference.To).To(BeNumerically("~", 2.71, 2.72))
+			})
+
+			It("should return that a boolean was modified", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+      enabled: false
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+      enabled: true
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				difference := result[0]
+				Expect(difference.Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(difference.From).To(BeIdenticalTo(false))
+				Expect(difference.To).To(BeIdenticalTo(true))
+			})
+
+			It("should return that one value was added", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+      version: v1
 `)
 
 				result := CompareObjects(from, to)
@@ -52,12 +145,18 @@ version: v1
 
 			It("should return that one value was removed", func() {
 				from := getYamlFromString(`---
-name: foobar
-version: v1
+some:
+  yaml:
+    structure:
+      name: foobar
+      version: v1
 `)
 
 				to := getYamlFromString(`---
-name: foobar
+some:
+  yaml:
+    structure:
+      name: foobar
 `)
 
 				result := CompareObjects(from, to)
@@ -68,6 +167,96 @@ name: foobar
 				Expect(difference.Kind).To(BeIdenticalTo(REMOVAL))
 				Expect(difference.From).To(BeIdenticalTo("v1"))
 				Expect(difference.To).To(BeNil())
+			})
+
+			It("should return two diffs if one value was removed and another one added", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+      version: v1
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      name: foobar
+      release: v1
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(2))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[0].From).To(BeIdenticalTo("v1"))
+				Expect(result[0].To).To(BeNil())
+
+				Expect(result[1].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[1].From).To(BeNil())
+				Expect(result[1].To).To(BeIdenticalTo("v1"))
+			})
+		})
+
+		Context("Given two YAML structures with simple lists", func() {
+			It("should return that a list entry was added", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - one
+      - two
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - one
+      - two
+      - three
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[0].From).To(BeNil())
+				Expect(result[0].To).To(BeIdenticalTo("three"))
+			})
+
+			It("should return that a list entry was removed", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - one
+      - two
+      - three
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - one
+      - two
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[0].From).To(BeIdenticalTo("three"))
+				Expect(result[0].To).To(BeNil())
 			})
 		})
 	})

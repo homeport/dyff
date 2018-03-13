@@ -25,7 +25,6 @@ import (
 
 	"github.com/HeavyWombat/dyff/core"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // betweenCmd represents the between command
@@ -41,22 +40,25 @@ to quickly create a Cobra application.`,
 	Args:    cobra.ExactArgs(2),
 	Aliases: []string{"bw"},
 	Run: func(cmd *cobra.Command, args []string) {
-		from := args[0]
-		to := args[1]
+		fromLocation := args[0]
+		toLocation := args[1]
 
-		fmt.Printf("Difference between %s and %s ...\n", core.Bold(from), core.Bold(to))
-
-		a, err := core.LoadFile(from)
+		from, err := core.LoadFile(fromLocation)
 		if err != nil {
 			panic(err)
 		}
 
-		out, err := yaml.Marshal(a)
+		to, err := core.LoadFile(toLocation)
 		if err != nil {
 			panic(err)
 		}
 
-		fmt.Printf("---\n%s\n\n", string(out))
+		diffs := core.CompareObjects(from, to)
+
+		fmt.Printf("Difference between %s and %s ...\n", core.Bold(fromLocation), core.Bold(toLocation))
+		for i, diff := range diffs {
+			fmt.Printf("%s\n%v\n\n", core.Bold(fmt.Sprintf("diff #%d:", i)), diff)
+		}
 	},
 }
 
