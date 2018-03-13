@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -13,12 +14,11 @@ func TestCore(t *testing.T) {
 	RunSpecs(t, "Core Suite")
 }
 
-func getYamlFromString(input string) (yaml.MapSlice, error) {
+func getYamlFromString(input string) yaml.MapSlice {
 	content := yaml.MapSlice{}
-	err := yaml.UnmarshalStrict([]byte(input), &content)
-	if err != nil {
-		return nil, err
+	if err := yaml.UnmarshalStrict([]byte(input), &content); err != nil {
+		Fail(fmt.Sprintf("Failed to create test YAML MapSlice from input string:\n%s", input))
 	}
 
-	return content, nil
+	return content
 }

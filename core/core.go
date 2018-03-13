@@ -4,11 +4,45 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
+	"reflect"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/fatih/color"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
 	yaml "gopkg.in/yaml.v2"
 )
+
+// Debug log output
+var Debug = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+// Info log output
+var Info = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+// Warning log output
+var Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+// Error log output
+var Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+// Constants to differenciate between the different kinds of differences
+const (
+	ADDITION     = '+'
+	REMOVAL      = '-'
+	MODIFICATION = '±'
+	ILLEGAL      = '✕'
+	ATTENTION    = '⚠'
+)
+
+// Diff encapsulates everything noteworthy about a difference
+type Diff struct {
+	Kind rune
+	Path string
+	From interface{}
+	To   interface{}
+}
 
 // ANSI coloring convenience helpers
 var bold = color.New(color.Bold)
@@ -16,6 +50,85 @@ var bold = color.New(color.Bold)
 // Bold returns the provided string in 'bold' format
 func Bold(text string) string {
 	return bold.Sprint(text)
+}
+
+// Compare returns a list of differences between `from` and `to`
+func CompareObjects(from interface{}, to interface{}) []Diff {
+	result := make([]Diff, 0)
+
+	Debug.Printf("Entering Compare(from %s, to %s)", reflect.TypeOf(from), reflect.TypeOf(to))
+	switch from.(type) {
+
+	case yaml.MapSlice:
+		switch to.(type) {
+		case yaml.MapSlice:
+			result = append(result, compareMapSlices(from.(yaml.MapSlice), to.(yaml.MapSlice))...)
+
+		}
+
+	case string:
+		switch to.(type) {
+		case string:
+			result = append(result, compareStrings(from.(string), to.(string))...)
+
+		}
+	}
+
+	return result
+}
+
+func compareMapSlices(from yaml.MapSlice, to yaml.MapSlice) []Diff {
+	return compareMaps(convertMapSliceToMap(from), convertMapSliceToMap(to))
+}
+
+func compareMaps(from map[interface{}]interface{}, to map[interface{}]interface{}) []Diff {
+	result := make([]Diff, 0)
+
+	for fromKey, fromValue := range from {
+		if toValue, ok := to[fromKey]; ok {
+			// `from` and `to` contain the same `key` -> require comparison
+			result = append(result, CompareObjects(fromValue, toValue)...)
+
+		} else {
+			// `from` contain the `key`, but `to` does not -> removal
+			result = append(result, Diff{Kind: REMOVAL, From: fromValue, To: nil})
+		}
+	}
+
+	for toKey, toValue := range to {
+		if _, ok := from[toKey]; !ok {
+			// `to` contains a `key` that `from` does not have -> addition
+			result = append(result, Diff{Kind: ADDITION, From: nil, To: toValue})
+		}
+	}
+
+	return result
+}
+
+func compareLists(from []interface{}, to []interface{}) []Diff {
+	panic("not implemented yet")
+}
+
+func compareStrings(from string, to string) []Diff {
+	distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
+	relative := float64(distance) / float64(utf8.RuneCountInString(to))
+	Debug.Printf("levenshtein distance between %s and %s is %d (relative: %f)", from, to, distance, relative)
+
+	result := make([]Diff, 0)
+	if strings.Compare(from, to) != 0 {
+		result = append(result, Diff{Kind: MODIFICATION, From: from, To: to})
+	}
+
+	return result
+}
+
+func convertMapSliceToMap(mapslice yaml.MapSlice) map[interface{}]interface{} {
+	result := make(map[interface{}]interface{})
+	for _, entry := range mapslice {
+		result[entry.Key] = entry.Value
+	}
+
+	return result
 }
 
 // LoadFile Processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice

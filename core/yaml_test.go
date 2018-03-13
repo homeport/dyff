@@ -10,11 +10,9 @@ var _ = Describe("YAML", func() {
 	Describe("Getting JSON input", func() {
 		Context("Processing valid JSON input", func() {
 			It("should convert JSON to YAML", func() {
-				content, err := getYamlFromString(`{ "name": "foobar", "list": [A, B, C] }`)
-				Expect(err).To(BeNil())
+				content := getYamlFromString(`{ "name": "foobar", "list": [A, B, C] }`)
 
-				var result string
-				result, err = ToYAMLString(content)
+				result, err := ToYAMLString(content)
 				Expect(err).To(BeNil())
 
 				Expect(result).To(Equal(`---
@@ -28,11 +26,9 @@ list:
 			})
 
 			It("should preserve the order inside the structure", func() {
-				content, err := getYamlFromString(`{ "list": [C, B, A], "name": "foobar" }`)
-				Expect(err).To(BeNil())
+				content := getYamlFromString(`{ "list": [C, B, A], "name": "foobar" }`)
 
-				var result string
-				result, err = ToYAMLString(content)
+				result, err := ToYAMLString(content)
 				Expect(err).To(BeNil())
 
 				Expect(result).To(Equal(`---
