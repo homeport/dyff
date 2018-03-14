@@ -36,6 +36,15 @@ const (
 	ATTENTION    = '⚠'
 )
 
+// PathElement describes a part of a path, meaning its name. In this case the "Key" string is empty. Named list entries such as "name: one" use both "Key" and "Name" to properly specify the path element.
+type PathElement struct {
+	Key  string
+	Name string
+}
+
+// Path describes a position inside a YAML (or JSON) structure by providing a name to each hierarchy level (tree structure).
+type Path []PathElement
+
 // Diff encapsulates everything noteworthy about a difference
 type Diff struct {
 	Kind rune
@@ -46,10 +55,49 @@ type Diff struct {
 
 // ANSI coloring convenience helpers
 var bold = color.New(color.Bold)
+var italic = color.New(color.Italic)
 
 // Bold returns the provided string in 'bold' format
 func Bold(text string) string {
 	return bold.Sprint(text)
+}
+
+// Italic returns the provided string in 'italic' format
+func Italic(text string) string {
+	return italic.Sprint(text)
+}
+
+// ToDotStyle returns a path as a string in dot style separating each path element by a dot.
+// Please note that path elements that are named "." will look ugly.
+func ToDotStyle(path Path) string {
+	result := make([]string, 0, len(path))
+	for _, element := range path {
+		if element.Key != "" {
+			result = append(result, Italic(element.Name))
+		} else {
+			result = append(result, element.Name)
+		}
+	}
+
+	return strings.Join(result, ".")
+}
+
+// ToGoPatchStyle returns a path as a string in Go-Patch (https://github.com/cppforlife/go-patch) style separating each path element by a slash. Named list entries will be shown with their respecitive identifier name such as "name", "key", or "id".
+func ToGoPatchStyle(path Path) string {
+	result := make([]string, 0, len(path))
+	for _, element := range path {
+		if element.Key != "" {
+			result = append(result, fmt.Sprintf("%s=%s", element.Key, element.Name))
+		} else {
+			result = append(result, element.Name)
+		}
+	}
+
+	return "/" + strings.Join(result, "/")
+}
+
+func (path Path) String() string {
+	return ToGoPatchStyle(path)
 }
 
 // CompareObjects returns a list of differences between `from` and `to`
@@ -128,14 +176,14 @@ func compareLists(from []interface{}, to []interface{}) []Diff {
 	fromLookup := createLookUpMap(from)
 	toLookup := createLookUpMap(to)
 
-	for fromValue, _ := range fromLookup {
+	for fromValue := range fromLookup {
 		if _, ok := toLookup[fromValue]; !ok {
 			// `from` entry does not exist in `to` list
 			result = append(result, Diff{Kind: REMOVAL, From: fromValue, To: nil})
 		}
 	}
 
-	for toValue, _ := range toLookup {
+	for toValue := range toLookup {
 		if _, ok := fromLookup[toValue]; !ok {
 			// `to` entry does not exist in `from` list
 			result = append(result, Diff{Kind: ADDITION, From: nil, To: toValue})
