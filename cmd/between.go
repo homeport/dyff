@@ -53,7 +53,7 @@ to quickly create a Cobra application.`,
 			panic(err)
 		}
 
-		diffs := core.CompareObjects(from, to)
+		diffs := core.CompareDocuments(from, to)
 
 		fmt.Printf("Difference between %s and %s ...\n", core.Bold(fromLocation), core.Bold(toLocation))
 		for i, diff := range diffs {

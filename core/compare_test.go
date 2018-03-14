@@ -26,12 +26,13 @@ some:
       version: v1
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				difference := result[0]
 				Expect(difference.Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/name"))
 				Expect(difference.From).To(BeIdenticalTo("foobar"))
 				Expect(difference.To).To(BeIdenticalTo("fOObAr"))
 			})
@@ -53,12 +54,13 @@ some:
       version: v1
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				difference := result[0]
 				Expect(difference.Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/name"))
 				Expect(difference.From).To(BeIdenticalTo(1))
 				Expect(difference.To).To(BeIdenticalTo(2))
 			})
@@ -80,12 +82,13 @@ some:
       level: 2.7182818284
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				difference := result[0]
 				Expect(difference.Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/level"))
 				Expect(difference.From).To(BeNumerically("~", 3.14, 3.15))
 				Expect(difference.To).To(BeNumerically("~", 2.71, 2.72))
 			})
@@ -107,12 +110,13 @@ some:
       enabled: true
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				difference := result[0]
 				Expect(difference.Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/enabled"))
 				Expect(difference.From).To(BeIdenticalTo(false))
 				Expect(difference.To).To(BeIdenticalTo(true))
 			})
@@ -133,12 +137,13 @@ some:
       version: v1
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				difference := result[0]
 				Expect(difference.Kind).To(BeIdenticalTo(ADDITION))
+				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/version"))
 				Expect(difference.From).To(BeNil())
 				Expect(difference.To).To(BeIdenticalTo("v1"))
 			})
@@ -159,12 +164,13 @@ some:
       name: foobar
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				difference := result[0]
 				Expect(difference.Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/version"))
 				Expect(difference.From).To(BeIdenticalTo("v1"))
 				Expect(difference.To).To(BeNil())
 			})
@@ -186,15 +192,17 @@ some:
       release: v1
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(2))
 
 				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/version"))
 				Expect(result[0].From).To(BeIdenticalTo("v1"))
 				Expect(result[0].To).To(BeNil())
 
 				Expect(result[1].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[1].Path.String()).To(BeIdenticalTo("/some/yaml/structure/release"))
 				Expect(result[1].From).To(BeNil())
 				Expect(result[1].To).To(BeIdenticalTo("v1"))
 			})
@@ -221,11 +229,12 @@ some:
       - three
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				Expect(result[0].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
 				Expect(result[0].From).To(BeNil())
 				Expect(result[0].To).To(BeIdenticalTo("three"))
 			})
@@ -250,11 +259,12 @@ some:
       - 3
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				Expect(result[0].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
 				Expect(result[0].From).To(BeNil())
 				Expect(result[0].To).To(BeIdenticalTo(3))
 			})
@@ -279,11 +289,12 @@ some:
       - two
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
 				Expect(result[0].From).To(BeIdenticalTo("three"))
 				Expect(result[0].To).To(BeNil())
 			})
@@ -308,11 +319,12 @@ some:
       - 2
 `)
 
-				result := CompareObjects(from, to)
+				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
 				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
 				Expect(result[0].From).To(BeIdenticalTo(3))
 				Expect(result[0].To).To(BeNil())
 			})

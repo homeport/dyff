@@ -48,7 +48,7 @@ type Path []PathElement
 // Diff encapsulates everything noteworthy about a difference
 type Diff struct {
 	Kind rune
-	Path string
+	Path Path
 	From interface{}
 	To   interface{}
 }
@@ -73,7 +73,7 @@ func ToDotStyle(path Path) string {
 	result := make([]string, 0, len(path))
 	for _, element := range path {
 		if element.Key != "" {
-			result = append(result, Italic(element.Name))
+			result = append(result, element.Name) // TODO make italic for human output
 		} else {
 			result = append(result, element.Name)
 		}
@@ -100,30 +100,35 @@ func (path Path) String() string {
 	return ToGoPatchStyle(path)
 }
 
+// CompareDocuments is the main entry point to compare to YAML MapSlices (documents) and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
+func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
+	return compareMapSlices(Path{}, from, to)
+}
+
 // CompareObjects returns a list of differences between `from` and `to`
-func CompareObjects(from interface{}, to interface{}) []Diff {
+func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 	result := make([]Diff, 0)
 
-	Debug.Printf("Entering Compare(from %s, to %s)", reflect.TypeOf(from), reflect.TypeOf(to))
+	Debug.Printf("Entering CompareObjects(path %s, from %s, to %s)", path, reflect.TypeOf(from), reflect.TypeOf(to))
 	switch from.(type) {
 
 	case yaml.MapSlice:
 		switch to.(type) {
 		case yaml.MapSlice:
-			result = append(result, compareMapSlices(from.(yaml.MapSlice), to.(yaml.MapSlice))...)
+			result = append(result, compareMapSlices(path, from.(yaml.MapSlice), to.(yaml.MapSlice))...)
 
 		}
 
 	case []interface{}:
 		switch to.(type) {
 		case []interface{}:
-			result = append(result, compareLists(from.([]interface{}), to.([]interface{}))...)
+			result = append(result, compareLists(path, from.([]interface{}), to.([]interface{}))...)
 		}
 
 	case string:
 		switch to.(type) {
 		case string:
-			result = append(result, compareStrings(from.(string), to.(string))...)
+			result = append(result, compareStrings(path, from.(string), to.(string))...)
 
 		}
 
@@ -131,7 +136,7 @@ func CompareObjects(from interface{}, to interface{}) []Diff {
 		switch to.(type) {
 		case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
 			if from != to {
-				result = append(result, Diff{Kind: MODIFICATION, From: from, To: to})
+				result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to})
 			}
 		}
 
@@ -142,35 +147,43 @@ func CompareObjects(from interface{}, to interface{}) []Diff {
 	return result
 }
 
-func compareMapSlices(from yaml.MapSlice, to yaml.MapSlice) []Diff {
-	return compareMaps(convertMapSliceToMap(from), convertMapSliceToMap(to))
+func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
+	return compareMaps(path, convertMapSliceToMap(from), convertMapSliceToMap(to))
 }
 
-func compareMaps(from map[interface{}]interface{}, to map[interface{}]interface{}) []Diff {
+func newPath(path Path, key interface{}, name interface{}) Path {
+	result := make(Path, len(path))
+	copy(result, path)
+
+	return append(result, PathElement{Key: fmt.Sprintf("%v", key),
+		Name: fmt.Sprintf("%v", name)})
+}
+
+func compareMaps(path Path, from map[interface{}]interface{}, to map[interface{}]interface{}) []Diff {
 	result := make([]Diff, 0)
 
 	for fromKey, fromValue := range from {
 		if toValue, ok := to[fromKey]; ok {
 			// `from` and `to` contain the same `key` -> require comparison
-			result = append(result, CompareObjects(fromValue, toValue)...)
+			result = append(result, CompareObjects(newPath(path, "", fromKey), fromValue, toValue)...)
 
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
-			result = append(result, Diff{Kind: REMOVAL, From: fromValue, To: nil})
+			result = append(result, Diff{Path: newPath(path, "", fromKey), Kind: REMOVAL, From: fromValue, To: nil})
 		}
 	}
 
 	for toKey, toValue := range to {
 		if _, ok := from[toKey]; !ok {
 			// `to` contains a `key` that `from` does not have -> addition
-			result = append(result, Diff{Kind: ADDITION, From: nil, To: toValue})
+			result = append(result, Diff{Path: newPath(path, "", toKey), Kind: ADDITION, From: nil, To: toValue})
 		}
 	}
 
 	return result
 }
 
-func compareLists(from []interface{}, to []interface{}) []Diff {
+func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 	result := make([]Diff, 0)
 
 	fromLookup := createLookUpMap(from)
@@ -179,28 +192,30 @@ func compareLists(from []interface{}, to []interface{}) []Diff {
 	for fromValue := range fromLookup {
 		if _, ok := toLookup[fromValue]; !ok {
 			// `from` entry does not exist in `to` list
-			result = append(result, Diff{Kind: REMOVAL, From: fromValue, To: nil})
+			result = append(result, Diff{Path: path, Kind: REMOVAL, From: fromValue, To: nil})
 		}
 	}
 
 	for toValue := range toLookup {
 		if _, ok := fromLookup[toValue]; !ok {
 			// `to` entry does not exist in `from` list
-			result = append(result, Diff{Kind: ADDITION, From: nil, To: toValue})
+			result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: toValue})
 		}
 	}
 
 	return result
 }
 
-func compareStrings(from string, to string) []Diff {
+func compareStrings(path Path, from string, to string) []Diff {
+	Debug.Printf("Entering compareStrings(path %s, %s, %s)", path, from, to)
+
 	distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
 	relative := float64(distance) / float64(utf8.RuneCountInString(to))
 	Debug.Printf("levenshtein distance between %s and %s is %d (relative: %f)", from, to, distance, relative)
 
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
-		result = append(result, Diff{Kind: MODIFICATION, From: from, To: to})
+		result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to})
 	}
 
 	return result
