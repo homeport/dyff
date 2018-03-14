@@ -201,7 +201,7 @@ some:
 		})
 
 		Context("Given two YAML structures with simple lists", func() {
-			It("should return that a list entry was added", func() {
+			It("should return that a string list entry was added", func() {
 				from := getYamlFromString(`---
 some:
   yaml:
@@ -230,7 +230,36 @@ some:
 				Expect(result[0].To).To(BeIdenticalTo("three"))
 			})
 
-			It("should return that a list entry was removed", func() {
+			It("should return that an integer list entry was added", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - 1
+      - 2
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - 1
+      - 2
+      - 3
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[0].From).To(BeNil())
+				Expect(result[0].To).To(BeIdenticalTo(3))
+			})
+
+			It("should return that a string list entry was removed", func() {
 				from := getYamlFromString(`---
 some:
   yaml:
@@ -256,6 +285,35 @@ some:
 
 				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
 				Expect(result[0].From).To(BeIdenticalTo("three"))
+				Expect(result[0].To).To(BeNil())
+			})
+
+			It("should return that an integer list entry was removed", func() {
+				from := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - 1
+      - 2
+      - 3
+`)
+
+				to := getYamlFromString(`---
+some:
+  yaml:
+    structure:
+      list:
+      - 1
+      - 2
+`)
+
+				result := CompareObjects(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[0].From).To(BeIdenticalTo(3))
 				Expect(result[0].To).To(BeNil())
 			})
 		})
