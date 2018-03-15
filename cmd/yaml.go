@@ -30,13 +30,11 @@ import (
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{
 	Use:   "yaml",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Converts input document into YAML format",
+	Long: `
+Converts input document into YAML format while preserving the order of all keys.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
@@ -57,14 +55,4 @@ to quickly create a Cobra application.`,
 
 func init() {
 	rootCmd.AddCommand(yamlCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// yamlCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// yamlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
