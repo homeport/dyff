@@ -95,5 +95,59 @@ var _ = Describe("Core", func() {
 				Expect(output).To(BeEquivalentTo("/some/deep/yaml/structure/name=one/list/id=first"))
 			})
 		})
+
+		Context("identify the main identifier key in named lists", func() {
+			It("should return 'name' as the main identifier if list uses 'name'", func() {
+				sample := getYamlFromString(`---
+list:
+- name: one
+  version: v1
+- name: two
+  version: v1
+`)
+
+				output := GetIdentifierFromNamedList(sample[0].Value.([]interface{}))
+				Expect(output).To(BeEquivalentTo("name"))
+			})
+
+			It("should return 'key' as the main identifier if list uses 'key'", func() {
+				sample := getYamlFromString(`---
+list:
+- key: one
+  version: v1
+- key: two
+  version: v1
+`)
+
+				output := GetIdentifierFromNamedList(sample[0].Value.([]interface{}))
+				Expect(output).To(BeEquivalentTo("key"))
+			})
+
+			It("should return 'id' as the main identifier if list uses 'id'", func() {
+				sample := getYamlFromString(`---
+list:
+- id: one
+  version: v1
+- id: two
+  version: v1
+`)
+
+				output := GetIdentifierFromNamedList(sample[0].Value.([]interface{}))
+				Expect(output).To(BeEquivalentTo("id"))
+			})
+
+			It("should return nothing as the main identifier if there is no common identifier", func() {
+				sample := getYamlFromString(`---
+list:
+- name: one
+  version: v1
+- id: two
+  version: v1
+`)
+
+				output := GetIdentifierFromNamedList(sample[0].Value.([]interface{}))
+				Expect(output).To(BeEmpty())
+			})
+		})
 	})
 })

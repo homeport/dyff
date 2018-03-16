@@ -8,7 +8,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/fatih/color"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
@@ -47,10 +46,11 @@ type Path []PathElement
 
 // Diff encapsulates everything noteworthy about a difference
 type Diff struct {
-	Kind rune
-	Path Path
-	From interface{}
-	To   interface{}
+	Kind     rune
+	Path     Path
+	From     interface{}
+	To       interface{}
+	Distance int
 }
 
 // ANSI coloring convenience helpers
@@ -109,9 +109,7 @@ func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
 func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 	result := make([]Diff, 0)
 
-	Debug.Printf("Entering CompareObjects(path %s, from %s, to %s)", path, reflect.TypeOf(from), reflect.TypeOf(to))
 	switch from.(type) {
-
 	case yaml.MapSlice:
 		switch to.(type) {
 		case yaml.MapSlice:
@@ -148,35 +146,25 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 }
 
 func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
-	return compareMaps(path, convertMapSliceToMap(from), convertMapSliceToMap(to))
-}
-
-func newPath(path Path, key interface{}, name interface{}) Path {
-	result := make(Path, len(path))
-	copy(result, path)
-
-	return append(result, PathElement{Key: fmt.Sprintf("%v", key),
-		Name: fmt.Sprintf("%v", name)})
-}
-
-func compareMaps(path Path, from map[interface{}]interface{}, to map[interface{}]interface{}) []Diff {
 	result := make([]Diff, 0)
 
-	for fromKey, fromValue := range from {
-		if toValue, ok := to[fromKey]; ok {
+	for _, fromItem := range from {
+		key := fromItem.Key
+		if toItem, ok := GetMapItemByKeyFromMapSlice(key, to); ok {
 			// `from` and `to` contain the same `key` -> require comparison
-			result = append(result, CompareObjects(newPath(path, "", fromKey), fromValue, toValue)...)
+			result = append(result, CompareObjects(newPath(path, "", key), fromItem.Value, toItem.Value)...)
 
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
-			result = append(result, Diff{Path: newPath(path, "", fromKey), Kind: REMOVAL, From: fromValue, To: nil})
+			result = append(result, Diff{Path: newPath(path, "", key), Kind: REMOVAL, From: fromItem.Value, To: nil})
 		}
 	}
 
-	for toKey, toValue := range to {
-		if _, ok := from[toKey]; !ok {
+	for _, toItem := range to {
+		key := toItem.Key
+		if _, ok := GetMapItemByKeyFromMapSlice(key, from); !ok {
 			// `to` contains a `key` that `from` does not have -> addition
-			result = append(result, Diff{Path: newPath(path, "", toKey), Kind: ADDITION, From: nil, To: toValue})
+			result = append(result, Diff{Path: newPath(path, "", key), Kind: ADDITION, From: nil, To: toItem.Value})
 		}
 	}
 
@@ -184,6 +172,14 @@ func compareMaps(path Path, from map[interface{}]interface{}, to map[interface{}
 }
 
 func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
+	if isSimpleList(from) && isSimpleList(to) {
+		return compareSimpleLists(path, from, to)
+	}
+
+	return compareNamedEntryLists(path, from, to)
+}
+
+func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
 	result := make([]Diff, 0)
 
 	fromLookup := createLookUpMap(from)
@@ -206,19 +202,120 @@ func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 	return result
 }
 
-func compareStrings(path Path, from string, to string) []Diff {
-	Debug.Printf("Entering compareStrings(path %s, %s, %s)", path, from, to)
-
-	distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
-	relative := float64(distance) / float64(utf8.RuneCountInString(to))
-	Debug.Printf("levenshtein distance between %s and %s is %d (relative: %f)", from, to, distance, relative)
-
+func compareNamedEntryLists(path Path, from []interface{}, to []interface{}) []Diff {
 	result := make([]Diff, 0)
-	if strings.Compare(from, to) != 0 {
-		result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to})
+
+	fromIdentifier := GetIdentifierFromNamedList(from)
+	toIdentifier := GetIdentifierFromNamedList(to)
+	if fromIdentifier != toIdentifier {
+		panic(fmt.Sprintf("Unable to compare two named entry lists with different identifier: from uses %s while to uses %s", fromIdentifier, toIdentifier))
+	}
+
+	identifier := fromIdentifier
+
+	for _, fromEntry := range from {
+		name := GetKeyValue(fromEntry.(yaml.MapSlice), identifier)
+		if toEntry, ok := GetEntryFromNamedList(to, identifier, name); ok {
+			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
+			result = append(result, CompareObjects(newPath(path, identifier, name), fromEntry, toEntry)...)
+
+		} else {
+			// `from` has an entry (identified by identifier and name), but `to` does not -> removal
+			result = append(result, Diff{Path: newPath(path, identifier, name), Kind: REMOVAL, From: fromEntry, To: nil})
+		}
+	}
+
+	for _, toEntry := range to {
+		name := GetKeyValue(toEntry.(yaml.MapSlice), identifier)
+		if _, ok := GetEntryFromNamedList(from, identifier, name); !ok {
+			// `to` has an entry (identified by identifier and name), but `from` does not -> addition
+			result = append(result, Diff{Path: newPath(path, identifier, name), Kind: ADDITION, From: nil, To: toEntry})
+		}
 	}
 
 	return result
+}
+
+func compareStrings(path Path, from string, to string) []Diff {
+	result := make([]Diff, 0)
+	if strings.Compare(from, to) != 0 {
+		distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
+		result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to, Distance: distance})
+	}
+
+	return result
+}
+
+func newPath(path Path, key interface{}, name interface{}) Path {
+	result := make(Path, len(path))
+	copy(result, path)
+
+	return append(result, PathElement{Key: fmt.Sprintf("%v", key),
+		Name: fmt.Sprintf("%v", name)})
+}
+
+// GetMapItemByKeyFromMapSlice returns the MapItem (tuple of key/value) where the MapItem key matches the provided key. It will return an empty MapItem and bool false if the given MapSlice does not contain a suitable MapItem.
+func GetMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.MapItem, bool) {
+	for _, mapitem := range mapslice {
+		if mapitem.Key == key {
+			return mapitem, true
+		}
+	}
+
+	return yaml.MapItem{}, false
+}
+
+// GetKeyValue returns the value for a given key in a provided MapSlice. This is comparable to getting a value from a map with `foobar[key]`. Function will panic if there is no such key. This is only intended to be used in scenarios where you know a key has to be present.
+func GetKeyValue(mapslice yaml.MapSlice, key string) interface{} {
+	for _, element := range mapslice {
+		if element.Key == key {
+			return element.Value
+		}
+	}
+
+	panic(fmt.Sprintf("There is no key `%s` in MapSlice %v", key, mapslice))
+}
+
+// GetEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
+func GetEntryFromNamedList(list []interface{}, identifier string, name interface{}) (interface{}, bool) {
+	for _, listEntry := range list {
+		mapslice := listEntry.(yaml.MapSlice)
+
+		for _, element := range mapslice {
+			if element.Key == identifier && element.Value == name {
+				return mapslice, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
+// GetIdentifierFromNamedList returns the identifier key used in the provided list, or an empty string if there is none. The identifier key is either 'name', 'key', or 'id'.
+func GetIdentifierFromNamedList(list []interface{}) string {
+	counters := map[interface{}]int{}
+
+	for _, sliceEntry := range list {
+		switch sliceEntry.(type) {
+		case yaml.MapSlice:
+			for _, mapSliceEntry := range sliceEntry.(yaml.MapSlice) {
+				if _, ok := counters[mapSliceEntry.Key]; !ok {
+					counters[mapSliceEntry.Key] = 0
+				}
+
+				counters[mapSliceEntry.Key]++
+			}
+		}
+	}
+
+	sliceLength := len(list)
+	for _, identifier := range []string{"name", "key", "id"} {
+		if count, ok := counters[identifier]; ok && count == sliceLength {
+			return identifier
+		}
+	}
+
+	return ""
 }
 
 func createLookUpMap(list []interface{}) map[interface{}]struct{} {
@@ -230,13 +327,20 @@ func createLookUpMap(list []interface{}) map[interface{}]struct{} {
 	return result
 }
 
-func convertMapSliceToMap(mapslice yaml.MapSlice) map[interface{}]interface{} {
-	result := make(map[interface{}]interface{})
-	for _, entry := range mapslice {
-		result[entry.Key] = entry.Value
+func isSimpleList(list []interface{}) bool {
+	if len(list) == 0 {
+		return false
 	}
 
-	return result
+	var counter = 0
+	for _, entry := range list {
+		switch entry.(type) {
+		case map[interface{}]interface{}, yaml.MapSlice, yaml.MapItem:
+			counter++
+		}
+	}
+
+	return counter == 0
 }
 
 // LoadFile Processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice

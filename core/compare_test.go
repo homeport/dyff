@@ -4,6 +4,7 @@ import (
 	. "github.com/HeavyWombat/dyff/core"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Compare", func() {
@@ -327,6 +328,119 @@ some:
 				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
 				Expect(result[0].From).To(BeIdenticalTo(3))
 				Expect(result[0].To).To(BeNil())
+			})
+		})
+
+		Context("Given two YAML structures with complext content", func() {
+			It("should return all differences in there", func() {
+				from := getYamlFromString(`---
+instance_groups:
+- name: web
+  instances: 1
+  resource_pool: concourse_resource_pool
+  networks:
+  - name: concourse
+    static_ips: 192.168.1.1
+  jobs:
+  - release: concourse
+    name: atc
+    properties:
+      postgresql_database: &atc-db atc
+      external_url: http://192.168.1.100:8080
+      development_mode: true
+  - release: concourse
+    name: tsa
+    properties: {}
+
+  - name: db
+    instances: 1
+    resource_pool: concourse_resource_pool
+    networks: [{name: concourse}, {name: testnet}]
+    persistent_disk: 10240
+    jobs:
+    - release: concourse
+      name: postgresql
+      properties:
+        databases:
+        - name: *atc-db
+          role: atc
+          password: supersecret
+`)
+
+				to := getYamlFromString(`---
+instance_groups:
+- name: web
+  instances: 1
+  resource_pool: concourse_resource_pool
+  networks:
+  - name: concourse
+    static_ips: 192.168.0.1
+  jobs:
+  - release: concourse
+    name: atc
+    properties:
+      postgresql_database: &atc-db atc
+      external_url: http://192.168.0.100:8080
+      development_mode: false
+  - release: concourse
+    name: tsa
+    properties: {}
+  - release: custom
+    name: logger
+
+  - name: db
+    instances: 2
+    resource_pool: concourse_resource_pool
+    networks: [{name: concourse}]
+    persistent_disk: 10240
+    jobs:
+    - release: concourse
+      name: postgresql
+      properties:
+        databases:
+        - name: *atc-db
+          role: atc
+          password: "zwX#(;P=%hTfFzM["
+`)
+
+				result := CompareDocuments(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(7))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/networks/name=concourse/static_ips"))
+				Expect(result[0].From).To(BeIdenticalTo("192.168.1.1"))
+				Expect(result[0].To).To(BeIdenticalTo("192.168.0.1"))
+
+				Expect(result[1].Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(result[1].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=atc/properties/external_url"))
+				Expect(result[1].From).To(BeIdenticalTo("http://192.168.1.100:8080"))
+				Expect(result[1].To).To(BeIdenticalTo("http://192.168.0.100:8080"))
+
+				Expect(result[2].Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(result[2].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=atc/properties/development_mode"))
+				Expect(result[2].From).To(BeIdenticalTo(true))
+				Expect(result[2].To).To(BeIdenticalTo(false))
+
+				Expect(result[3].Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(result[3].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=db/instances"))
+				Expect(result[3].From).To(BeIdenticalTo(1))
+				Expect(result[3].To).To(BeIdenticalTo(2))
+
+				Expect(result[4].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[4].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=db/networks/name=testnet"))
+				Expect(result[4].From).To(BeEquivalentTo(yaml.MapSlice{yaml.MapItem{Key: "name", Value: "testnet"}}))
+				Expect(result[4].To).To(BeNil())
+
+				Expect(result[5].Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(result[5].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password"))
+				Expect(result[5].From).To(BeIdenticalTo("supersecret"))
+				Expect(result[5].To).To(BeIdenticalTo("zwX#(;P=%hTfFzM["))
+
+				Expect(result[6].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[6].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=logger"))
+				Expect(result[6].From).To(BeNil())
+				Expect(result[6].To).To(BeEquivalentTo(yaml.MapSlice{yaml.MapItem{Key: "release", Value: "custom"}, yaml.MapItem{Key: "name", Value: "logger"}}))
 			})
 		})
 	})
