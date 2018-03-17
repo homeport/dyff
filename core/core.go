@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"io/ioutil"
 	"log"
 	"os"
@@ -176,42 +177,53 @@ func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 		return compareSimpleLists(path, from, to)
 	}
 
-	return compareNamedEntryLists(path, from, to)
+	fromIdentifier := GetIdentifierFromNamedList(from)
+	toIdentifier := GetIdentifierFromNamedList(to)
+	if fromIdentifier == toIdentifier && fromIdentifier != "" {
+		return compareNamedEntryLists(path, fromIdentifier, from, to)
+	}
+
+	return compareSimpleLists(path, from, to)
 }
 
 func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
 	result := make([]Diff, 0)
 
+	fromLength := len(from)
+	toLength := len(to)
+
+	// Back out immediately if both lists are empty
+	if fromLength == 0 && fromLength == toLength {
+		return result
+	}
+
+	// Special case if both lists only contain one entry: directly compare the two entries with each other
+	if fromLength == 1 && fromLength == toLength {
+		return CompareObjects(newPath(path, "", 0), from[0], to[0])
+	}
+
 	fromLookup := createLookUpMap(from)
 	toLookup := createLookUpMap(to)
 
-	for fromValue := range fromLookup {
+	for fromValue, idxPos := range fromLookup {
 		if _, ok := toLookup[fromValue]; !ok {
 			// `from` entry does not exist in `to` list
-			result = append(result, Diff{Path: path, Kind: REMOVAL, From: fromValue, To: nil})
+			result = append(result, Diff{Path: path, Kind: REMOVAL, From: from[idxPos], To: nil})
 		}
 	}
 
-	for toValue := range toLookup {
+	for toValue, idxPos := range toLookup {
 		if _, ok := fromLookup[toValue]; !ok {
 			// `to` entry does not exist in `from` list
-			result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: toValue})
+			result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: to[idxPos]})
 		}
 	}
 
 	return result
 }
 
-func compareNamedEntryLists(path Path, from []interface{}, to []interface{}) []Diff {
+func compareNamedEntryLists(path Path, identifier string, from []interface{}, to []interface{}) []Diff {
 	result := make([]Diff, 0)
-
-	fromIdentifier := GetIdentifierFromNamedList(from)
-	toIdentifier := GetIdentifierFromNamedList(to)
-	if fromIdentifier != toIdentifier {
-		panic(fmt.Sprintf("Unable to compare two named entry lists with different identifier: from uses %s while to uses %s", fromIdentifier, toIdentifier))
-	}
-
-	identifier := fromIdentifier
 
 	for _, fromEntry := range from {
 		name := GetKeyValue(fromEntry.(yaml.MapSlice), identifier)
@@ -318,13 +330,31 @@ func GetIdentifierFromNamedList(list []interface{}) string {
 	return ""
 }
 
-func createLookUpMap(list []interface{}) map[interface{}]struct{} {
-	result := make(map[interface{}]struct{}, len(list))
-	for _, entry := range list {
-		result[entry] = struct{}{}
+func createLookUpMap(list []interface{}) map[interface{}]int {
+	result := make(map[interface{}]int, len(list))
+	for idx, entry := range list {
+		switch entry.(type) {
+		case yaml.MapSlice:
+			result[mapSliceHash(entry.(yaml.MapSlice))] = idx
+
+		default:
+			result[entry] = idx
+		}
 	}
 
 	return result
+}
+
+func mapSliceHash(mapSlice yaml.MapSlice) uint64 {
+	var result string
+	var err error
+	if result, err = ToYAMLString(mapSlice); err != nil {
+		panic(fmt.Sprintf("Unable to convert MapSlice to String: %v\n\n%s", mapSlice, err))
+	}
+
+	hashFct := fnv.New64a()
+	hashFct.Write([]byte(result))
+	return hashFct.Sum64()
 }
 
 func isSimpleList(list []interface{}) bool {

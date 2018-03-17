@@ -442,6 +442,51 @@ instance_groups:
 				Expect(result[6].From).To(BeNil())
 				Expect(result[6].To).To(BeEquivalentTo(yaml.MapSlice{yaml.MapItem{Key: "release", Value: "custom"}, yaml.MapItem{Key: "name", Value: "logger"}}))
 			})
+
+			It("should return even difficult ones", func() {
+				from := getYamlFromString(`---
+resource_pools:
+- name: concourse_resource_pool
+  stemcell:
+    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
+    version: '3232.2'
+  network: concourse
+  cloud_properties:
+    ram: 4096
+    disk: 32768
+    cpu: 2
+    datacenters:
+    - clusters:
+      - CLS_PAAS_SFT_035: {resource_pool: other-vsphere-res-pool}
+`)
+
+				to := getYamlFromString(`---
+resource_pools:
+- name: concourse_resource_pool
+  stemcell:
+    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
+    version: '3232.2'
+  network: concourse
+  cloud_properties:
+    ram: 4096
+    disk: 32768
+    cpu: 2
+    datacenters:
+    - clusters:
+      - CLS_PAAS_SFT_035:
+          resource_pool: new-vsphere-res-pool
+`)
+
+				result := CompareDocuments(from, to)
+				Expect(result).NotTo(BeNil())
+
+				Expect(len(result)).To(BeEquivalentTo(1))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(MODIFICATION))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters/0/CLS_PAAS_SFT_035/resource_pool"))
+				Expect(result[0].From).To(BeIdenticalTo("other-vsphere-res-pool"))
+				Expect(result[0].To).To(BeIdenticalTo("new-vsphere-res-pool"))
+			})
 		})
 	})
 })
