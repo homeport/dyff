@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/mitchellh/hashstructure"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -205,15 +205,15 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 	fromLookup := createLookUpMap(from)
 	toLookup := createLookUpMap(to)
 
-	for fromValue, idxPos := range fromLookup {
-		if _, ok := toLookup[fromValue]; !ok {
+	for idxPos, fromValue := range from {
+		if _, ok := toLookup[calcHash(fromValue)]; !ok {
 			// `from` entry does not exist in `to` list
 			result = append(result, Diff{Path: path, Kind: REMOVAL, From: from[idxPos], To: nil})
 		}
 	}
 
-	for toValue, idxPos := range toLookup {
-		if _, ok := fromLookup[toValue]; !ok {
+	for idxPos, toValue := range to {
+		if _, ok := fromLookup[calcHash(toValue)]; !ok {
 			// `to` entry does not exist in `from` list
 			result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: to[idxPos]})
 		}
@@ -330,31 +330,23 @@ func GetIdentifierFromNamedList(list []interface{}) string {
 	return ""
 }
 
-func createLookUpMap(list []interface{}) map[interface{}]int {
-	result := make(map[interface{}]int, len(list))
+func createLookUpMap(list []interface{}) map[uint64]int {
+	result := make(map[uint64]int, len(list))
 	for idx, entry := range list {
-		switch entry.(type) {
-		case yaml.MapSlice:
-			result[mapSliceHash(entry.(yaml.MapSlice))] = idx
-
-		default:
-			result[entry] = idx
-		}
+		result[calcHash(entry)] = idx
 	}
 
 	return result
 }
 
-func mapSliceHash(mapSlice yaml.MapSlice) uint64 {
-	var result string
+func calcHash(obj interface{}) uint64 {
+	var hash uint64
 	var err error
-	if result, err = ToYAMLString(mapSlice); err != nil {
-		panic(fmt.Sprintf("Unable to convert MapSlice to String: %v\n\n%s", mapSlice, err))
+	if hash, err = hashstructure.Hash(obj, nil); err != nil {
+		panic(err)
 	}
 
-	hashFct := fnv.New64a()
-	hashFct.Write([]byte(result))
-	return hashFct.Sum64()
+	return hash
 }
 
 func isSimpleList(list []interface{}) bool {

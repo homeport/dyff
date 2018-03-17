@@ -487,6 +487,53 @@ resource_pools:
 				Expect(result[0].From).To(BeIdenticalTo("other-vsphere-res-pool"))
 				Expect(result[0].To).To(BeIdenticalTo("new-vsphere-res-pool"))
 			})
+
+			It("should return even difficult ones that cannot simply be compared", func() {
+				from := getYamlFromString(`---
+resource_pools:
+- name: concourse_resource_pool
+  cloud_properties:
+    datacenters:
+    - clusters:
+      - CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}
+      - CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}
+`)
+
+				to := getYamlFromString(`---
+resource_pools:
+- name: concourse_resource_pool
+  cloud_properties:
+    datacenters:
+    - clusters:
+      - CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}
+      - CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}
+`)
+
+				result := CompareDocuments(from, to)
+				Expect(result).NotTo(BeNil())
+
+				Expect(len(result)).To(BeEquivalentTo(4))
+
+				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[0].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
+				Expect(result[0].From).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}")))
+				Expect(result[0].To).To(BeNil())
+
+				Expect(result[1].Kind).To(BeIdenticalTo(REMOVAL))
+				Expect(result[1].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
+				Expect(result[1].From).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}")))
+				Expect(result[1].To).To(BeNil())
+
+				Expect(result[2].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[2].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
+				Expect(result[2].From).To(BeNil())
+				Expect(result[2].To).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}")))
+
+				Expect(result[3].Kind).To(BeIdenticalTo(ADDITION))
+				Expect(result[3].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
+				Expect(result[3].From).To(BeNil())
+				Expect(result[3].To).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}")))
+			})
 		})
 	})
 })
