@@ -539,69 +539,74 @@ resource_pools:
 		Context("Given two YAML files", func() {
 			It("should return all differences in there", func() {
 				result := CompareDocuments(yml("../assets/examples/from.yml"), yml("../assets/examples/to.yml"))
+				expected := []Diff{
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/map/string"),
+						From: nil,
+						To:   "new"},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/map/bool"),
+						From: nil,
+						To:   true},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/map/int"),
+						From: nil,
+						To:   42},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/map/float"),
+						From: nil,
+						To:   3.1415},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/map/map"),
+						From: nil,
+						To:   yml("key: value")},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/map/list"),
+						From: nil,
+						To:   yml(`list: [ A, B, C ]`)[0].Value},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/simple-list"),
+						From: nil,
+						To:   "new"},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/named-entry-list-using-name/name=new"),
+						From: nil,
+						To:   yml(`name: new`)},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/named-entry-list-using-key/key=new"),
+						From: nil,
+						To:   yml(`key: new`)},
+
+					Diff{
+						Kind: ADDITION,
+						Path: path("/additions/named-entry-list-using-id/id=new"),
+						From: nil,
+						To:   yml(`id: new`)},
+				}
 
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(10))
+				Expect(len(result)).To(BeEquivalentTo(len(expected)))
 
-				Expect(result[0]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/map/string"),
-					From: nil,
-					To:   "new"}))
-
-				Expect(result[1]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/map/bool"),
-					From: nil,
-					To:   true}))
-
-				Expect(result[2]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/map/int"),
-					From: nil,
-					To:   42}))
-
-				Expect(result[3]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/map/float"),
-					From: nil,
-					To:   3.1415}))
-
-				Expect(result[4]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/map/map"),
-					From: nil,
-					To:   yml("key: value")}))
-
-				Expect(result[5]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/map/list"),
-					From: nil,
-					To:   yml(`list: [ A, B, C ]`)[0].Value}))
-
-				Expect(result[6]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/simple-list"),
-					From: nil,
-					To:   "new"}))
-
-				Expect(result[7]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/named-entry-list-using-name/name=new"),
-					From: nil,
-					To:   yml(`name: new`)}))
-
-				Expect(result[8]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/named-entry-list-using-key/key=new"),
-					From: nil,
-					To:   yml(`key: new`)}))
-
-				Expect(result[9]).To(BeEquivalentTo(Diff{
-					Kind: ADDITION,
-					Path: path("/additions/named-entry-list-using-id/id=new"),
-					From: nil,
-					To:   yml(`id: new`)}))
+				for i, r := range expected {
+					Expect(r).To(BeEquivalentTo(expected[i]))
+				}
 			})
 		})
 	})
