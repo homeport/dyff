@@ -98,7 +98,7 @@ var _ = Describe("Core", func() {
 
 		Context("identify the main identifier key in named lists", func() {
 			It("should return 'name' as the main identifier if list uses 'name'", func() {
-				sample := getYamlFromString(`---
+				sample := yml(`---
 list:
 - name: one
   version: v1
@@ -111,7 +111,7 @@ list:
 			})
 
 			It("should return 'key' as the main identifier if list uses 'key'", func() {
-				sample := getYamlFromString(`---
+				sample := yml(`---
 list:
 - key: one
   version: v1
@@ -124,7 +124,7 @@ list:
 			})
 
 			It("should return 'id' as the main identifier if list uses 'id'", func() {
-				sample := getYamlFromString(`---
+				sample := yml(`---
 list:
 - id: one
   version: v1
@@ -137,7 +137,7 @@ list:
 			})
 
 			It("should return nothing as the main identifier if there is no common identifier", func() {
-				sample := getYamlFromString(`---
+				sample := yml(`---
 list:
 - name: one
   version: v1

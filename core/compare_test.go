@@ -11,7 +11,7 @@ var _ = Describe("Compare", func() {
 	Describe("Difference between YAMLs", func() {
 		Context("Given two simple YAML structures", func() {
 			It("should return that a string value was modified", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -19,7 +19,7 @@ some:
       version: v1
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -39,7 +39,7 @@ some:
 			})
 
 			It("should return that an integer was modified", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -47,7 +47,7 @@ some:
       version: v1
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -67,7 +67,7 @@ some:
 			})
 
 			It("should return that a float was modified", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -75,7 +75,7 @@ some:
       level: 3.14159265359
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -95,7 +95,7 @@ some:
 			})
 
 			It("should return that a boolean was modified", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -103,7 +103,7 @@ some:
       enabled: false
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -123,14 +123,14 @@ some:
 			})
 
 			It("should return that one value was added", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
       name: foobar
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -150,7 +150,7 @@ some:
 			})
 
 			It("should return that one value was removed", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -158,7 +158,7 @@ some:
       version: v1
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -177,7 +177,7 @@ some:
 			})
 
 			It("should return two diffs if one value was removed and another one added", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -185,7 +185,7 @@ some:
       version: v1
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -211,7 +211,7 @@ some:
 
 		Context("Given two YAML structures with simple lists", func() {
 			It("should return that a string list entry was added", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -220,7 +220,7 @@ some:
       - two
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -241,7 +241,7 @@ some:
 			})
 
 			It("should return that an integer list entry was added", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -250,7 +250,7 @@ some:
       - 2
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -271,7 +271,7 @@ some:
 			})
 
 			It("should return that a string list entry was removed", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -281,7 +281,7 @@ some:
       - three
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -301,7 +301,7 @@ some:
 			})
 
 			It("should return that an integer list entry was removed", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 some:
   yaml:
     structure:
@@ -311,7 +311,7 @@ some:
       - 3
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 some:
   yaml:
     structure:
@@ -333,7 +333,7 @@ some:
 
 		Context("Given two YAML structures with complext content", func() {
 			It("should return all differences in there", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 instance_groups:
 - name: web
   instances: 1
@@ -367,7 +367,7 @@ instance_groups:
           password: supersecret
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 instance_groups:
 - name: web
   instances: 1
@@ -444,7 +444,7 @@ instance_groups:
 			})
 
 			It("should return even difficult ones", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 resource_pools:
 - name: concourse_resource_pool
   stemcell:
@@ -460,7 +460,7 @@ resource_pools:
       - CLS_PAAS_SFT_035: {resource_pool: other-vsphere-res-pool}
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 resource_pools:
 - name: concourse_resource_pool
   stemcell:
@@ -489,7 +489,7 @@ resource_pools:
 			})
 
 			It("should return even difficult ones that cannot simply be compared", func() {
-				from := getYamlFromString(`---
+				from := yml(`---
 resource_pools:
 - name: concourse_resource_pool
   cloud_properties:
@@ -499,7 +499,7 @@ resource_pools:
       - CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}
 `)
 
-				to := getYamlFromString(`---
+				to := yml(`---
 resource_pools:
 - name: concourse_resource_pool
   cloud_properties:
@@ -516,23 +516,62 @@ resource_pools:
 
 				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
 				Expect(result[0].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
-				Expect(result[0].From).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}")))
+				Expect(result[0].From).To(BeEquivalentTo(yml("CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}")))
 				Expect(result[0].To).To(BeNil())
 
 				Expect(result[1].Kind).To(BeIdenticalTo(REMOVAL))
 				Expect(result[1].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
-				Expect(result[1].From).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}")))
+				Expect(result[1].From).To(BeEquivalentTo(yml("CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}")))
 				Expect(result[1].To).To(BeNil())
 
 				Expect(result[2].Kind).To(BeIdenticalTo(ADDITION))
 				Expect(result[2].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
 				Expect(result[2].From).To(BeNil())
-				Expect(result[2].To).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}")))
+				Expect(result[2].To).To(BeEquivalentTo(yml("CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}")))
 
 				Expect(result[3].Kind).To(BeIdenticalTo(ADDITION))
 				Expect(result[3].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
 				Expect(result[3].From).To(BeNil())
-				Expect(result[3].To).To(BeEquivalentTo(getYamlFromString("CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}")))
+				Expect(result[3].To).To(BeEquivalentTo(yml("CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}")))
+			})
+		})
+
+		Context("Given two YAML files", func() {
+			It("should return all differences in there", func() {
+				result := CompareDocuments(yml("../assets/examples/from.yml"), yml("../assets/examples/to.yml"))
+
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(5))
+
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/additions/map/foobar"),
+					From: nil,
+					To:   "new"}))
+
+				Expect(result[1]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/additions/simple-list"),
+					From: nil,
+					To:   "new"}))
+
+				Expect(result[2]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/additions/named-entry-list-using-name/name=new"),
+					From: nil,
+					To:   yml(`name: new`)}))
+
+				Expect(result[3]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/additions/named-entry-list-using-key/key=new"),
+					From: nil,
+					To:   yml(`key: new`)}))
+
+				Expect(result[4]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/additions/named-entry-list-using-id/id=new"),
+					From: nil,
+					To:   yml(`id: new`)}))
 			})
 		})
 	})

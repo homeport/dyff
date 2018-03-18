@@ -110,6 +110,17 @@ func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
 func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 	result := make([]Diff, 0)
 
+	// Save some time and process some simple nil use cases immediately
+	if from == nil && to != nil {
+		return append(result, Diff{Path: path, Kind: ADDITION, From: from, To: to})
+
+	} else if from != nil && to == nil {
+		return append(result, Diff{Path: path, Kind: REMOVAL, From: from, To: to})
+
+	} else if from == nil && to == nil {
+		return result
+	}
+
 	switch from.(type) {
 	case yaml.MapSlice:
 		switch to.(type) {

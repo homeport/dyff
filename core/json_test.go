@@ -10,7 +10,7 @@ var _ = Describe("JSON", func() {
 	Describe("Getting YAML input", func() {
 		Context("Processing valid YAML input", func() {
 			It("should convert YAML to JSON", func() {
-				content := getYamlFromString(`---
+				content := yml(`---
 name: foobar
 list:
 - A

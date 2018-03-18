@@ -1,0 +1,20 @@
+---
+additions:
+  map:
+    foobar: new
+
+  simple-list:
+  - foobar
+  - new
+
+  named-entry-list-using-name:
+  - name: foobar
+  - name: new
+
+  named-entry-list-using-key:
+  - key: foobar
+  - key: new
+
+  named-entry-list-using-id:
+  - id: foobar
+  - id: new
