@@ -1,7 +1,12 @@
 ---
 additions:
   map:
-    foobar: new
+    string: new
+    bool: true
+    int: 42
+    float: 3.1415
+    map: { key: value }
+    list: [ A, B, C ]
 
   simple-list:
   - foobar

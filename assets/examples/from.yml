@@ -1,7 +1,6 @@
 ---
 additions:
-  map:
-    foobar:
+  map: {}
 
   simple-list:
   - foobar
