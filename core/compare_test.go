@@ -4,7 +4,6 @@ import (
 	. "github.com/HeavyWombat/dyff/core"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	yaml "gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Compare", func() {
@@ -142,11 +141,11 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
-				difference := result[0]
-				Expect(difference.Kind).To(BeIdenticalTo(ADDITION))
-				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/version"))
-				Expect(difference.From).To(BeNil())
-				Expect(difference.To).To(BeIdenticalTo("v1"))
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/some/yaml/structure"),
+					From: nil,
+					To:   yml(`version: v1`)}))
 			})
 
 			It("should return that one value was removed", func() {
@@ -169,11 +168,11 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
-				difference := result[0]
-				Expect(difference.Kind).To(BeIdenticalTo(REMOVAL))
-				Expect(difference.Path.String()).To(BeIdenticalTo("/some/yaml/structure/version"))
-				Expect(difference.From).To(BeIdenticalTo("v1"))
-				Expect(difference.To).To(BeNil())
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: REMOVAL,
+					Path: path("/some/yaml/structure"),
+					From: yml(`version: v1`),
+					To:   nil}))
 			})
 
 			It("should return two diffs if one value was removed and another one added", func() {
@@ -197,15 +196,17 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(2))
 
-				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
-				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/version"))
-				Expect(result[0].From).To(BeIdenticalTo("v1"))
-				Expect(result[0].To).To(BeNil())
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: REMOVAL,
+					Path: path("/some/yaml/structure"),
+					From: yml(`version: v1`),
+					To:   nil}))
 
-				Expect(result[1].Kind).To(BeIdenticalTo(ADDITION))
-				Expect(result[1].Path.String()).To(BeIdenticalTo("/some/yaml/structure/release"))
-				Expect(result[1].From).To(BeNil())
-				Expect(result[1].To).To(BeIdenticalTo("v1"))
+				Expect(result[1]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/some/yaml/structure"),
+					From: nil,
+					To:   yml("release: v1")}))
 			})
 		})
 
@@ -234,10 +235,10 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
-				Expect(result[0].Kind).To(BeIdenticalTo(ADDITION))
-				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
-				Expect(result[0].From).To(BeNil())
-				Expect(result[0].To).To(BeIdenticalTo("three"))
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/some/yaml/structure/list"),
+					To:   yml(`list: [ three ]`)[0].Value}))
 			})
 
 			It("should return that an integer list entry was added", func() {
@@ -264,10 +265,10 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
-				Expect(result[0].Kind).To(BeIdenticalTo(ADDITION))
-				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
-				Expect(result[0].From).To(BeNil())
-				Expect(result[0].To).To(BeIdenticalTo(3))
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/some/yaml/structure/list"),
+					To:   yml(`list: [ 3 ]`)[0].Value}))
 			})
 
 			It("should return that a string list entry was removed", func() {
@@ -294,10 +295,10 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
-				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
-				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
-				Expect(result[0].From).To(BeIdenticalTo("three"))
-				Expect(result[0].To).To(BeNil())
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: REMOVAL,
+					Path: path("/some/yaml/structure/list"),
+					From: yml(`list: [ three ]`)[0].Value}))
 			})
 
 			It("should return that an integer list entry was removed", func() {
@@ -324,10 +325,10 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
-				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
-				Expect(result[0].Path.String()).To(BeIdenticalTo("/some/yaml/structure/list"))
-				Expect(result[0].From).To(BeIdenticalTo(3))
-				Expect(result[0].To).To(BeNil())
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: REMOVAL,
+					Path: path("/some/yaml/structure/list"),
+					From: yml(`list: [ 3 ]`)[0].Value}))
 			})
 		})
 
@@ -427,20 +428,20 @@ instance_groups:
 				Expect(result[3].From).To(BeIdenticalTo(1))
 				Expect(result[3].To).To(BeIdenticalTo(2))
 
-				Expect(result[4].Kind).To(BeIdenticalTo(REMOVAL))
-				Expect(result[4].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=db/networks/name=testnet"))
-				Expect(result[4].From).To(BeEquivalentTo(yaml.MapSlice{yaml.MapItem{Key: "name", Value: "testnet"}}))
-				Expect(result[4].To).To(BeNil())
+				Expect(result[4]).To(BeEquivalentTo(Diff{
+					Kind: REMOVAL,
+					Path: path("/instance_groups/name=web/jobs/name=db/networks"),
+					From: yml(`list: [ { name: testnet } ]`)[0].Value}))
 
 				Expect(result[5].Kind).To(BeIdenticalTo(MODIFICATION))
 				Expect(result[5].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password"))
 				Expect(result[5].From).To(BeIdenticalTo("supersecret"))
 				Expect(result[5].To).To(BeIdenticalTo("zwX#(;P=%hTfFzM["))
 
-				Expect(result[6].Kind).To(BeIdenticalTo(ADDITION))
-				Expect(result[6].Path.String()).To(BeIdenticalTo("/instance_groups/name=web/jobs/name=logger"))
-				Expect(result[6].From).To(BeNil())
-				Expect(result[6].To).To(BeEquivalentTo(yaml.MapSlice{yaml.MapItem{Key: "release", Value: "custom"}, yaml.MapItem{Key: "name", Value: "logger"}}))
+				Expect(result[6]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/instance_groups/name=web/jobs"),
+					To:   yml(`list: [ { release: custom, name: logger } ]`)[0].Value}))
 			})
 
 			It("should return even difficult ones", func() {
@@ -512,100 +513,94 @@ resource_pools:
 				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 
-				Expect(len(result)).To(BeEquivalentTo(4))
+				Expect(len(result)).To(BeEquivalentTo(2))
 
-				Expect(result[0].Kind).To(BeIdenticalTo(REMOVAL))
-				Expect(result[0].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
-				Expect(result[0].From).To(BeEquivalentTo(yml("CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}")))
-				Expect(result[0].To).To(BeNil())
+				Expect(result[0]).To(BeEquivalentTo(Diff{
+					Kind: REMOVAL,
+					Path: path("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"),
+					From: yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`)[0].Value}))
 
-				Expect(result[1].Kind).To(BeIdenticalTo(REMOVAL))
-				Expect(result[1].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
-				Expect(result[1].From).To(BeEquivalentTo(yml("CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}")))
-				Expect(result[1].To).To(BeNil())
-
-				Expect(result[2].Kind).To(BeIdenticalTo(ADDITION))
-				Expect(result[2].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
-				Expect(result[2].From).To(BeNil())
-				Expect(result[2].To).To(BeEquivalentTo(yml("CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}")))
-
-				Expect(result[3].Kind).To(BeIdenticalTo(ADDITION))
-				Expect(result[3].Path.String()).To(BeIdenticalTo("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"))
-				Expect(result[3].From).To(BeNil())
-				Expect(result[3].To).To(BeEquivalentTo(yml("CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}")))
+				Expect(result[1]).To(BeEquivalentTo(Diff{
+					Kind: ADDITION,
+					Path: path("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters"),
+					To:   yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`)[0].Value}))
 			})
 		})
 
 		Context("Given two YAML files", func() {
 			It("should return all differences in there", func() {
-				result := CompareDocuments(yml("../assets/examples/from.yml"), yml("../assets/examples/to.yml"))
+				results := CompareDocuments(yml("../assets/examples/from.yml"), yml("../assets/examples/to.yml"))
 				expected := []Diff{
 					Diff{
-						Kind: ADDITION,
-						Path: path("/additions/map/string"),
-						From: nil,
-						To:   "new"},
+						Kind: REMOVAL,
+						Path: path("/yaml/map"),
+						From: yml(`---
+stringB: fOObAr
+intB: 10
+floatB: 2.71
+boolB: false
+mapB: { key0: B, key1: B }
+listB: [ B, B, B ]
+`)},
 
 					Diff{
 						Kind: ADDITION,
-						Path: path("/additions/map/bool"),
-						From: nil,
-						To:   true},
+						Path: path("/yaml/map"),
+						To: yml(`---
+stringY: YAML!
+intY: 147
+floatY: 24.0
+boolY: true
+mapY: { key0: Y, key1: Y }
+listY: [ Y, Y, Y ]
+`)},
+
+					Diff{
+						Kind: REMOVAL,
+						Path: path("/yaml/simple-list"),
+						From: yml(`list: [ X, Z ]`)[0].Value},
 
 					Diff{
 						Kind: ADDITION,
-						Path: path("/additions/map/int"),
-						From: nil,
-						To:   42},
+						Path: path("/yaml/simple-list"),
+						To:   yml(`list: [ D, E ]`)[0].Value},
+
+					Diff{
+						Kind: REMOVAL,
+						Path: path("/yaml/named-entry-list-using-name"),
+						From: yml(`list: [ {name: X}, {name: Z} ]`)[0].Value},
 
 					Diff{
 						Kind: ADDITION,
-						Path: path("/additions/map/float"),
-						From: nil,
-						To:   3.1415},
+						Path: path("/yaml/named-entry-list-using-name"),
+						To:   yml(`list: [ {name: D}, {name: E} ]`)[0].Value},
+
+					Diff{
+						Kind: REMOVAL,
+						Path: path("/yaml/named-entry-list-using-key"),
+						From: yml(`list: [ {key: X}, {key: Z} ]`)[0].Value},
 
 					Diff{
 						Kind: ADDITION,
-						Path: path("/additions/map/map"),
-						From: nil,
-						To:   yml("key: value")},
+						Path: path("/yaml/named-entry-list-using-key"),
+						To:   yml(`list: [ {key: D}, {key: E} ]`)[0].Value},
+
+					Diff{
+						Kind: REMOVAL,
+						Path: path("/yaml/named-entry-list-using-id"),
+						From: yml(`list: [ {id: X}, {id: Z} ]`)[0].Value},
 
 					Diff{
 						Kind: ADDITION,
-						Path: path("/additions/map/list"),
-						From: nil,
-						To:   yml(`list: [ A, B, C ]`)[0].Value},
-
-					Diff{
-						Kind: ADDITION,
-						Path: path("/additions/simple-list"),
-						From: nil,
-						To:   "new"},
-
-					Diff{
-						Kind: ADDITION,
-						Path: path("/additions/named-entry-list-using-name/name=new"),
-						From: nil,
-						To:   yml(`name: new`)},
-
-					Diff{
-						Kind: ADDITION,
-						Path: path("/additions/named-entry-list-using-key/key=new"),
-						From: nil,
-						To:   yml(`key: new`)},
-
-					Diff{
-						Kind: ADDITION,
-						Path: path("/additions/named-entry-list-using-id/id=new"),
-						From: nil,
-						To:   yml(`id: new`)},
+						Path: path("/yaml/named-entry-list-using-id"),
+						To:   yml(`list: [ {id: D}, {id: E} ]`)[0].Value},
 				}
 
-				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(len(expected)))
+				Expect(results).NotTo(BeNil())
+				Expect(len(results)).To(BeEquivalentTo(len(expected)))
 
-				for i, r := range expected {
-					Expect(r).To(BeEquivalentTo(expected[i]))
+				for i, result := range results {
+					Expect(result).To(BeEquivalentTo(expected[i]))
 				}
 			})
 		})

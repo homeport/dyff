@@ -1,15 +1,44 @@
 ---
-additions:
-  map: {}
+yaml:
+  map:
+    before: after
+    stringA: foobar
+    stringB: fOObAr
+    intA: 42
+    intB: 10
+    floatA: 3.1415
+    floatB: 2.71
+    boolA: true
+    boolB: false
+    mapA: { key0: A, key1: A }
+    mapB: { key0: B, key1: B }
+    listA: [ A, A, A ]
+    listB: [ B, B, B ]
 
   simple-list:
-  - foobar
+  - A
+  - B
+  - C
+  - X
+  - Z
 
   named-entry-list-using-name:
-  - name: foobar
+  - name: A
+  - name: B
+  - name: C
+  - name: X
+  - name: Z
 
   named-entry-list-using-key:
-  - key: foobar
+  - key: A
+  - key: B
+  - key: C
+  - key: X
+  - key: Z
 
   named-entry-list-using-id:
-  - id: foobar
+  - id: A
+  - id: B
+  - id: C
+  - id: X
+  - id: Z

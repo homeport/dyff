@@ -31,7 +31,7 @@ func yml(input string) yaml.MapSlice {
 
 	content := yaml.MapSlice{}
 	if err := yaml.UnmarshalStrict([]byte(input), &content); err != nil {
-		Fail(fmt.Sprintf("Failed to create test YAML MapSlice from input string:\n%s", input))
+		Fail(fmt.Sprintf("Failed to create test YAML MapSlice from input string:\n%s\n\n%v", input, err))
 	}
 
 	return content

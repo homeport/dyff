@@ -1,25 +1,44 @@
 ---
-additions:
+yaml:
   map:
-    string: new
-    bool: true
-    int: 42
-    float: 3.1415
-    map: { key: value }
-    list: [ A, B, C ]
+    before: after
+    stringA: foobar
+    stringY: YAML!
+    intA: 42
+    intY: 147
+    floatA: 3.1415
+    floatY: 24.0
+    boolA: true
+    boolY: true
+    mapA: { key0: A, key1: A }
+    mapY: { key0: Y, key1: Y }
+    listA: [ A, A, A ]
+    listY: [ Y, Y, Y ]
 
   simple-list:
-  - foobar
-  - new
+  - A
+  - B
+  - C
+  - D
+  - E
 
   named-entry-list-using-name:
-  - name: foobar
-  - name: new
+  - name: A
+  - name: B
+  - name: C
+  - name: D
+  - name: E
 
   named-entry-list-using-key:
-  - key: foobar
-  - key: new
+  - key: A
+  - key: B
+  - key: C
+  - key: D
+  - key: E
 
   named-entry-list-using-id:
-  - id: foobar
-  - id: new
+  - id: A
+  - id: B
+  - id: C
+  - id: D
+  - id: E

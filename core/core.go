@@ -158,6 +158,9 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 }
 
 func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
+	removals := yaml.MapSlice{}
+	additions := yaml.MapSlice{}
+
 	result := make([]Diff, 0)
 
 	for _, fromItem := range from {
@@ -168,7 +171,7 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
-			result = append(result, Diff{Path: newPath(path, "", key), Kind: REMOVAL, From: fromItem.Value, To: nil})
+			removals = append(removals, fromItem)
 		}
 	}
 
@@ -176,28 +179,35 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 		key := toItem.Key
 		if _, ok := GetMapItemByKeyFromMapSlice(key, from); !ok {
 			// `to` contains a `key` that `from` does not have -> addition
-			result = append(result, Diff{Path: newPath(path, "", key), Kind: ADDITION, From: nil, To: toItem.Value})
+			additions = append(additions, toItem)
 		}
+	}
+
+	if len(removals) > 0 {
+		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+	}
+
+	if len(additions) > 0 {
+		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
 	}
 
 	return result
 }
 
 func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
-	if isSimpleList(from) && isSimpleList(to) {
-		return compareSimpleLists(path, from, to)
-	}
-
-	fromIdentifier := GetIdentifierFromNamedList(from)
-	toIdentifier := GetIdentifierFromNamedList(to)
-	if fromIdentifier == toIdentifier && fromIdentifier != "" {
-		return compareNamedEntryLists(path, fromIdentifier, from, to)
+	if fromIdentifier := GetIdentifierFromNamedList(from); fromIdentifier != "" {
+		if toIdentifier := GetIdentifierFromNamedList(to); fromIdentifier == toIdentifier {
+			return compareNamedEntryLists(path, fromIdentifier, from, to)
+		}
 	}
 
 	return compareSimpleLists(path, from, to)
 }
 
 func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
+	removals := make([]interface{}, 0)
+	additions := make([]interface{}, 0)
+
 	result := make([]Diff, 0)
 
 	fromLength := len(from)
@@ -219,21 +229,32 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 	for idxPos, fromValue := range from {
 		if _, ok := toLookup[calcHash(fromValue)]; !ok {
 			// `from` entry does not exist in `to` list
-			result = append(result, Diff{Path: path, Kind: REMOVAL, From: from[idxPos], To: nil})
+			removals = append(removals, from[idxPos])
 		}
 	}
 
 	for idxPos, toValue := range to {
 		if _, ok := fromLookup[calcHash(toValue)]; !ok {
 			// `to` entry does not exist in `from` list
-			result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: to[idxPos]})
+			additions = append(additions, to[idxPos])
 		}
+	}
+
+	if len(removals) > 0 {
+		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+	}
+
+	if len(additions) > 0 {
+		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
 	}
 
 	return result
 }
 
 func compareNamedEntryLists(path Path, identifier string, from []interface{}, to []interface{}) []Diff {
+	removals := make([]interface{}, 0)
+	additions := make([]interface{}, 0)
+
 	result := make([]Diff, 0)
 
 	for _, fromEntry := range from {
@@ -244,7 +265,7 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 		} else {
 			// `from` has an entry (identified by identifier and name), but `to` does not -> removal
-			result = append(result, Diff{Path: newPath(path, identifier, name), Kind: REMOVAL, From: fromEntry, To: nil})
+			removals = append(removals, fromEntry)
 		}
 	}
 
@@ -252,8 +273,16 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 		name := GetKeyValue(toEntry.(yaml.MapSlice), identifier)
 		if _, ok := GetEntryFromNamedList(from, identifier, name); !ok {
 			// `to` has an entry (identified by identifier and name), but `from` does not -> addition
-			result = append(result, Diff{Path: newPath(path, identifier, name), Kind: ADDITION, From: nil, To: toEntry})
+			additions = append(additions, toEntry)
 		}
+	}
+
+	if len(removals) > 0 {
+		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+	}
+
+	if len(additions) > 0 {
+		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
 	}
 
 	return result
@@ -358,22 +387,6 @@ func calcHash(obj interface{}) uint64 {
 	}
 
 	return hash
-}
-
-func isSimpleList(list []interface{}) bool {
-	if len(list) == 0 {
-		return false
-	}
-
-	var counter = 0
-	for _, entry := range list {
-		switch entry.(type) {
-		case map[interface{}]interface{}, yaml.MapSlice, yaml.MapItem:
-			counter++
-		}
-	}
-
-	return counter == 0
 }
 
 // LoadFile Processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice
