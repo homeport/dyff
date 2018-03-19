@@ -42,12 +42,12 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		fromLocation := args[0]
 		toLocation := args[1]
 
-		from, err := core.LoadFile(fromLocation)
+		from, err := core.LoadYAMLFromLocation(fromLocation)
 		if err != nil {
 			panic(err)
 		}
 
-		to, err := core.LoadFile(toLocation)
+		to, err := core.LoadYAMLFromLocation(toLocation)
 		if err != nil {
 			panic(err)
 		}

@@ -22,7 +22,7 @@ func yml(input string) yaml.MapSlice {
 	if _, err := os.Open(input); err == nil {
 		var content yaml.MapSlice
 		var err error
-		if content, err = core.LoadFile(input); err != nil {
+		if content, err = core.LoadYAMLFromLocation(input); err != nil {
 			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %v", input, err))
 		}
 

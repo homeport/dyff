@@ -38,7 +38,7 @@ Converts input document into YAML format while preserving the order of all keys.
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			a, err := core.LoadFile(x)
+			a, err := core.LoadYAMLFromLocation(x)
 			if err != nil {
 				panic(err)
 			}

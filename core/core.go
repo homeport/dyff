@@ -389,19 +389,26 @@ func calcHash(obj interface{}) uint64 {
 	return hash
 }
 
-// LoadFile Processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice
-func LoadFile(location string) (yaml.MapSlice, error) {
+// LoadYAMLFromLocation processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice
+func LoadYAMLFromLocation(location string) (yaml.MapSlice, error) {
 	// TODO Support URIs as loaction
-	// TODO Support STDIN as location
 	// TODO Generate error if file contains more than one document
 
-	data, ioerr := ioutil.ReadFile(location)
-	if ioerr != nil {
-		return nil, ioerr
+	var data []byte
+	var content = yaml.MapSlice{}
+	var err error
+
+	if location == "-" {
+		if data, err = ioutil.ReadAll(os.Stdin); err != nil {
+			return nil, err
+		}
+	} else {
+		if data, err = ioutil.ReadFile(location); err != nil {
+			return nil, err
+		}
 	}
 
-	content := yaml.MapSlice{}
-	if err := yaml.UnmarshalStrict([]byte(data), &content); err != nil {
+	if err = yaml.UnmarshalStrict([]byte(data), &content); err != nil {
 		return nil, err
 	}
 
