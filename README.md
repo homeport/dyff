@@ -1,2 +1,2 @@
-# δyƒƒ
-A diff tool for YAML (and sometimes JSON) files.
+# δyƒƒ /ˈdʏf/
+A diff tool for YAML files, and sometimes JSON
