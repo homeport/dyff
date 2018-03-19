@@ -68,6 +68,14 @@ func Italic(text string) string {
 	return italic.Sprint(text)
 }
 
+func Green(text string) string {
+	return color.New(color.FgGreen).Sprint(text)
+}
+
+func Red(text string) string {
+	return color.New(color.FgRed).Sprint(text)
+}
+
 // ToDotStyle returns a path as a string in dot style separating each path element by a dot.
 // Please note that path elements that are named "." will look ugly.
 func ToDotStyle(path Path) string {

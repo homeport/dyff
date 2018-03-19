@@ -22,10 +22,14 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/HeavyWombat/dyff/core"
 	"github.com/spf13/cobra"
 )
+
+var style string
 
 // betweenCmd represents the between command
 var betweenCmd = &cobra.Command{
@@ -39,6 +43,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 	Args:    cobra.ExactArgs(2),
 	Aliases: []string{"bw"},
 	Run: func(cmd *cobra.Command, args []string) {
+		// TODO Add helper function to print absolute path in case it is not a URL, or STDIN indicator -
 		fromLocation := args[0]
 		toLocation := args[1]
 
@@ -52,15 +57,48 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			panic(err)
 		}
 
+		start := time.Now()
 		diffs := core.CompareDocuments(from, to)
+		elapsed := time.Since(start)
 
-		fmt.Printf("Difference between %s and %s ...\n", core.Bold(fromLocation), core.Bold(toLocation))
-		for i, diff := range diffs {
-			fmt.Printf("%s\n%v\n\n", core.Bold(fmt.Sprintf("diff #%d:", i)), diff)
+		// TODO Add style Go-Patch
+		// TODO Add style Spruce
+		// TODO Add style JSON report
+		// TODO Add style YAML report
+		// TODO Add style one-line report
+		switch strings.ToLower(style) {
+		case "human", "bosh":
+			fmt.Printf(`
+      _        __  __
+    _| |_   _ / _|/ _|  %s
+  / _' | | | | |_| |_   %s
+ | (_| | |_| |  _|  _|
+  \__,_|\__, |_| |_|    %s
+        |___/           %s
+
+`, core.Bold(fromLocation),
+				core.Bold(toLocation),
+				fmt.Sprintf("Number of differences found: %d", len(diffs)),
+				fmt.Sprintf("Processing time: %s", elapsed))
+			fmt.Print(core.DiffsToHumanStyle(diffs))
+
+		case "json":
+			fmt.Printf("Output style JSON is not implemented yet\n")
+
+		case "yaml":
+			fmt.Printf("Output style YAML is not implemented yet\n")
+
+		default:
+			fmt.Printf("Unkown output style %s\n", style)
+			cmd.Usage()
 		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(betweenCmd)
+
+	// TODO Add flag for swap
+	// TODO Add flag for filter on path
+	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "Specify the output style, e.g. 'human' (more to come ...)")
 }
