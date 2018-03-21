@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/HeavyWombat/yaml"
 	"github.com/fatih/color"
 	"github.com/mitchellh/hashstructure"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Debug log output

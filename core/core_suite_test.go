@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/HeavyWombat/dyff/core"
+	"github.com/HeavyWombat/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func TestCore(t *testing.T) {

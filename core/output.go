@@ -3,7 +3,8 @@ package core
 import (
 	"bytes"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/HeavyWombat/yaml"
+	"github.com/fatih/color"
 )
 
 func pathToString(path Path) string {
@@ -11,6 +12,17 @@ func pathToString(path Path) string {
 }
 
 func yamlString(input interface{}) string {
+	// disable coloring if needed during YAML string generation
+	prev := color.NoColor
+	color.NoColor = true
+	defer func() { color.NoColor = prev }()
+
+	// TODO Write code to detect color sequences in the target string in
+	// order to check whether we can write some code to merge different
+	// color styles. For exmple: string contains "bold" parts and we want
+	// to overwrite with "green" so that the previous "bold" parts remain
+	// in bold style, but with additional green.
+
 	output, err := yaml.Marshal(input)
 	if err != nil {
 		panic(err)
