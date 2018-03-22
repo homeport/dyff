@@ -17,6 +17,10 @@ func TestCore(t *testing.T) {
 	RunSpecs(t, "Core Suite")
 }
 
+var _ = BeforeSuite(func() {
+	yaml.HighlightKeys = false
+})
+
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {

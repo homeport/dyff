@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
-	"github.com/fatih/color"
 	"github.com/mitchellh/hashstructure"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 )

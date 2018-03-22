@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fatih/color"
+	"github.com/HeavyWombat/color"
 	"github.com/spf13/cobra"
 )
 

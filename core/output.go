@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/HeavyWombat/yaml"
-	"github.com/fatih/color"
 )
 
 func pathToString(path Path) string {
@@ -13,9 +12,9 @@ func pathToString(path Path) string {
 
 func yamlString(input interface{}) string {
 	// disable coloring if needed during YAML string generation
-	prev := color.NoColor
-	color.NoColor = true
-	defer func() { color.NoColor = prev }()
+	prev := yaml.HighlightKeys
+	yaml.HighlightKeys = false
+	defer func() { yaml.HighlightKeys = prev }()
 
 	// TODO Write code to detect color sequences in the target string in
 	// order to check whether we can write some code to merge different
