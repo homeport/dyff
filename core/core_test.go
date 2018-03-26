@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Core", func() {
+var _ = Describe("Core/Functions", func() {
 	Describe("common functions", func() {
 		Context("path to string in dot-style", func() {
 			It("should print out simple hash paths nicely", func() {

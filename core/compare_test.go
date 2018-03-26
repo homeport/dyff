@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Compare", func() {
+var _ = Describe("Core/Compare", func() {
 	Describe("Difference between YAMLs", func() {
 		Context("Given two simple YAML structures", func() {
 			It("should return that a string value was modified", func() {

@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -72,4 +73,11 @@ func path(path string) core.Path {
 	}
 
 	return result
+}
+
+func humanDiff(diff core.Diff) string {
+	var buf bytes.Buffer
+	core.GenerateHumanDiffOutput(&buf, diff)
+
+	return buf.String()
 }

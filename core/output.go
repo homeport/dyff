@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/HeavyWombat/yaml"
 )
@@ -11,17 +12,6 @@ func pathToString(path Path) string {
 }
 
 func yamlString(input interface{}) string {
-	// disable coloring if needed during YAML string generation
-	prev := yaml.HighlightKeys
-	yaml.HighlightKeys = false
-	defer func() { yaml.HighlightKeys = prev }()
-
-	// TODO Write code to detect color sequences in the target string in
-	// order to check whether we can write some code to merge different
-	// color styles. For exmple: string contains "bold" parts and we want
-	// to overwrite with "green" so that the previous "bold" parts remain
-	// in bold style, but with additional green.
-
 	output, err := yaml.Marshal(input)
 	if err != nil {
 		panic(err)
@@ -31,23 +21,34 @@ func yamlString(input interface{}) string {
 }
 
 // DiffsToHumanStyle creates a string with human readable report of the differences
+// For this to work, dyff relies on modified versions of the YAML lib and the
+// coloring lib we use here. The YAML lib adds ANSI styles to make keys bold.
+// But this means the coloring lib needs to be able to apply styles on already
+// styled text without making it look ugly.
 func DiffsToHumanStyle(diffs []Diff) string {
 	var output bytes.Buffer
 
 	for _, diff := range diffs {
-		output.WriteString(pathToString(diff.Path))
-		output.WriteString("\n")
-
-		switch diff.Kind {
-		case ADDITION:
-			output.WriteString(Green(yamlString(diff.To)))
-
-		case REMOVAL:
-			output.WriteString(Red(yamlString(diff.From)))
-		}
-
-		output.WriteString("\n")
+		GenerateHumanDiffOutput(&output, diff)
 	}
 
 	return output.String()
+}
+
+func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
+	output.WriteString(pathToString(diff.Path))
+	output.WriteString("\n")
+
+	switch diff.Kind {
+	case ADDITION:
+		output.WriteString(Green(yamlString(diff.To)))
+
+	case REMOVAL:
+		output.WriteString(Red(yamlString(diff.From)))
+
+	case MODIFICATION:
+		output.WriteString(fmt.Sprintf("changed from %s to %s", diff.From, diff.To))
+	}
+
+	output.WriteString("\n")
 }

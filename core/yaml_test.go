@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("YAML", func() {
+var _ = Describe("Core/YAML", func() {
 	Describe("Getting JSON input", func() {
 		Context("Processing valid JSON input", func() {
 			It("should convert JSON to YAML", func() {
