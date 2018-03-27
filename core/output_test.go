@@ -17,7 +17,10 @@ var _ = Describe("Core/Output", func() {
 					To:   "Foobar"}
 
 				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.string
-changed from foobar to Foobar
+changed value
+ - foobar
+ + Foobar
+
 `))
 			})
 		})

@@ -47,7 +47,9 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 		output.WriteString(Red(yamlString(diff.From)))
 
 	case MODIFICATION:
-		output.WriteString(fmt.Sprintf("changed from %s to %s", diff.From, diff.To))
+		output.WriteString(Yellow("changed value\n"))
+		output.WriteString(Red(fmt.Sprintf(" - %v\n", diff.From)))
+		output.WriteString(Green(fmt.Sprintf(" + %v\n", diff.To)))
 	}
 
 	output.WriteString("\n")

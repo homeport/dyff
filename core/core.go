@@ -76,6 +76,10 @@ func Red(text string) string {
 	return color.New(color.FgRed).Sprint(text)
 }
 
+func Yellow(text string) string {
+	return color.New(color.FgYellow).Sprint(text)
+}
+
 // ToDotStyle returns a path as a string in dot style separating each path element by a dot.
 // Please note that path elements that are named "." will look ugly.
 func ToDotStyle(path Path) string {
@@ -116,18 +120,24 @@ func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
 
 // CompareObjects returns a list of differences between `from` and `to`
 func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
-	result := make([]Diff, 0)
+	// TODO add debug check or remove output
+	Debug.Printf("compare obj %#v (%s) vs %#v (%s)", from, reflect.TypeOf(from), to, reflect.TypeOf(to))
 
-	// Save some time and process some simple nil use cases immediately
+	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
-		return append(result, Diff{Path: path, Kind: ADDITION, From: from, To: to})
+		return []Diff{Diff{Path: path, Kind: ADDITION, From: from, To: to}}
 
 	} else if from != nil && to == nil {
-		return append(result, Diff{Path: path, Kind: REMOVAL, From: from, To: to})
+		return []Diff{Diff{Path: path, Kind: REMOVAL, From: from, To: to}}
 
 	} else if from == nil && to == nil {
-		return result
+		return []Diff{}
+
+	} else if reflect.TypeOf(from) != reflect.TypeOf(to) {
+		return []Diff{Diff{Path: path, Kind: MODIFICATION, From: from, To: to}}
 	}
+
+	result := make([]Diff, 0)
 
 	switch from.(type) {
 	case yaml.MapSlice:

@@ -528,9 +528,21 @@ resource_pools:
 		})
 
 		Context("Given two YAML files", func() {
-			It("should return all differences in there", func() {
+			It("should return all differences between the files", func() {
 				results := CompareDocuments(yml("../assets/examples/from.yml"), yml("../assets/examples/to.yml"))
 				expected := []Diff{
+					Diff{
+						Kind: MODIFICATION,
+						Path: path("/yaml/map/type-change-1"),
+						From: "string",
+						To:   147},
+
+					Diff{
+						Kind: MODIFICATION,
+						Path: path("/yaml/map/type-change-2"),
+						From: "12",
+						To:   12},
+
 					Diff{
 						Kind: REMOVAL,
 						Path: path("/yaml/map"),

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/dyff/core"
 	"github.com/HeavyWombat/yaml"
 	. "github.com/onsi/ginkgo"
@@ -20,6 +21,7 @@ func TestCore(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	yaml.HighlightKeys = false
+	color.NoColor = true
 })
 
 func yml(input string) yaml.MapSlice {
