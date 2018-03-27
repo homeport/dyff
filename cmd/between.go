@@ -22,6 +22,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -47,18 +48,15 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		fromLocation := args[0]
 		toLocation := args[1]
 
-		from, err := core.LoadYAMLFromLocation(fromLocation)
-		if err != nil {
-			panic(err)
-		}
-
-		to, err := core.LoadYAMLFromLocation(toLocation)
-		if err != nil {
-			panic(err)
-		}
-
 		start := time.Now()
+
+		from, to, err := core.LoadYAMLs(fromLocation, toLocation)
+		if err != nil {
+			panic(err)
+		}
+
 		diffs := core.CompareDocuments(from, to)
+
 		elapsed := time.Since(start)
 
 		// TODO Add style Go-Patch
@@ -66,33 +64,39 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		// TODO Add style JSON report
 		// TODO Add style YAML report
 		// TODO Add style one-line report
+
 		switch strings.ToLower(style) {
 		case "human", "bosh":
-			fmt.Printf(`
-      _        __  __
+			fmt.Printf(`      _        __  __
     _| |_   _ / _|/ _|  %s
   / _' | | | | |_| |_   %s
  | (_| | |_| |  _|  _|
   \__,_|\__, |_| |_|    %s
         |___/           %s
 
-`, core.Bold(fromLocation),
-				core.Bold(toLocation),
+`, niceLocation(fromLocation),
+				niceLocation(toLocation),
 				fmt.Sprintf("Number of differences found: %d", len(diffs)),
 				fmt.Sprintf("Processing time: %s", elapsed))
 			fmt.Print(core.DiffsToHumanStyle(diffs))
-
-		case "json":
-			fmt.Printf("Output style JSON is not implemented yet\n")
-
-		case "yaml":
-			fmt.Printf("Output style YAML is not implemented yet\n")
 
 		default:
 			fmt.Printf("Unkown output style %s\n", style)
 			cmd.Usage()
 		}
 	},
+}
+
+func niceLocation(location string) string {
+	if location == "-" {
+		return core.Italic("<stdin>")
+	}
+
+	if abs, err := filepath.Abs(location); err == nil {
+		return core.Bold(abs)
+	}
+
+	return location
 }
 
 func init() {
