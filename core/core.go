@@ -397,6 +397,39 @@ func calcHash(obj interface{}) uint64 {
 	return hash
 }
 
+// LoadYAMLs loads two YAMLs from the provided locations concurrently
+func LoadYAMLs(locationA string, locationB string) (yaml.MapSlice, yaml.MapSlice, error) {
+	type resultPair struct {
+		mapslice yaml.MapSlice
+		err      error
+	}
+
+	fromChan := make(chan resultPair, 1)
+	toChan := make(chan resultPair, 1)
+
+	go func() {
+		mapslice, err := LoadYAMLFromLocation(locationA)
+		fromChan <- resultPair{mapslice, err}
+	}()
+
+	go func() {
+		mapslice, err := LoadYAMLFromLocation(locationB)
+		toChan <- resultPair{mapslice, err}
+	}()
+
+	from := <-fromChan
+	if from.err != nil {
+		return nil, nil, from.err
+	}
+
+	to := <-toChan
+	if to.err != nil {
+		return nil, nil, to.err
+	}
+
+	return from.mapslice, to.mapslice, nil
+}
+
 // LoadYAMLFromLocation processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice
 func LoadYAMLFromLocation(location string) (yaml.MapSlice, error) {
 	// TODO Support URIs as loaction

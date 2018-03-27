@@ -8,6 +8,15 @@ import (
 
 var _ = Describe("Core/Functions", func() {
 	Describe("common functions", func() {
+		Context("loading input data", func() {
+			It("should load input files from disk", func() {
+				from, to, err := LoadYAMLs("../assets/examples/from.yml", "../assets/examples/to.yml")
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+			})
+		})
+
 		Context("path to string in dot-style", func() {
 			It("should print out simple hash paths nicely", func() {
 				path := Path{PathElement{Name: "some"},
