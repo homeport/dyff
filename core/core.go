@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -54,30 +55,42 @@ type Diff struct {
 	Distance int
 }
 
-// ANSI coloring convenience helpers
-var bold = color.New(color.Bold)
-var italic = color.New(color.Italic)
-
 // Bold returns the provided string in 'bold' format
 func Bold(text string) string {
-	return bold.Sprint(text)
+	return colorEachLine(color.New(color.Bold), text)
 }
 
 // Italic returns the provided string in 'italic' format
 func Italic(text string) string {
-	return italic.Sprint(text)
+	return colorEachLine(color.New(color.Italic), text)
 }
 
 func Green(text string) string {
-	return color.New(color.FgGreen).Sprint(text)
+	return colorEachLine(color.New(color.FgGreen), text)
 }
 
 func Red(text string) string {
-	return color.New(color.FgRed).Sprint(text)
+	return colorEachLine(color.New(color.FgRed), text)
 }
 
 func Yellow(text string) string {
-	return color.New(color.FgYellow).Sprint(text)
+	return colorEachLine(color.New(color.FgYellow), text)
+}
+
+func colorEachLine(color *color.Color, text string) string {
+	var buf bytes.Buffer
+
+	splitted := strings.Split(text, "\n")
+	length := len(splitted)
+	for idx, line := range splitted {
+		buf.WriteString(color.Sprint(line))
+
+		if idx < length-1 {
+			buf.WriteString("\n")
+		}
+	}
+
+	return buf.String()
 }
 
 // ToDotStyle returns a path as a string in dot style separating each path element by a dot.
@@ -121,7 +134,7 @@ func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
 // CompareObjects returns a list of differences between `from` and `to`
 func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 	// TODO add debug check or remove output
-	Debug.Printf("compare obj %#v (%s) vs %#v (%s)", from, reflect.TypeOf(from), to, reflect.TypeOf(to))
+	// Debug.Printf("compare obj %#v (%s) vs %#v (%s)", from, reflect.TypeOf(from), to, reflect.TypeOf(to))
 
 	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
