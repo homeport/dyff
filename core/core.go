@@ -13,7 +13,6 @@ import (
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
-	"github.com/texttheater/golang-levenshtein/levenshtein"
 )
 
 // Debug log output
@@ -46,13 +45,17 @@ type PathElement struct {
 // Path describes a position inside a YAML (or JSON) structure by providing a name to each hierarchy level (tree structure).
 type Path []PathElement
 
+// Detail encapsulate the actual details of a change, mainly the kind of difference and the values.
+type Detail struct {
+	Kind rune
+	From interface{}
+	To   interface{}
+}
+
 // Diff encapsulates everything noteworthy about a difference
 type Diff struct {
-	Kind     rune
-	Path     Path
-	From     interface{}
-	To       interface{}
-	Distance int
+	Path    Path
+	Details []Detail
 }
 
 // Bold returns the provided string in 'bold' format
@@ -138,16 +141,16 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 
 	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
-		return []Diff{Diff{Path: path, Kind: ADDITION, From: from, To: to}}
+		return []Diff{Diff{path, []Detail{Detail{Kind: ADDITION, From: from, To: to}}}}
 
 	} else if from != nil && to == nil {
-		return []Diff{Diff{Path: path, Kind: REMOVAL, From: from, To: to}}
+		return []Diff{Diff{path, []Detail{Detail{Kind: REMOVAL, From: from, To: to}}}}
 
 	} else if from == nil && to == nil {
 		return []Diff{}
 
 	} else if reflect.TypeOf(from) != reflect.TypeOf(to) {
-		return []Diff{Diff{Path: path, Kind: MODIFICATION, From: from, To: to}}
+		return []Diff{Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}}}
 	}
 
 	result := make([]Diff, 0)
@@ -177,7 +180,7 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 		switch to.(type) {
 		case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
 			if from != to {
-				result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to})
+				result = append(result, Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}})
 			}
 		}
 
@@ -215,11 +218,11 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 	}
 
 	if len(removals) > 0 {
-		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+		result = append(result, Diff{path, []Detail{Detail{Kind: REMOVAL, From: removals, To: nil}}})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
+		result = append(result, Diff{path, []Detail{Detail{Kind: ADDITION, From: nil, To: additions}}})
 	}
 
 	return result
@@ -272,11 +275,11 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 	}
 
 	if len(removals) > 0 {
-		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+		result = append(result, Diff{path, []Detail{Detail{Kind: REMOVAL, From: removals, To: nil}}})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
+		result = append(result, Diff{path, []Detail{Detail{Kind: ADDITION, From: nil, To: additions}}})
 	}
 
 	return result
@@ -309,11 +312,11 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 	}
 
 	if len(removals) > 0 {
-		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+		result = append(result, Diff{path, []Detail{Detail{Kind: REMOVAL, From: removals, To: nil}}})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
+		result = append(result, Diff{path, []Detail{Detail{Kind: ADDITION, From: nil, To: additions}}})
 	}
 
 	return result
@@ -322,8 +325,8 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 func compareStrings(path Path, from string, to string) []Diff {
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
-		distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
-		result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to, Distance: distance})
+		// distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
+		result = append(result, Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}})
 	}
 
 	return result

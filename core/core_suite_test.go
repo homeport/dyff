@@ -83,3 +83,14 @@ func humanDiff(diff core.Diff) string {
 
 	return buf.String()
 }
+
+func singleDiff(p string, change rune, from, to interface{}) core.Diff {
+	return core.Diff{
+		Path: path(p),
+		Details: []core.Detail{core.Detail{
+			Kind: change,
+			From: from,
+			To:   to,
+		}},
+	}
+}

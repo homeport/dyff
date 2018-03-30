@@ -39,17 +39,19 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	output.WriteString(pathToString(diff.Path))
 	output.WriteString("\n")
 
-	switch diff.Kind {
-	case ADDITION:
-		output.WriteString(Green(yamlString(diff.To)))
+	for _, detail := range diff.Details {
+		switch detail.Kind {
+		case ADDITION:
+			output.WriteString(Green(yamlString(detail.To)))
 
-	case REMOVAL:
-		output.WriteString(Red(yamlString(diff.From)))
+		case REMOVAL:
+			output.WriteString(Red(yamlString(detail.From)))
 
-	case MODIFICATION:
-		output.WriteString(Yellow("changed value\n"))
-		output.WriteString(Red(fmt.Sprintf(" - %v\n", diff.From)))
-		output.WriteString(Green(fmt.Sprintf(" + %v\n", diff.To)))
+		case MODIFICATION:
+			output.WriteString(Yellow("changed value\n"))
+			output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
+			output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+		}
 	}
 
 	output.WriteString("\n")
