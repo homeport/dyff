@@ -21,4 +21,37 @@ changed value
 			})
 		})
 	})
+
+	Describe("Column output", func() {
+		Context("writing output nicely", func() {
+			It("should show a nice table output", func() {
+				stringA := `
+#1
+#2
+#3
+#4
+`
+
+				stringB := `
+Mr. Foobar
+Mrs. Foobar
+Miss Foobar`
+
+				stringC := `
+10
+200
+3000
+40000
+500000`
+
+				Expect(Cols(stringA, stringB, stringC)).To(BeEquivalentTo(`
+#1  Mr. Foobar   10
+#2  Mrs. Foobar  200
+#3  Miss Foobar  3000
+#4               40000
+                 500000
+`))
+			})
+		})
+	})
 })

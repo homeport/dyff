@@ -3,10 +3,14 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
 )
+
+var sideBySide = false
 
 func pathToString(path Path) string {
 	return ToDotStyle(path)
@@ -40,28 +44,86 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	output.WriteString(pathToString(diff.Path))
 	output.WriteString("\n")
 
-	for _, detail := range diff.Details {
-		switch detail.Kind {
-		case ADDITION:
-			switch detail.To.(type) {
-			case []interface{}:
-				output.WriteString(Color(fmt.Sprintf("  %d entries added:\n", len(detail.To.([]interface{}))), color.FgYellow))
-			}
-			output.WriteString(Green(yamlString(detail.To)))
+	if sideBySide {
+		cols := make([]string, 0)
+		for _, detail := range diff.Details {
+			cols = append(cols, GenerateHumanDetailOutput(detail))
+		}
 
-		case REMOVAL:
-			switch detail.From.(type) {
-			case []interface{}:
-				output.WriteString(Color(fmt.Sprintf("  %d entries removed:\n", len(detail.From.([]interface{}))), color.FgYellow))
-			}
-			output.WriteString(Red(yamlString(detail.From)))
+		output.WriteString(Cols(cols...))
 
-		case MODIFICATION:
-			output.WriteString(Yellow("changed value\n"))
-			output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
-			output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+	} else {
+		for _, detail := range diff.Details {
+			output.WriteString(GenerateHumanDetailOutput(detail))
+			output.WriteString("\n")
+		}
+	}
+}
+
+func GenerateHumanDetailOutput(detail Detail) string {
+	var output bytes.Buffer
+
+	switch detail.Kind {
+	case ADDITION:
+		switch detail.To.(type) {
+		case []interface{}:
+			output.WriteString(Color(fmt.Sprintf("%d entries added:\n", len(detail.To.([]interface{}))), color.FgYellow))
+		}
+		output.WriteString(Green(yamlString(detail.To)))
+
+	case REMOVAL:
+		switch detail.From.(type) {
+		case []interface{}:
+			output.WriteString(Color(fmt.Sprintf("%d entries removed:\n", len(detail.From.([]interface{}))), color.FgYellow))
+		}
+		output.WriteString(Red(yamlString(detail.From)))
+
+	case MODIFICATION:
+		output.WriteString(Yellow("changed value\n"))
+		output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
+		output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+	}
+
+	return output.String()
+}
+
+func Cols(columns ...string) string {
+	cols := len(columns)
+	rows := -1
+	max := make([]int, cols)
+
+	for i, col := range columns {
+		lines := strings.Split(col, "\n")
+		if noOfLines := len(lines); noOfLines > rows {
+			rows = noOfLines
+		}
+
+		for _, line := range lines {
+			if length := utf8.RuneCountInString(line); length > max[i] {
+				max[i] = length
+			}
 		}
 	}
 
-	output.WriteString("\n")
+	mtrx := make([][]string, 0)
+	for x := 0; x < rows; x++ {
+		mtrx = append(mtrx, make([]string, cols))
+		for y := 0; y < cols; y++ {
+			mtrx[x][y] = strings.Repeat(" ", max[y])
+		}
+	}
+
+	for i, col := range columns {
+		for j, line := range strings.Split(col, "\n") {
+			mtrx[j][i] = line + strings.Repeat(" ", max[i]-utf8.RuneCountInString(line))
+		}
+	}
+
+	var buf bytes.Buffer
+	for _, row := range mtrx {
+		buf.WriteString(strings.TrimRight(strings.Join(row, "  "), " "))
+		buf.WriteString("\n")
+	}
+
+	return buf.String()
 }

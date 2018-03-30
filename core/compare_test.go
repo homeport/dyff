@@ -456,7 +456,7 @@ intY: 147
 floatY: 24.0
 boolY: true
 mapY: { key0: Y, key1: Y }
-listY: [ Y, Y, Y ]
+listY: [ Yo, Yo, Yo ]
 `)),
 
 					doubleDiff("/yaml/simple-list",

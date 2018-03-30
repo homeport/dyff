@@ -25,6 +25,7 @@ import (
 	"os"
 
 	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
 
@@ -66,5 +67,6 @@ func init() {
 func initSettings() {
 	if NoColor {
 		color.NoColor = true
+		yaml.HighlightKeys = false
 	}
 }
