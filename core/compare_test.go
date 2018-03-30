@@ -165,10 +165,10 @@ some:
 
 				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(2))
-
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure", REMOVAL, yml(`version: v1`), nil)))
-				Expect(result[1]).To(BeEquivalentTo(singleDiff("/some/yaml/structure", ADDITION, nil, yml(`release: v1`))))
+				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result[0]).To(BeEquivalentTo(doubleDiff("/some/yaml/structure",
+					REMOVAL, yml(`version: v1`), nil,
+					ADDITION, nil, yml(`release: v1`))))
 			})
 		})
 
@@ -427,9 +427,10 @@ resource_pools:
 
 				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(2))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters", REMOVAL, yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`)[0].Value, nil)))
-				Expect(result[1]).To(BeEquivalentTo(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters", ADDITION, nil, yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`)[0].Value)))
+				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result[0]).To(BeEquivalentTo(doubleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters",
+					REMOVAL, yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`)[0].Value, nil,
+					ADDITION, nil, yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`)[0].Value)))
 			})
 		})
 
@@ -440,16 +441,16 @@ resource_pools:
 					singleDiff("/yaml/map/type-change-1", MODIFICATION, "string", 147),
 					singleDiff("/yaml/map/type-change-2", MODIFICATION, "12", 12),
 
-					singleDiff("/yaml/map", REMOVAL, yml(`---
+					doubleDiff("/yaml/map",
+						REMOVAL, yml(`---
 stringB: fOObAr
 intB: 10
 floatB: 2.71
 boolB: false
 mapB: { key0: B, key1: B }
 listB: [ B, B, B ]
-`), nil),
-
-					singleDiff("/yaml/map", ADDITION, nil, yml(`---
+`), nil,
+						ADDITION, nil, yml(`---
 stringY: YAML!
 intY: 147
 floatY: 24.0
@@ -458,14 +459,21 @@ mapY: { key0: Y, key1: Y }
 listY: [ Y, Y, Y ]
 `)),
 
-					singleDiff("/yaml/simple-list", REMOVAL, yml(`list: [ X, Z ]`)[0].Value, nil),
-					singleDiff("/yaml/simple-list", ADDITION, nil, yml(`list: [ D, E ]`)[0].Value),
-					singleDiff("/yaml/named-entry-list-using-name", REMOVAL, yml(`list: [ {name: X}, {name: Z} ]`)[0].Value, nil),
-					singleDiff("/yaml/named-entry-list-using-name", ADDITION, nil, yml(`list: [ {name: D}, {name: E} ]`)[0].Value),
-					singleDiff("/yaml/named-entry-list-using-key", REMOVAL, yml(`list: [ {key: X}, {key: Z} ]`)[0].Value, nil),
-					singleDiff("/yaml/named-entry-list-using-key", ADDITION, nil, yml(`list: [ {key: D}, {key: E} ]`)[0].Value),
-					singleDiff("/yaml/named-entry-list-using-id", REMOVAL, yml(`list: [ {id: X}, {id: Z} ]`)[0].Value, nil),
-					singleDiff("/yaml/named-entry-list-using-id", ADDITION, nil, yml(`list: [ {id: D}, {id: E} ]`)[0].Value),
+					doubleDiff("/yaml/simple-list",
+						REMOVAL, yml(`list: [ X, Z ]`)[0].Value, nil,
+						ADDITION, nil, yml(`list: [ D, E ]`)[0].Value),
+
+					doubleDiff("/yaml/named-entry-list-using-name",
+						REMOVAL, yml(`list: [ {name: X}, {name: Z} ]`)[0].Value, nil,
+						ADDITION, nil, yml(`list: [ {name: D}, {name: E} ]`)[0].Value),
+
+					doubleDiff("/yaml/named-entry-list-using-key",
+						REMOVAL, yml(`list: [ {key: X}, {key: Z} ]`)[0].Value, nil,
+						ADDITION, nil, yml(`list: [ {key: D}, {key: E} ]`)[0].Value),
+
+					doubleDiff("/yaml/named-entry-list-using-id",
+						REMOVAL, yml(`list: [ {id: X}, {id: Z} ]`)[0].Value, nil,
+						ADDITION, nil, yml(`list: [ {id: D}, {id: E} ]`)[0].Value),
 				}
 
 				Expect(results).NotTo(BeNil())

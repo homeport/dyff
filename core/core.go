@@ -80,6 +80,10 @@ func Yellow(text string) string {
 	return colorEachLine(color.New(color.FgYellow), text)
 }
 
+func Color(text string, attributes ...color.Attribute) string {
+	return colorEachLine(color.New(attributes...), text)
+}
+
 func colorEachLine(color *color.Color, text string) string {
 	var buf bytes.Buffer
 
@@ -217,12 +221,18 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 		}
 	}
 
+	diff := Diff{Path: path, Details: []Detail{}}
+
 	if len(removals) > 0 {
-		result = append(result, Diff{path, []Detail{Detail{Kind: REMOVAL, From: removals, To: nil}}})
+		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{path, []Detail{Detail{Kind: ADDITION, From: nil, To: additions}}})
+		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+	}
+
+	if len(diff.Details) > 0 {
+		result = append(result, diff)
 	}
 
 	return result
@@ -274,12 +284,18 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 		}
 	}
 
+	diff := Diff{Path: path, Details: []Detail{}}
+
 	if len(removals) > 0 {
-		result = append(result, Diff{path, []Detail{Detail{Kind: REMOVAL, From: removals, To: nil}}})
+		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{path, []Detail{Detail{Kind: ADDITION, From: nil, To: additions}}})
+		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+	}
+
+	if len(diff.Details) > 0 {
+		result = append(result, diff)
 	}
 
 	return result
@@ -311,12 +327,18 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 		}
 	}
 
+	diff := Diff{Path: path, Details: []Detail{}}
+
 	if len(removals) > 0 {
-		result = append(result, Diff{path, []Detail{Detail{Kind: REMOVAL, From: removals, To: nil}}})
+		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{path, []Detail{Detail{Kind: ADDITION, From: nil, To: additions}}})
+		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+	}
+
+	if len(diff.Details) > 0 {
+		result = append(result, diff)
 	}
 
 	return result

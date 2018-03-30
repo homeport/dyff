@@ -94,3 +94,19 @@ func singleDiff(p string, change rune, from, to interface{}) core.Diff {
 		}},
 	}
 }
+
+func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, from2, to2 interface{}) core.Diff {
+	return core.Diff{
+		Path: path(p),
+		Details: []core.Detail{core.Detail{
+			Kind: change1,
+			From: from1,
+			To:   to1,
+		},
+			core.Detail{
+				Kind: change2,
+				From: from2,
+				To:   to2,
+			}},
+	}
+}

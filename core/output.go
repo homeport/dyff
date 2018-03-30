@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
 )
 
@@ -42,9 +43,17 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	for _, detail := range diff.Details {
 		switch detail.Kind {
 		case ADDITION:
+			switch detail.To.(type) {
+			case []interface{}:
+				output.WriteString(Color(fmt.Sprintf("  %d entries added:\n", len(detail.To.([]interface{}))), color.FgYellow))
+			}
 			output.WriteString(Green(yamlString(detail.To)))
 
 		case REMOVAL:
+			switch detail.From.(type) {
+			case []interface{}:
+				output.WriteString(Color(fmt.Sprintf("  %d entries removed:\n", len(detail.From.([]interface{}))), color.FgYellow))
+			}
 			output.WriteString(Red(yamlString(detail.From)))
 
 		case MODIFICATION:
