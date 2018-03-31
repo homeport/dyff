@@ -13,7 +13,9 @@ yaml:
     mapA: { key0: A, key1: A }
     mapY: { key0: Y, key1: Y }
     listA: [ A, A, A ]
-    listY: [ Y, Y, Y ]
+    listY: [ Yo, Yo, Yo ]
+    type-change-1: 147
+    type-change-2: 12
 
   simple-list:
   - A

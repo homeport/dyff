@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,10 +10,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/fatih/color"
+	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
-	"github.com/texttheater/golang-levenshtein/levenshtein"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Debug log output
@@ -45,27 +45,59 @@ type PathElement struct {
 // Path describes a position inside a YAML (or JSON) structure by providing a name to each hierarchy level (tree structure).
 type Path []PathElement
 
-// Diff encapsulates everything noteworthy about a difference
-type Diff struct {
-	Kind     rune
-	Path     Path
-	From     interface{}
-	To       interface{}
-	Distance int
+// Detail encapsulate the actual details of a change, mainly the kind of difference and the values.
+type Detail struct {
+	Kind rune
+	From interface{}
+	To   interface{}
 }
 
-// ANSI coloring convenience helpers
-var bold = color.New(color.Bold)
-var italic = color.New(color.Italic)
+// Diff encapsulates everything noteworthy about a difference
+type Diff struct {
+	Path    Path
+	Details []Detail
+}
 
 // Bold returns the provided string in 'bold' format
 func Bold(text string) string {
-	return bold.Sprint(text)
+	return colorEachLine(color.New(color.Bold), text)
 }
 
 // Italic returns the provided string in 'italic' format
 func Italic(text string) string {
-	return italic.Sprint(text)
+	return colorEachLine(color.New(color.Italic), text)
+}
+
+func Green(text string) string {
+	return colorEachLine(color.New(color.FgGreen), text)
+}
+
+func Red(text string) string {
+	return colorEachLine(color.New(color.FgRed), text)
+}
+
+func Yellow(text string) string {
+	return colorEachLine(color.New(color.FgYellow), text)
+}
+
+func Color(text string, attributes ...color.Attribute) string {
+	return colorEachLine(color.New(attributes...), text)
+}
+
+func colorEachLine(color *color.Color, text string) string {
+	var buf bytes.Buffer
+
+	splitted := strings.Split(text, "\n")
+	length := len(splitted)
+	for idx, line := range splitted {
+		buf.WriteString(color.Sprint(line))
+
+		if idx < length-1 {
+			buf.WriteString("\n")
+		}
+	}
+
+	return buf.String()
 }
 
 // ToDotStyle returns a path as a string in dot style separating each path element by a dot.
@@ -108,18 +140,24 @@ func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
 
 // CompareObjects returns a list of differences between `from` and `to`
 func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
-	result := make([]Diff, 0)
+	// TODO add debug check or remove output
+	// Debug.Printf("compare obj %#v (%s) vs %#v (%s)", from, reflect.TypeOf(from), to, reflect.TypeOf(to))
 
-	// Save some time and process some simple nil use cases immediately
+	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
-		return append(result, Diff{Path: path, Kind: ADDITION, From: from, To: to})
+		return []Diff{Diff{path, []Detail{Detail{Kind: ADDITION, From: from, To: to}}}}
 
 	} else if from != nil && to == nil {
-		return append(result, Diff{Path: path, Kind: REMOVAL, From: from, To: to})
+		return []Diff{Diff{path, []Detail{Detail{Kind: REMOVAL, From: from, To: to}}}}
 
 	} else if from == nil && to == nil {
-		return result
+		return []Diff{}
+
+	} else if reflect.TypeOf(from) != reflect.TypeOf(to) {
+		return []Diff{Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}}}
 	}
+
+	result := make([]Diff, 0)
 
 	switch from.(type) {
 	case yaml.MapSlice:
@@ -146,7 +184,7 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 		switch to.(type) {
 		case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
 			if from != to {
-				result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to})
+				result = append(result, Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}})
 			}
 		}
 
@@ -183,12 +221,18 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 		}
 	}
 
+	diff := Diff{Path: path, Details: []Detail{}}
+
 	if len(removals) > 0 {
-		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
+		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+	}
+
+	if len(diff.Details) > 0 {
+		result = append(result, diff)
 	}
 
 	return result
@@ -240,12 +284,18 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 		}
 	}
 
+	diff := Diff{Path: path, Details: []Detail{}}
+
 	if len(removals) > 0 {
-		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
+		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+	}
+
+	if len(diff.Details) > 0 {
+		result = append(result, diff)
 	}
 
 	return result
@@ -277,12 +327,18 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 		}
 	}
 
+	diff := Diff{Path: path, Details: []Detail{}}
+
 	if len(removals) > 0 {
-		result = append(result, Diff{Path: path, Kind: REMOVAL, From: removals, To: nil})
+		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
 	if len(additions) > 0 {
-		result = append(result, Diff{Path: path, Kind: ADDITION, From: nil, To: additions})
+		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+	}
+
+	if len(diff.Details) > 0 {
+		result = append(result, diff)
 	}
 
 	return result
@@ -291,8 +347,8 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 func compareStrings(path Path, from string, to string) []Diff {
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
-		distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
-		result = append(result, Diff{Path: path, Kind: MODIFICATION, From: from, To: to, Distance: distance})
+		// distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
+		result = append(result, Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}})
 	}
 
 	return result
@@ -387,6 +443,39 @@ func calcHash(obj interface{}) uint64 {
 	}
 
 	return hash
+}
+
+// LoadYAMLs loads two YAMLs from the provided locations concurrently
+func LoadYAMLs(locationA string, locationB string) (yaml.MapSlice, yaml.MapSlice, error) {
+	type resultPair struct {
+		mapslice yaml.MapSlice
+		err      error
+	}
+
+	fromChan := make(chan resultPair, 1)
+	toChan := make(chan resultPair, 1)
+
+	go func() {
+		mapslice, err := LoadYAMLFromLocation(locationA)
+		fromChan <- resultPair{mapslice, err}
+	}()
+
+	go func() {
+		mapslice, err := LoadYAMLFromLocation(locationB)
+		toChan <- resultPair{mapslice, err}
+	}()
+
+	from := <-fromChan
+	if from.err != nil {
+		return nil, nil, from.err
+	}
+
+	to := <-toChan
+	if to.err != nil {
+		return nil, nil, to.err
+	}
+
+	return from.mapslice, to.mapslice, nil
 }
 
 // LoadYAMLFromLocation processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice

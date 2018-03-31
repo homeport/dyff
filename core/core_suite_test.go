@@ -1,21 +1,28 @@
 package core_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/dyff/core"
+	"github.com/HeavyWombat/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func TestCore(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Core Suite")
 }
+
+var _ = BeforeSuite(func() {
+	yaml.HighlightKeys = false
+	color.NoColor = true
+})
 
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
@@ -68,4 +75,38 @@ func path(path string) core.Path {
 	}
 
 	return result
+}
+
+func humanDiff(diff core.Diff) string {
+	var buf bytes.Buffer
+	core.GenerateHumanDiffOutput(&buf, diff)
+
+	return buf.String()
+}
+
+func singleDiff(p string, change rune, from, to interface{}) core.Diff {
+	return core.Diff{
+		Path: path(p),
+		Details: []core.Detail{core.Detail{
+			Kind: change,
+			From: from,
+			To:   to,
+		}},
+	}
+}
+
+func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, from2, to2 interface{}) core.Diff {
+	return core.Diff{
+		Path: path(p),
+		Details: []core.Detail{core.Detail{
+			Kind: change1,
+			From: from1,
+			To:   to1,
+		},
+			core.Detail{
+				Kind: change2,
+				From: from2,
+				To:   to2,
+			}},
+	}
 }
