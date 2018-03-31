@@ -10,7 +10,8 @@ import (
 	"github.com/HeavyWombat/yaml"
 )
 
-var sideBySide = false
+// NoSideBySide disables output in table style
+var NoSideBySide = false
 
 func pathToString(path Path) string {
 	return ToDotStyle(path)
@@ -44,19 +45,19 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	output.WriteString(pathToString(diff.Path))
 	output.WriteString("\n")
 
-	if sideBySide {
+	if NoSideBySide {
+		for _, detail := range diff.Details {
+			output.WriteString(GenerateHumanDetailOutput(detail))
+			output.WriteString("\n")
+		}
+
+	} else {
 		cols := make([]string, 0)
 		for _, detail := range diff.Details {
 			cols = append(cols, GenerateHumanDetailOutput(detail))
 		}
 
-		output.WriteString(Cols(cols...))
-
-	} else {
-		for _, detail := range diff.Details {
-			output.WriteString(GenerateHumanDetailOutput(detail))
-			output.WriteString("\n")
-		}
+		output.WriteString(Cols("    ", 2, cols...))
 	}
 }
 
@@ -87,7 +88,11 @@ func GenerateHumanDetailOutput(detail Detail) string {
 	return output.String()
 }
 
-func Cols(columns ...string) string {
+func plainTextLength(text string) int {
+	return utf8.RuneCountInString(color.RemoveAllEscapeSequences(text))
+}
+
+func Cols(separator string, intend int, columns ...string) string {
 	cols := len(columns)
 	rows := -1
 	max := make([]int, cols)
@@ -99,7 +104,7 @@ func Cols(columns ...string) string {
 		}
 
 		for _, line := range lines {
-			if length := utf8.RuneCountInString(line); length > max[i] {
+			if length := plainTextLength(line); length > max[i] {
 				max[i] = length
 			}
 		}
@@ -109,19 +114,19 @@ func Cols(columns ...string) string {
 	for x := 0; x < rows; x++ {
 		mtrx = append(mtrx, make([]string, cols))
 		for y := 0; y < cols; y++ {
-			mtrx[x][y] = strings.Repeat(" ", max[y])
+			mtrx[x][y] = strings.Repeat(" ", max[y]+intend)
 		}
 	}
 
 	for i, col := range columns {
 		for j, line := range strings.Split(col, "\n") {
-			mtrx[j][i] = line + strings.Repeat(" ", max[i]-utf8.RuneCountInString(line))
+			mtrx[j][i] = strings.Repeat(" ", intend) + line + strings.Repeat(" ", max[i]-plainTextLength(line))
 		}
 	}
 
 	var buf bytes.Buffer
 	for _, row := range mtrx {
-		buf.WriteString(strings.TrimRight(strings.Join(row, "  "), " "))
+		buf.WriteString(strings.TrimRight(strings.Join(row, separator), " "))
 		buf.WriteString("\n")
 	}
 

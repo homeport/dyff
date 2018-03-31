@@ -105,4 +105,5 @@ func init() {
 	// TODO Add flag for swap
 	// TODO Add flag for filter on path
 	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "Specify the output style, e.g. 'human' (more to come ...)")
+	betweenCmd.PersistentFlags().BoolVarP(&core.NoSideBySide, "no-side-by-side", "l", false, "Disable the side by side output")
 }
