@@ -10,10 +10,17 @@ import (
 	"github.com/HeavyWombat/yaml"
 )
 
-// NoSideBySide disables output in table style
-var NoSideBySide = false
+// NoTableStyle disables output in table style
+var NoTableStyle = false
+
+// UseGoPatchPaths style paths instead of Spruce Dot-Style
+var UseGoPatchPaths = false
 
 func pathToString(path Path) string {
+	if UseGoPatchPaths {
+		return ToGoPatchStyle(path)
+	}
+
 	return ToDotStyle(path)
 }
 
@@ -45,7 +52,7 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	output.WriteString(pathToString(diff.Path))
 	output.WriteString("\n")
 
-	if NoSideBySide {
+	if NoTableStyle {
 		for _, detail := range diff.Details {
 			output.WriteString(GenerateHumanDetailOutput(detail))
 			output.WriteString("\n")
@@ -69,6 +76,8 @@ func GenerateHumanDetailOutput(detail Detail) string {
 		switch detail.To.(type) {
 		case []interface{}:
 			output.WriteString(Color(fmt.Sprintf("%d entries added:\n", len(detail.To.([]interface{}))), color.FgYellow))
+		case yaml.MapSlice:
+			output.WriteString(Color(fmt.Sprintf("%d entries added:\n", len(detail.To.(yaml.MapSlice))), color.FgYellow))
 		}
 		output.WriteString(Green(yamlString(detail.To)))
 
@@ -76,6 +85,9 @@ func GenerateHumanDetailOutput(detail Detail) string {
 		switch detail.From.(type) {
 		case []interface{}:
 			output.WriteString(Color(fmt.Sprintf("%d entries removed:\n", len(detail.From.([]interface{}))), color.FgYellow))
+		case yaml.MapSlice:
+			output.WriteString(Color(fmt.Sprintf("%d entries removed:\n", len(detail.From.(yaml.MapSlice))), color.FgYellow))
+
 		}
 		output.WriteString(Red(yamlString(detail.From)))
 

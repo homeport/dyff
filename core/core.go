@@ -108,9 +108,9 @@ func ToDotStyle(path Path) string {
 	result := make([]string, 0, len(path))
 	for _, element := range path {
 		if element.Key != "" {
-			result = append(result, element.Name) // TODO make italic for human output
+			result = append(result, Color(element.Name, color.Italic, color.Bold))
 		} else {
-			result = append(result, element.Name)
+			result = append(result, Color(element.Name, color.Bold))
 		}
 	}
 
@@ -122,9 +122,9 @@ func ToGoPatchStyle(path Path) string {
 	result := make([]string, 0, len(path))
 	for _, element := range path {
 		if element.Key != "" {
-			result = append(result, fmt.Sprintf("%s=%s", element.Key, element.Name))
+			result = append(result, fmt.Sprintf("%s=%s", Color(element.Key, color.Italic), Color(element.Name, color.Bold, color.Italic)))
 		} else {
-			result = append(result, element.Name)
+			result = append(result, Color(element.Name, color.Bold))
 		}
 	}
 
