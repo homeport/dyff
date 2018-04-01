@@ -142,9 +142,6 @@ func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
 
 // CompareObjects returns a list of differences between `from` and `to`
 func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
-	// TODO add debug check or remove output
-	// Debug.Printf("compare obj %#v (%s) vs %#v (%s)", from, reflect.TypeOf(from), to, reflect.TypeOf(to))
-
 	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
 		return []Diff{Diff{path, []Detail{Detail{Kind: ADDITION, From: from, To: to}}}}

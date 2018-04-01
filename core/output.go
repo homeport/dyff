@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 	"unicode/utf8"
 
@@ -92,7 +93,14 @@ func GenerateHumanDetailOutput(detail Detail) string {
 		output.WriteString(Red(yamlString(detail.From)))
 
 	case MODIFICATION:
-		output.WriteString(Yellow("changed value\n"))
+		fromType := reflect.TypeOf(detail.From)
+		toType := reflect.TypeOf(detail.To)
+		if fromType != toType {
+			output.WriteString(Yellow(fmt.Sprintf("changed type from %s to %s\n", Italic(fromType.String()), Italic(toType.String()))))
+
+		} else {
+			output.WriteString(Yellow("changed value\n"))
+		}
 		output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
 		output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
 	}

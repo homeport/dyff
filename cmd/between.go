@@ -73,13 +73,13 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
     _| |_   _ / _|/ _|  between %s
   / _' | | | | |_| |_       and %s
  | (_| | |_| |  _|  _|
-  \__,_|\__, |_| |_|    %s
-        |___/           %s
+  \__,_|\__, |_| |_|    YAML path changed: %s
+        |___/             Processing time: %s
 
 `, niceLocation(fromLocation),
 				niceLocation(toLocation),
-				fmt.Sprintf("Number of differences found: %d", len(diffs)),
-				fmt.Sprintf("Processing time: %s", elapsed))
+				core.Bold(fmt.Sprintf("%d", len(diffs))),
+				core.Bold(fmt.Sprintf("%s", elapsed)))
 			fmt.Print(core.DiffsToHumanStyle(diffs))
 
 		default:
