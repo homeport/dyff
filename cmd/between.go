@@ -22,10 +22,12 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/dyff/core"
 	"github.com/spf13/cobra"
 )
@@ -68,8 +70,8 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		switch strings.ToLower(style) {
 		case "human", "bosh":
 			fmt.Printf(`      _        __  __
-    _| |_   _ / _|/ _|  %s
-  / _' | | | | |_| |_   %s
+    _| |_   _ / _|/ _|  between %s
+  / _' | | | | |_| |_       and %s
  | (_| | |_| |  _|  _|
   \__,_|\__, |_| |_|    %s
         |___/           %s
@@ -90,6 +92,10 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 func niceLocation(location string) string {
 	if location == "-" {
 		return core.Italic("<stdin>")
+	}
+
+	if _, err := url.ParseRequestURI(location); err == nil {
+		return core.Color(location, color.FgBlue, color.Underline)
 	}
 
 	if abs, err := filepath.Abs(location); err == nil {

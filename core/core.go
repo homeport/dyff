@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
@@ -480,7 +482,6 @@ func LoadYAMLs(locationA string, locationB string) (yaml.MapSlice, yaml.MapSlice
 
 // LoadYAMLFromLocation processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice
 func LoadYAMLFromLocation(location string) (yaml.MapSlice, error) {
-	// TODO Support URIs as loaction
 	// TODO Generate error if file contains more than one document
 
 	var data []byte
@@ -491,12 +492,26 @@ func LoadYAMLFromLocation(location string) (yaml.MapSlice, error) {
 		if data, err = ioutil.ReadAll(os.Stdin); err != nil {
 			return nil, err
 		}
-	} else {
+
+	} else if _, err = os.Stat(location); err == nil {
 		if data, err = ioutil.ReadFile(location); err != nil {
 			return nil, err
 		}
+
+	} else if _, err = url.ParseRequestURI(location); err == nil {
+		var response *http.Response
+		response, err = http.Get(location)
+		defer response.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(response.Body)
+		data = buf.Bytes()
 	}
 
+	// Whatever was loaded into data, try to unmarshal it into a YAML MapSlice
 	if err = yaml.UnmarshalStrict([]byte(data), &content); err != nil {
 		return nil, err
 	}
