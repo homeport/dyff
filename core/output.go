@@ -2,6 +2,8 @@ package core
 
 import (
 	"bytes"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"reflect"
 	"strings"
@@ -9,6 +11,8 @@ import (
 
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
+
+	"github.com/grantae/certinfo"
 )
 
 // NoTableStyle disables output in table style
@@ -72,6 +76,7 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 func GenerateHumanDetailOutput(detail Detail) string {
 	var output bytes.Buffer
 
+	// TODO Externalise part of code into separate functions for readability
 	switch detail.Kind {
 	case ADDITION:
 		switch detail.To.(type) {
@@ -93,19 +98,68 @@ func GenerateHumanDetailOutput(detail Detail) string {
 		output.WriteString(Red(yamlString(detail.From)))
 
 	case MODIFICATION:
-		fromType := reflect.TypeOf(detail.From)
-		toType := reflect.TypeOf(detail.To)
+		fromType := reflect.TypeOf(detail.From).Kind()
+		toType := reflect.TypeOf(detail.To).Kind()
 		if fromType != toType {
 			output.WriteString(Yellow(fmt.Sprintf("changed type from %s to %s\n", Italic(fromType.String()), Italic(toType.String()))))
 
 		} else {
 			output.WriteString(Yellow("changed value\n"))
 		}
-		output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
-		output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+
+		if fromType == reflect.String && toType == reflect.String {
+			if fromCertText, toCertText, err := LoadX509Certs(detail.From.(string), detail.To.(string)); err == nil {
+				output.WriteString(Red(fmt.Sprintf(" - %v\n", fromCertText)))
+				output.WriteString(Green(fmt.Sprintf(" + %v\n", toCertText)))
+
+			} else {
+				output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
+				output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+			}
+
+		} else {
+			// default output
+			output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
+			output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+
+		}
 	}
 
 	return output.String()
+}
+
+func LoadX509Certs(from, to string) (string, string, error) {
+	fromDecoded, _ := pem.Decode([]byte(from))
+	if fromDecoded == nil {
+		return "", "", fmt.Errorf("string '%s' is no PEM string", from)
+	}
+
+	toDecoded, _ := pem.Decode([]byte(to))
+	if toDecoded == nil {
+		return "", "", fmt.Errorf("string '%s' is no PEM string", to)
+	}
+
+	fromCert, err := x509.ParseCertificate(fromDecoded.Bytes)
+	if err != nil {
+		return "", "", err
+	}
+
+	toCert, err := x509.ParseCertificate(toDecoded.Bytes)
+	if err != nil {
+		return "", "", err
+	}
+
+	fromCertText, err := certinfo.CertificateText(fromCert)
+	if err != nil {
+		return "", "", err
+	}
+
+	toCertText, err := certinfo.CertificateText(toCert)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fromCertText, toCertText, nil
 }
 
 func plainTextLength(text string) int {
