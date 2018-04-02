@@ -57,20 +57,12 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	output.WriteString(pathToString(diff.Path))
 	output.WriteString("\n")
 
-	if NoTableStyle {
-		for _, detail := range diff.Details {
-			output.WriteString(GenerateHumanDetailOutput(detail))
-			output.WriteString("\n")
-		}
-
-	} else {
-		cols := make([]string, 0)
-		for _, detail := range diff.Details {
-			cols = append(cols, GenerateHumanDetailOutput(detail))
-		}
-
-		output.WriteString(Cols("    ", 2, cols...))
+	blocks := make([]string, len(diff.Details))
+	for i, detail := range diff.Details {
+		blocks[i] = GenerateHumanDetailOutput(detail)
 	}
+
+	WriteTextBlocks(output, 2, blocks...)
 }
 
 func GenerateHumanDetailOutput(detail Detail) string {
@@ -109,8 +101,7 @@ func GenerateHumanDetailOutput(detail Detail) string {
 
 		if fromType == reflect.String && toType == reflect.String {
 			if fromCertText, toCertText, err := LoadX509Certs(detail.From.(string), detail.To.(string)); err == nil {
-				output.WriteString(Red(fmt.Sprintf(" - %v\n", fromCertText)))
-				output.WriteString(Green(fmt.Sprintf(" + %v\n", toCertText)))
+				WriteTextBlocks(&output, 0, Red(fmt.Sprintf(" - %v\n", fromCertText)), Green(fmt.Sprintf(" + %v\n", toCertText)))
 
 			} else {
 				output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
@@ -128,6 +119,7 @@ func GenerateHumanDetailOutput(detail Detail) string {
 	return output.String()
 }
 
+// LoadX509Certs tries to load the provided strings as a cert each and returns a textual represenation of the certs, or an error if the strings are not X509 certs
 func LoadX509Certs(from, to string) (string, string, error) {
 	fromDecoded, _ := pem.Decode([]byte(from))
 	if fromDecoded == nil {
@@ -149,6 +141,18 @@ func LoadX509Certs(from, to string) (string, string, error) {
 		return "", "", err
 	}
 
+	// TODO Create an option to only display a few important fields, like:
+	// Common Name: www.example.com
+	// Organization: Company Name
+	// Organization Unit: Org
+	// Locality: Portland
+	// State: Oregon
+	// Country: US
+	// Valid From: April 2, 2018
+	// Valid To: April 2, 2019
+	// Issuer: www.example.com, Company Name
+	// Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
+
 	fromCertText, err := certinfo.CertificateText(fromCert)
 	if err != nil {
 		return "", "", err
@@ -164,6 +168,20 @@ func LoadX509Certs(from, to string) (string, string, error) {
 
 func plainTextLength(text string) int {
 	return utf8.RuneCountInString(color.RemoveAllEscapeSequences(text))
+}
+
+// WriteTextBlocks writes strings into the provided buffer in either a table style (each string a column) or list style (each string a row)
+func WriteTextBlocks(buf *bytes.Buffer, intend int, blocks ...string) {
+	// TODO Add look-up logic to detect whether a line would be too much for the terminal size
+
+	if NoTableStyle {
+		for _, block := range blocks {
+			buf.WriteString(block)
+		}
+
+	} else {
+		buf.WriteString(Cols("   ", intend, blocks...))
+	}
 }
 
 func Cols(separator string, intend int, columns ...string) string {
