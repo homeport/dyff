@@ -29,8 +29,9 @@ import (
 
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{
-	Use:   "yaml",
-	Short: "Converts input document into YAML format",
+	Use:     "yaml",
+	Aliases: []string{"yml"},
+	Short:   "Converts input document into YAML format",
 	Long: `
 Converts input document into YAML format while preserving the order of all keys.
 
