@@ -27,13 +27,18 @@ var _ = BeforeSuite(func() {
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {
-		var content yaml.MapSlice
+		var content interface{}
 		var err error
-		if content, err = core.LoadYAMLFromLocation(input); err != nil {
+		if content, err = core.LoadFile(input); err != nil {
 			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %v", input, err))
 		}
 
-		return content
+		switch content.(type) {
+		case yaml.MapSlice:
+			return content.(yaml.MapSlice)
+		}
+
+		Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Input file is not YAML", input))
 	}
 
 	content := yaml.MapSlice{}

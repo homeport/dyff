@@ -52,7 +52,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		start := time.Now()
 
-		from, to, err := core.LoadYAMLs(fromLocation, toLocation)
+		from, to, err := core.LoadFiles(fromLocation, toLocation)
 		if err != nil {
 			panic(err)
 		}

@@ -38,7 +38,7 @@ Converts input document into JSON format while preserving the order of all keys.
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			a, err := core.LoadYAMLFromLocation(x)
+			a, err := core.LoadFile(x)
 			if err != nil {
 				panic(err)
 			}

@@ -62,7 +62,14 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 		blocks[i] = GenerateHumanDetailOutput(detail)
 	}
 
-	WriteTextBlocks(output, 2, blocks...)
+	// For the use case in which only a path-less diff is suppose to be printed,
+	// omit the indent in this case since there is only one element to show
+	indent := 2
+	if len(diff.Path) == 0 {
+		indent = 0
+	}
+
+	WriteTextBlocks(output, indent, blocks...)
 }
 
 func GenerateHumanDetailOutput(detail Detail) string {
@@ -73,18 +80,18 @@ func GenerateHumanDetailOutput(detail Detail) string {
 	case ADDITION:
 		switch detail.To.(type) {
 		case []interface{}:
-			output.WriteString(Color(fmt.Sprintf("%d entries added:\n", len(detail.To.([]interface{}))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %d list entries added:\n", ADDITION, len(detail.To.([]interface{}))), color.FgYellow))
 		case yaml.MapSlice:
-			output.WriteString(Color(fmt.Sprintf("%d entries added:\n", len(detail.To.(yaml.MapSlice))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %d map entries added:\n", ADDITION, len(detail.To.(yaml.MapSlice))), color.FgYellow))
 		}
 		output.WriteString(Green(yamlString(detail.To)))
 
 	case REMOVAL:
 		switch detail.From.(type) {
 		case []interface{}:
-			output.WriteString(Color(fmt.Sprintf("%d entries removed:\n", len(detail.From.([]interface{}))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %d list entries removed:\n", REMOVAL, len(detail.From.([]interface{}))), color.FgYellow))
 		case yaml.MapSlice:
-			output.WriteString(Color(fmt.Sprintf("%d entries removed:\n", len(detail.From.(yaml.MapSlice))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %d map entries removed:\n", REMOVAL, len(detail.From.(yaml.MapSlice))), color.FgYellow))
 
 		}
 		output.WriteString(Red(yamlString(detail.From)))
@@ -96,12 +103,19 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			output.WriteString(Yellow(fmt.Sprintf("changed type from %s to %s\n", Italic(fromType.String()), Italic(toType.String()))))
 
 		} else {
-			output.WriteString(Yellow("changed value\n"))
+			output.WriteString(Yellow(fmt.Sprintf("%c changed value\n", MODIFICATION)))
 		}
 
 		if fromType == reflect.String && toType == reflect.String {
-			if fromCertText, toCertText, err := LoadX509Certs(detail.From.(string), detail.To.(string)); err == nil {
+			from := detail.From.(string)
+			to := detail.To.(string)
+			if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
 				WriteTextBlocks(&output, 0, Red(fmt.Sprintf(" - %v\n", fromCertText)), Green(fmt.Sprintf(" + %v\n", toCertText)))
+
+			} else if isMinorChange(from, to) {
+				// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
+				output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
+				output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
 
 			} else {
 				output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
@@ -171,7 +185,7 @@ func plainTextLength(text string) int {
 }
 
 // WriteTextBlocks writes strings into the provided buffer in either a table style (each string a column) or list style (each string a row)
-func WriteTextBlocks(buf *bytes.Buffer, intend int, blocks ...string) {
+func WriteTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
 	// TODO Add look-up logic to detect whether a line would be too much for the terminal size
 
 	if NoTableStyle {
@@ -180,11 +194,11 @@ func WriteTextBlocks(buf *bytes.Buffer, intend int, blocks ...string) {
 		}
 
 	} else {
-		buf.WriteString(Cols("   ", intend, blocks...))
+		buf.WriteString(Cols("   ", indent, blocks...))
 	}
 }
 
-func Cols(separator string, intend int, columns ...string) string {
+func Cols(separator string, indent int, columns ...string) string {
 	cols := len(columns)
 	rows := -1
 	max := make([]int, cols)
@@ -206,13 +220,13 @@ func Cols(separator string, intend int, columns ...string) string {
 	for x := 0; x < rows; x++ {
 		mtrx = append(mtrx, make([]string, cols))
 		for y := 0; y < cols; y++ {
-			mtrx[x][y] = strings.Repeat(" ", max[y]+intend)
+			mtrx[x][y] = strings.Repeat(" ", max[y]+indent)
 		}
 	}
 
 	for i, col := range columns {
 		for j, line := range strings.Split(col, "\n") {
-			mtrx[j][i] = strings.Repeat(" ", intend) + line + strings.Repeat(" ", max[i]-plainTextLength(line))
+			mtrx[j][i] = strings.Repeat(" ", indent) + line + strings.Repeat(" ", max[i]-plainTextLength(line))
 		}
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
 )
 
 // Debug log output
@@ -135,9 +136,9 @@ func (path Path) String() string {
 	return ToGoPatchStyle(path)
 }
 
-// CompareDocuments is the main entry point to compare to YAML MapSlices (documents) and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
-func CompareDocuments(from yaml.MapSlice, to yaml.MapSlice) []Diff {
-	return compareMapSlices(Path{}, from, to)
+// CompareDocuments is the main entry point to compare two documents and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
+func CompareDocuments(from interface{}, to interface{}) []Diff {
+	return CompareObjects(Path{}, from, to)
 }
 
 // CompareObjects returns a list of differences between `from` and `to`
@@ -346,7 +347,6 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 func compareStrings(path Path, from string, to string) []Diff {
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
-		// distance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
 		result = append(result, Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}})
 	}
 
@@ -444,24 +444,42 @@ func calcHash(obj interface{}) uint64 {
 	return hash
 }
 
-// LoadYAMLs loads two YAMLs from the provided locations concurrently
-func LoadYAMLs(locationA string, locationB string) (yaml.MapSlice, yaml.MapSlice, error) {
+func isMinorChange(from string, to string) bool {
+	min := func(a, b int) int {
+		if a < b {
+			return a
+		}
+
+		return b
+	}
+
+	levenshteinDistance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
+	referenceLength := min(len(from), len(to))
+
+	distanceVsLengthFactor := float64(levenshteinDistance) / float64(referenceLength)
+	threshold := 0.1
+
+	return distanceVsLengthFactor < threshold
+}
+
+// LoadFiles concurrently loads two files from the provided locations
+func LoadFiles(locationA string, locationB string) (interface{}, interface{}, error) {
 	type resultPair struct {
-		mapslice yaml.MapSlice
-		err      error
+		result interface{}
+		err    error
 	}
 
 	fromChan := make(chan resultPair, 1)
 	toChan := make(chan resultPair, 1)
 
 	go func() {
-		mapslice, err := LoadYAMLFromLocation(locationA)
-		fromChan <- resultPair{mapslice, err}
+		result, err := LoadFile(locationA)
+		fromChan <- resultPair{result, err}
 	}()
 
 	go func() {
-		mapslice, err := LoadYAMLFromLocation(locationB)
-		toChan <- resultPair{mapslice, err}
+		result, err := LoadFile(locationB)
+		toChan <- resultPair{result, err}
 	}()
 
 	from := <-fromChan
@@ -474,11 +492,11 @@ func LoadYAMLs(locationA string, locationB string) (yaml.MapSlice, yaml.MapSlice
 		return nil, nil, to.err
 	}
 
-	return from.mapslice, to.mapslice, nil
+	return from.result, to.result, nil
 }
 
-// LoadYAMLFromLocation processes the provided input location to load a YAML (or JSON) into a yaml.MapSlice
-func LoadYAMLFromLocation(location string) (yaml.MapSlice, error) {
+// LoadFileFromLocation processes the provided input location to load a YAML (or JSON, or raw text)
+func LoadFile(location string) (interface{}, error) {
 	// TODO Generate error if file contains more than one document
 
 	var data []byte
@@ -509,10 +527,12 @@ func LoadYAMLFromLocation(location string) (yaml.MapSlice, error) {
 	}
 
 	// Whatever was loaded into data, try to unmarshal it into a YAML MapSlice
-	if err = yaml.UnmarshalStrict([]byte(data), &content); err != nil {
-		return nil, err
+	if err = yaml.UnmarshalStrict(data, &content); err != nil {
+		// return the raw text if it cannot be unmarshaled properly
+		return string(data), nil
 	}
 
+	// return the YAML structure
 	return content, nil
 }
 

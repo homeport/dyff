@@ -24,6 +24,7 @@ import (
 	"fmt"
 
 	"github.com/HeavyWombat/dyff/core"
+	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
 
@@ -39,17 +40,23 @@ Converts input document into YAML format while preserving the order of all keys.
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			a, err := core.LoadYAMLFromLocation(x)
+			a, err := core.LoadFile(x)
 			if err != nil {
 				panic(err)
 			}
 
-			output, yamlerr := core.ToYAMLString(a)
-			if yamlerr != nil {
-				panic(yamlerr)
-			}
+			switch a.(type) {
+			case yaml.MapSlice:
+				output, yamlerr := core.ToYAMLString(a.(yaml.MapSlice))
+				if yamlerr != nil {
+					panic(yamlerr)
+				}
 
-			fmt.Print(output)
+				fmt.Print(output)
+
+			default:
+				panic(fmt.Errorf("Provided input file is not YAML compatible"))
+			}
 		}
 	},
 }

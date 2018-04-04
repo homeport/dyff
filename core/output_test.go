@@ -16,7 +16,7 @@ var _ = Describe("Core/Output", func() {
 			It("should show a nice string difference", func() {
 				content := singleDiff("/some/yaml/structure/string", MODIFICATION, "foobar", "Foobar")
 				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.string
-  changed value
+  ± changed value
    - foobar
    + Foobar
 
