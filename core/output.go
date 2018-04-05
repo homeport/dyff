@@ -112,14 +112,18 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
 				WriteTextBlocks(&output, 0, Red(fmt.Sprintf(" - %v\n", fromCertText)), Green(fmt.Sprintf(" + %v\n", toCertText)))
 
+			} else if isWhitespaceOnlyChange(from, to) {
+				output.WriteString(createStringWithPrefix(" - ", showWhitespaceCharacters(from), color.FgRed))
+				output.WriteString(createStringWithPrefix(" + ", showWhitespaceCharacters(to), color.FgGreen))
+
 			} else if isMinorChange(from, to) {
 				// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
-				output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
-				output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+				output.WriteString(createStringWithPrefix(" - ", from, color.FgRed))
+				output.WriteString(createStringWithPrefix(" + ", to, color.FgGreen))
 
 			} else {
-				output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
-				output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+				output.WriteString(createStringWithPrefix(" - ", from, color.FgRed))
+				output.WriteString(createStringWithPrefix(" + ", to, color.FgGreen))
 			}
 
 		} else {
@@ -178,6 +182,31 @@ func LoadX509Certs(from, to string) (string, string, error) {
 	}
 
 	return fromCertText, toCertText, nil
+}
+
+func isWhitespaceOnlyChange(from string, to string) bool {
+	return strings.Trim(from, " \n") == strings.Trim(to, " \n")
+}
+
+func showWhitespaceCharacters(text string) string {
+	return strings.Replace(strings.Replace(text, "\n", Bold("↵\n"), -1), " ", Bold("·"), -1)
+}
+
+func createStringWithPrefix(prefix string, obj interface{}, attributes ...color.Attribute) string {
+	var buf bytes.Buffer
+	for i, line := range strings.Split(fmt.Sprintf("%v", obj), "\n") {
+		if i == 0 {
+			buf.WriteString(Color(prefix, color.Bold))
+
+		} else {
+			buf.WriteString(strings.Repeat(" ", len(prefix)))
+		}
+
+		buf.WriteString(line)
+		buf.WriteString("\n")
+	}
+
+	return Color(buf.String(), attributes...)
 }
 
 func plainTextLength(text string) int {

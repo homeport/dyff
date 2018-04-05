@@ -22,6 +22,37 @@ var _ = Describe("Core/Output", func() {
 
 `))
 			})
+
+			It("should return that strings are identical if only the usage of whitespaces differs", func() {
+				from := yml(`---
+input: |+
+  This is a text with
+  newlines and stuff
+  to show case whitespace
+  issues.
+`)
+
+				to := yml(`---
+input: |+
+  This is a text with
+  newlines and stuff
+  to show case whitespace
+  issues.
+
+`)
+
+				result := CompareDocuments(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result[0]).To(BeEquivalentTo(singleDiff("/input",
+					MODIFICATION,
+					"This is a text with\nnewlines and stuff\nto show case whitespace\nissues.\n",
+					"This is a text with\nnewlines and stuff\nto show case whitespace\nissues.\n\n")))
+
+				Expect(humanDiff(result[0])).To(BeEquivalentTo("input\n  ± changed value\n" +
+					"   - This·is·a·text·with↵\n     newlines·and·stuff↵\n     to·show·case·whitespace↵\n     issues.↵\n\n" +
+					"   + This·is·a·text·with↵\n     newlines·and·stuff↵\n     to·show·case·whitespace↵\n     issues.↵\n     ↵\n\n\n"))
+			})
 		})
 	})
 
