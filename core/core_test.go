@@ -17,6 +17,29 @@ var _ = Describe("Core/Functions", func() {
 			})
 		})
 
+		Context("creating proper texts", func() {
+			It("should return human readable plurals", func() {
+				Expect(Plural(0, "foobar")).To(BeEquivalentTo("zero foobars"))
+				Expect(Plural(1, "foobar")).To(BeEquivalentTo("one foobar"))
+				Expect(Plural(2, "foobar")).To(BeEquivalentTo("two foobars"))
+				Expect(Plural(3, "foobar")).To(BeEquivalentTo("three foobars"))
+				Expect(Plural(4, "foobar")).To(BeEquivalentTo("four foobars"))
+				Expect(Plural(5, "foobar")).To(BeEquivalentTo("five foobars"))
+				Expect(Plural(6, "foobar")).To(BeEquivalentTo("six foobars"))
+				Expect(Plural(7, "foobar")).To(BeEquivalentTo("seven foobars"))
+				Expect(Plural(8, "foobar")).To(BeEquivalentTo("eight foobars"))
+				Expect(Plural(9, "foobar")).To(BeEquivalentTo("nine foobars"))
+				Expect(Plural(10, "foobar")).To(BeEquivalentTo("ten foobars"))
+				Expect(Plural(11, "foobar")).To(BeEquivalentTo("eleven foobars"))
+				Expect(Plural(12, "foobar")).To(BeEquivalentTo("twelve foobars"))
+				Expect(Plural(13, "foobar")).To(BeEquivalentTo("13 foobars"))
+				Expect(Plural(147, "foobar")).To(BeEquivalentTo("147 foobars"))
+
+				Expect(Plural(1, "basis", "bases")).To(BeEquivalentTo("one basis"))
+				Expect(Plural(2, "basis", "bases")).To(BeEquivalentTo("two bases"))
+			})
+		})
+
 		Context("path to string in dot-style", func() {
 			It("should print out simple hash paths nicely", func() {
 				path := Path{PathElement{Name: "some"},

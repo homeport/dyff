@@ -25,7 +25,6 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/dyff/core"
@@ -50,16 +49,12 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		fromLocation := args[0]
 		toLocation := args[1]
 
-		start := time.Now()
-
 		from, to, err := core.LoadFiles(fromLocation, toLocation)
 		if err != nil {
 			panic(err)
 		}
 
 		diffs := core.CompareDocuments(from, to)
-
-		elapsed := time.Since(start)
 
 		// TODO Add style Go-Patch
 		// TODO Add style Spruce
@@ -73,13 +68,12 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
     _| |_   _ / _|/ _|  between %s
   / _' | | | | |_| |_       and %s
  | (_| | |_| |  _|  _|
-  \__,_|\__, |_| |_|    YAML path changed: %s
-        |___/             Processing time: %s
+  \__,_|\__, |_| |_|   returned %s
+        |___/
 
 `, niceLocation(fromLocation),
 				niceLocation(toLocation),
-				core.Bold(fmt.Sprintf("%d", len(diffs))),
-				core.Bold(fmt.Sprintf("%s", elapsed)))
+				core.Bold(core.Plural(len(diffs), "difference")))
 			fmt.Print(core.DiffsToHumanStyle(diffs))
 
 		default:

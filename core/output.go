@@ -80,61 +80,66 @@ func GenerateHumanDetailOutput(detail Detail) string {
 	case ADDITION:
 		switch detail.To.(type) {
 		case []interface{}:
-			output.WriteString(Color(fmt.Sprintf("%c %d list entries added:\n", ADDITION, len(detail.To.([]interface{}))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.([]interface{})), "list entry", "list entries")), color.FgYellow))
 		case yaml.MapSlice:
-			output.WriteString(Color(fmt.Sprintf("%c %d map entries added:\n", ADDITION, len(detail.To.(yaml.MapSlice))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 		}
-		output.WriteString(Green(yamlString(detail.To)))
+		WriteTextBlocks(&output, 2, Green(yamlString(detail.To)))
 
 	case REMOVAL:
 		switch detail.From.(type) {
 		case []interface{}:
-			output.WriteString(Color(fmt.Sprintf("%c %d list entries removed:\n", REMOVAL, len(detail.From.([]interface{}))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.([]interface{})), "list entry", "list entries")), color.FgYellow))
 		case yaml.MapSlice:
-			output.WriteString(Color(fmt.Sprintf("%c %d map entries removed:\n", REMOVAL, len(detail.From.(yaml.MapSlice))), color.FgYellow))
+			output.WriteString(Color(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 
 		}
-		output.WriteString(Red(yamlString(detail.From)))
+		WriteTextBlocks(&output, 2, Red(yamlString(detail.From)))
 
 	case MODIFICATION:
 		fromType := reflect.TypeOf(detail.From).Kind()
 		toType := reflect.TypeOf(detail.To).Kind()
 		if fromType != toType {
-			output.WriteString(Yellow(fmt.Sprintf("changed type from %s to %s\n", Italic(fromType.String()), Italic(toType.String()))))
+			output.WriteString(Yellow(fmt.Sprintf("%c changed type from %s to %s\n", MODIFICATION, Italic(fromType.String()), Italic(toType.String()))))
 
 		} else {
 			output.WriteString(Yellow(fmt.Sprintf("%c changed value\n", MODIFICATION)))
 		}
 
 		if fromType == reflect.String && toType == reflect.String {
-			from := detail.From.(string)
-			to := detail.To.(string)
-			if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
-				WriteTextBlocks(&output, 0, Red(fmt.Sprintf(" - %v\n", fromCertText)), Green(fmt.Sprintf(" + %v\n", toCertText)))
-
-			} else if isWhitespaceOnlyChange(from, to) {
-				output.WriteString(createStringWithPrefix(" - ", showWhitespaceCharacters(from), color.FgRed))
-				output.WriteString(createStringWithPrefix(" + ", showWhitespaceCharacters(to), color.FgGreen))
-
-			} else if isMinorChange(from, to) {
-				// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
-				output.WriteString(createStringWithPrefix(" - ", from, color.FgRed))
-				output.WriteString(createStringWithPrefix(" + ", to, color.FgGreen))
-
-			} else {
-				output.WriteString(createStringWithPrefix(" - ", from, color.FgRed))
-				output.WriteString(createStringWithPrefix(" + ", to, color.FgGreen))
-			}
+			// delegate to special string output
+			writeStringDiff(&output, detail.From.(string), detail.To.(string))
 
 		} else {
 			// default output
-			output.WriteString(Red(fmt.Sprintf(" - %v\n", detail.From)))
-			output.WriteString(Green(fmt.Sprintf(" + %v\n", detail.To)))
+			output.WriteString(Red(fmt.Sprintf("  - %v\n", detail.From)))
+			output.WriteString(Green(fmt.Sprintf("  + %v\n", detail.To)))
 
 		}
 	}
 
 	return output.String()
+}
+
+func writeStringDiff(output *bytes.Buffer, from string, to string) {
+	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
+		WriteTextBlocks(output, 0,
+			Red(fmt.Sprintf("  - %v\n", fromCertText)),
+			Green(fmt.Sprintf("  + %v\n", toCertText)))
+
+	} else if isWhitespaceOnlyChange(from, to) {
+		output.WriteString(createStringWithPrefix("  - ", showWhitespaceCharacters(from), color.FgRed))
+		output.WriteString(createStringWithPrefix("  + ", showWhitespaceCharacters(to), color.FgGreen))
+
+	} else if isMinorChange(from, to) {
+		// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
+		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
+		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
+
+	} else {
+		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
+		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
+	}
 }
 
 // LoadX509Certs tries to load the provided strings as a cert each and returns a textual represenation of the certs, or an error if the strings are not X509 certs

@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/HeavyWombat/color"
@@ -85,6 +86,40 @@ func Yellow(text string) string {
 
 func Color(text string, attributes ...color.Attribute) string {
 	return colorEachLine(color.New(attributes...), text)
+}
+
+// Plural returns a string with the number and noun in either singular or plural form.
+// If one text argument is given, the plural will be done with the plural s. If two
+// arguments are provided, the second text is the irregular plural. More than two
+// arguments are not supported and result in a Go panic.
+func Plural(amount int, text ...string) string {
+	words := [...]string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"}
+
+	var number string
+	if amount < len(words) {
+		number = words[amount]
+	} else {
+		number = strconv.Itoa(amount)
+	}
+
+	switch len(text) {
+	case 1:
+		if amount == 1 {
+			return fmt.Sprintf("%s %s", number, text[0])
+		}
+
+		return fmt.Sprintf("%s %ss", number, text[0])
+
+	case 2:
+		if amount == 1 {
+			return fmt.Sprintf("%s %s", number, text[0])
+		}
+
+		return fmt.Sprintf("%s %s", number, text[1])
+
+	default:
+		panic("Wrong usage of Plural function, only one or two arguments supported")
+	}
 }
 
 func colorEachLine(color *color.Color, text string) string {

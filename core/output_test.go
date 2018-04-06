@@ -17,8 +17,28 @@ var _ = Describe("Core/Output", func() {
 				content := singleDiff("/some/yaml/structure/string", MODIFICATION, "foobar", "Foobar")
 				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.string
   ± changed value
-   - foobar
-   + Foobar
+    - foobar
+    + Foobar
+
+`))
+			})
+
+			It("should show a nice integer difference", func() {
+				content := singleDiff("/some/yaml/structure/int", MODIFICATION, 12, 147)
+				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.int
+  ± changed value
+    - 12
+    + 147
+
+`))
+			})
+
+			It("should show a type difference", func() {
+				content := singleDiff("/some/yaml/structure/test", MODIFICATION, 12, 12.0)
+				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.test
+  ± changed type from int to float64
+    - 12
+    + 12
 
 `))
 			})
@@ -50,8 +70,8 @@ input: |+
 					"This is a text with\nnewlines and stuff\nto show case whitespace\nissues.\n\n")))
 
 				Expect(humanDiff(result[0])).To(BeEquivalentTo("input\n  ± changed value\n" +
-					"   - This·is·a·text·with↵\n     newlines·and·stuff↵\n     to·show·case·whitespace↵\n     issues.↵\n\n" +
-					"   + This·is·a·text·with↵\n     newlines·and·stuff↵\n     to·show·case·whitespace↵\n     issues.↵\n     ↵\n\n\n"))
+					"    - This·is·a·text·with↵\n      newlines·and·stuff↵\n      to·show·case·whitespace↵\n      issues.↵\n\n" +
+					"    + This·is·a·text·with↵\n      newlines·and·stuff↵\n      to·show·case·whitespace↵\n      issues.↵\n      ↵\n\n\n"))
 			})
 		})
 	})
