@@ -116,6 +116,11 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			output.WriteString(Green(fmt.Sprintf("  + %v\n", detail.To)))
 
 		}
+
+	case ORDERCHANGE:
+		output.WriteString(Yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
+		output.WriteString(Red(fmt.Sprintf("  - %s\n", strings.Join(detail.From.([]string), ", "))))
+		output.WriteString(Green(fmt.Sprintf("  + %s\n", strings.Join(detail.To.([]string), ", "))))
 	}
 
 	return output.String()

@@ -438,9 +438,6 @@ resource_pools:
 			It("should return all differences between the files", func() {
 				results := CompareDocuments(yml("../assets/examples/from.yml"), yml("../assets/examples/to.yml"))
 				expected := []Diff{
-					singleDiff("/yaml/map/type-change-1", MODIFICATION, "string", 147),
-					singleDiff("/yaml/map/type-change-2", MODIFICATION, "12", 12),
-
 					doubleDiff("/yaml/map",
 						REMOVAL, yml(`---
 stringB: fOObAr
@@ -458,6 +455,10 @@ boolY: true
 mapY: { key0: Y, key1: Y }
 listY: [ Yo, Yo, Yo ]
 `)),
+
+					singleDiff("/yaml/map/type-change-1", MODIFICATION, "string", 147),
+
+					singleDiff("/yaml/map/type-change-2", MODIFICATION, "12", 12),
 
 					doubleDiff("/yaml/simple-list",
 						REMOVAL, yml(`list: [ X, Z ]`)[0].Value, nil,
@@ -482,6 +483,21 @@ listY: [ Yo, Yo, Yo ]
 				for i, result := range results {
 					Expect(result).To(BeEquivalentTo(expected[i]))
 				}
+			})
+
+			It("should return order changes in named entry lists (ignoring additions and removals)", func() {
+				from := yml(`list: [ {name: A}, {name: C}, {name: B}, {name: D}, {name: E} ]`)
+				to := yml(`list: [ {name: A}, {name: X1}, {name: B}, {name: C}, {name: D}, {name: X2} ]`)
+				results := CompareDocuments(from, to)
+
+				Expect(results).NotTo(BeNil())
+				Expect(len(results)).To(BeEquivalentTo(1))
+				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
+				Expect(results[0].Details[0]).To(BeEquivalentTo(Detail{
+					Kind: ORDERCHANGE,
+					From: []string{"A", "C", "B", "D"},
+					To:   []string{"A", "B", "C", "D"},
+				}))
 			})
 		})
 	})

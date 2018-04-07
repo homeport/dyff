@@ -36,6 +36,7 @@ const (
 	ADDITION     = '+'
 	REMOVAL      = '-'
 	MODIFICATION = '±'
+	ORDERCHANGE  = '⇆'
 	ILLEGAL      = '✕'
 	ATTENTION    = '⚠'
 )
@@ -141,7 +142,15 @@ func colorEachLine(color *color.Color, text string) string {
 // ToDotStyle returns a path as a string in dot style separating each path element by a dot.
 // Please note that path elements that are named "." will look ugly.
 func ToDotStyle(path Path) string {
-	result := make([]string, 0, len(path))
+	pathLength := len(path)
+
+	// The Dot style does not really support the root level. An empty path
+	// will just return a text indicating the root level is meant
+	if pathLength == 0 {
+		return Color("(root level)", color.Italic, color.Bold)
+	}
+
+	result := make([]string, 0, pathLength)
 	for _, element := range path {
 		if element.Key != "" {
 			result = append(result, Color(element.Name, color.Italic, color.Bold))
@@ -267,7 +276,7 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 	}
 
 	if len(diff.Details) > 0 {
-		result = append(result, diff)
+		result = append([]Diff{diff}, result...)
 	}
 
 	return result
@@ -284,6 +293,8 @@ func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 }
 
 func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
+	// TODO Add support for order change detection of simple lists
+
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
@@ -330,7 +341,7 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 	}
 
 	if len(diff.Details) > 0 {
-		result = append(result, diff)
+		result = append([]Diff{diff}, result...)
 	}
 
 	return result
@@ -340,13 +351,27 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
+	fromLength := len(from)
+	toLength := len(to)
+
 	result := make([]Diff, 0)
 
+	// Bail out quickly if there is nothing to check
+	if fromLength == 0 && toLength == 0 {
+		return result
+	}
+
+	// Fill two lists with the names of the entries that are common to both provided lists
+	fromNames := make([]string, 0, fromLength)
+	toNames := make([]string, 0, fromLength)
+
+	// Find entries that are common to both lists to compare them separately, and find entries that are only in from, but not to and are therefore removed
 	for _, fromEntry := range from {
-		name := GetKeyValue(fromEntry.(yaml.MapSlice), identifier)
+		name := GetKeyValueOrPanic(fromEntry.(yaml.MapSlice), identifier)
 		if toEntry, ok := GetEntryFromNamedList(to, identifier, name); ok {
 			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
 			result = append(result, CompareObjects(newPath(path, identifier, name), fromEntry, toEntry)...)
+			fromNames = append(fromNames, name.(string))
 
 		} else {
 			// `from` has an entry (identified by identifier and name), but `to` does not -> removal
@@ -354,24 +379,46 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 		}
 	}
 
+	// Find entries that are only in to, but not from and are therefore added
 	for _, toEntry := range to {
-		name := GetKeyValue(toEntry.(yaml.MapSlice), identifier)
-		if _, ok := GetEntryFromNamedList(from, identifier, name); !ok {
+		name := GetKeyValueOrPanic(toEntry.(yaml.MapSlice), identifier)
+		if _, ok := GetEntryFromNamedList(from, identifier, name); ok {
+			// `to` and `from` have the same entry idenfified by identifier and name (comparison already covered by previous range)
+			toNames = append(toNames, name.(string))
+
+		} else {
 			// `to` has an entry (identified by identifier and name), but `from` does not -> addition
 			additions = append(additions, toEntry)
 		}
 	}
 
+	// prepare a diff for this path to added to the result set (if there are changes)
 	diff := Diff{Path: path, Details: []Detail{}}
 
+	// Try to find order changes ...
+	idxLookupMap := make(map[string]int, len(toNames))
+	for idx, name := range toNames {
+		idxLookupMap[name] = idx
+	}
+
+	for idx, name := range fromNames {
+		if idxLookupMap[name] != idx {
+			diff.Details = append(diff.Details, Detail{Kind: ORDERCHANGE, From: fromNames, To: toNames})
+			break
+		}
+	}
+
+	// If there are removals, add them to the diff details list
 	if len(removals) > 0 {
 		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
+	// If there are additions, add them to the diff details list
 	if len(additions) > 0 {
 		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
 	}
 
+	// If there were changes added to the details list, we can safely add it to the result set, otherwise it the result set will be returned as-is
 	if len(diff.Details) > 0 {
 		result = append(result, diff)
 	}
@@ -407,15 +454,37 @@ func GetMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.
 	return yaml.MapItem{}, false
 }
 
-// GetKeyValue returns the value for a given key in a provided MapSlice. This is comparable to getting a value from a map with `foobar[key]`. Function will panic if there is no such key. This is only intended to be used in scenarios where you know a key has to be present.
-func GetKeyValue(mapslice yaml.MapSlice, key string) interface{} {
+// GetKeyValue returns the value (and true) for a given key in a provided MapSlice, or nil with false if there is no such entry. This is comparable to getting a value from a map with `foobar[key]`.
+func GetKeyValue(mapslice yaml.MapSlice, key string) (interface{}, bool) {
+	// TODO Search for other functions that could use this function (other than just getNamesFromNamedList)
 	for _, element := range mapslice {
 		if element.Key == key {
-			return element.Value
+			return element.Value, true
 		}
 	}
 
+	return nil, false
+}
+
+// GetKeyValueOrPanic returns the value for a given key in a provided MapSlice. This is comparable to getting a value from a map with `foobar[key]`. Function will panic if there is no such key. This is only intended to be used in scenarios where you know a key has to be present.
+func GetKeyValueOrPanic(mapslice yaml.MapSlice, key string) interface{} {
+	// TODO Either rewrite the code that relies on that function to work with errors or find yet another better solution
+	if value, ok := GetKeyValue(mapslice, key); ok {
+		return value
+	}
+
 	panic(fmt.Sprintf("There is no key `%s` in MapSlice %v", key, mapslice))
+}
+
+func getNamesFromNamedList(list []interface{}, identifier string) []string {
+	result := make([]string, 0, len(list))
+	for _, entry := range list {
+		if name, ok := GetKeyValue(entry.(yaml.MapSlice), identifier); ok {
+			result = append(result, name.(string))
+		}
+	}
+
+	return result
 }
 
 // GetEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
@@ -435,6 +504,9 @@ func GetEntryFromNamedList(list []interface{}, identifier string, name interface
 
 // GetIdentifierFromNamedList returns the identifier key used in the provided list, or an empty string if there is none. The identifier key is either 'name', 'key', or 'id'.
 func GetIdentifierFromNamedList(list []interface{}) string {
+	// TODO Write additional logic to detect an identifier that is not a known one but something completely different
+	// TODO Check whether there is a way to support Concourse YAMLs which do not come with one unique identifier per list
+
 	counters := map[interface{}]int{}
 
 	for _, sliceEntry := range list {
