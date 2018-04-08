@@ -356,12 +356,12 @@ instance_groups:
 				Expect(len(result)).To(BeEquivalentTo(7))
 
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", MODIFICATION, "192.168.1.1", "192.168.0.1")))
-				Expect(result[1]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
-				Expect(result[2]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/development_mode", MODIFICATION, true, false)))
-				Expect(result[3]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/instances", MODIFICATION, 1, 2)))
-				Expect(result[4]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/networks", REMOVAL, yml(`list: [ { name: testnet } ]`)[0].Value, nil)))
-				Expect(result[5]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password", MODIFICATION, "supersecret", "zwX#(;P=%hTfFzM[")))
-				Expect(result[6]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, yml(`list: [ { release: custom, name: logger } ]`)[0].Value)))
+				Expect(result[1]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, yml(`list: [ { release: custom, name: logger } ]`)[0].Value)))
+				Expect(result[2]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
+				Expect(result[3]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/development_mode", MODIFICATION, true, false)))
+				Expect(result[4]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/instances", MODIFICATION, 1, 2)))
+				Expect(result[5]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/networks", REMOVAL, yml(`list: [ { name: testnet } ]`)[0].Value, nil)))
+				Expect(result[6]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password", MODIFICATION, "supersecret", "zwX#(;P=%hTfFzM[")))
 			})
 
 			It("should return even difficult ones", func() {

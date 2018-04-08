@@ -17,6 +17,7 @@ import (
 	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
+	"golang.org/x/sys/unix"
 )
 
 // Debug log output
@@ -121,6 +122,23 @@ func Plural(amount int, text ...string) string {
 	default:
 		panic("Wrong usage of Plural function, only one or two arguments supported")
 	}
+}
+
+// GetTerminalSize return the current terminal size with width and height (columns and rows)
+func GetTerminalSize() (int, int) {
+	bounds, err := unix.IoctlGetWinsize(0, unix.TIOCGWINSZ)
+	if err != nil {
+		// TODO Add debug output that default terminal sizings were returned due to an error
+		return 80, 25
+	}
+
+	return int(bounds.Col), int(bounds.Row)
+}
+
+// GetTerminalWidth return the current terminal width
+func GetTerminalWidth() int {
+	width, _ := GetTerminalSize()
+	return width
 }
 
 func colorEachLine(color *color.Color, text string) string {
@@ -420,7 +438,7 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 	// If there were changes added to the details list, we can safely add it to the result set, otherwise it the result set will be returned as-is
 	if len(diff.Details) > 0 {
-		result = append(result, diff)
+		result = append([]Diff{diff}, result...)
 	}
 
 	return result
@@ -551,15 +569,23 @@ func calcHash(obj interface{}) uint64 {
 	return hash
 }
 
-func isMinorChange(from string, to string) bool {
-	min := func(a, b int) int {
-		if a < b {
-			return a
-		}
-
-		return b
+func min(a, b int) int {
+	if a < b {
+		return a
 	}
 
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+
+	return b
+}
+
+func isMinorChange(from string, to string) bool {
 	levenshteinDistance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
 	referenceLength := min(len(from), len(to))
 

@@ -119,8 +119,24 @@ func GenerateHumanDetailOutput(detail Detail) string {
 
 	case ORDERCHANGE:
 		output.WriteString(Yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
-		output.WriteString(Red(fmt.Sprintf("  - %s\n", strings.Join(detail.From.([]string), ", "))))
-		output.WriteString(Green(fmt.Sprintf("  + %s\n", strings.Join(detail.To.([]string), ", "))))
+
+		from := detail.From.([]string)
+		to := detail.To.([]string)
+		const singleLineSeparator = ", "
+
+		threshold := GetTerminalWidth() / 2
+		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
+		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
+		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
+			output.WriteString(Red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
+			output.WriteString(Green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
+			output.WriteString("\n")
+
+		} else {
+			output.WriteString(Cols(" ", 2,
+				Red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
+				Green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
+		}
 	}
 
 	return output.String()
@@ -223,17 +239,44 @@ func plainTextLength(text string) int {
 	return utf8.RuneCountInString(color.RemoveAllEscapeSequences(text))
 }
 
+func stringArrayLen(list []string) int {
+	result := 0
+	for _, entry := range list {
+		result += plainTextLength(entry)
+	}
+
+	return result
+}
+
 // WriteTextBlocks writes strings into the provided buffer in either a table style (each string a column) or list style (each string a row)
 func WriteTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
-	// TODO Add look-up logic to detect whether a line would be too much for the terminal size
+	const separator = "   "
 
-	if NoTableStyle {
+	// Calcuclate the theoretical maximum line length if blocks would be rendered next to each other
+	theoreticalMaxLineLength := indent + ((len(blocks) - 1) * plainTextLength(separator))
+	for _, block := range blocks {
+		maxLineLengthInBlock := 0
+		for _, line := range strings.Split(block, "\n") {
+			if lineLength := plainTextLength(line); maxLineLengthInBlock < lineLength {
+				maxLineLengthInBlock = lineLength
+			}
+		}
+
+		theoreticalMaxLineLength += maxLineLengthInBlock
+	}
+
+	// In case the line with blocks next to each other would surpass the terminal width, fall back to the no-table-style
+	if NoTableStyle || theoreticalMaxLineLength > GetTerminalWidth() {
 		for _, block := range blocks {
-			buf.WriteString(block)
+			for _, line := range strings.Split(block, "\n") {
+				buf.WriteString(strings.Repeat(" ", indent))
+				buf.WriteString(line)
+				buf.WriteString("\n")
+			}
 		}
 
 	} else {
-		buf.WriteString(Cols("   ", indent, blocks...))
+		buf.WriteString(Cols(separator, indent, blocks...))
 	}
 }
 

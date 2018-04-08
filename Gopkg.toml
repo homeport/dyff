@@ -57,6 +57,10 @@
   branch = "master"
   name = "github.com/texttheater/golang-levenshtein"
 
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/sys"
+
 [prune]
   go-tests = true
   unused-packages = true
