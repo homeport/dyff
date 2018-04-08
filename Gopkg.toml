@@ -31,7 +31,7 @@
 
 [[constraint]]
   name = "github.com/HeavyWombat/yaml"
-  version = "2.1.42"
+  version = "2.2.42"
 
 [[constraint]]
   branch = "master"

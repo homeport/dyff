@@ -3,11 +3,13 @@ package yaml
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/HeavyWombat/color"
 )
 
 // Bold embeds the provided byte array in the ANSI bold espace sequence
 func bold(data []byte) []byte {
-	if HighlightKeys {
+	if HighlightKeys && !color.NoColor {
 		return append([]byte("\x1b[1m"), append(data, []byte("\x1b[0m")...)...)
 	}
 

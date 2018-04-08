@@ -10,8 +10,8 @@
 [[projects]]
   name = "github.com/HeavyWombat/yaml"
   packages = ["."]
-  revision = "572c7ee48341763f9c5657afb08d393bb5f21d05"
-  version = "v2.1.42"
+  revision = "147a4f49de08a0bcf4aa07ce5e76bdcdbd3b1976"
+  version = "v2.2.42"
 
 [[projects]]
   branch = "master"
@@ -154,6 +154,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4866b9d847782e970a3224637f6b28fd5cba5a1b8eee9013a1a2accca74a8de9"
+  inputs-digest = "324bfcce80d6a7a192ed211233b7c8e6355d4175cff540222475271343c28476"
   solver-name = "gps-cdcl"
   solver-version = 1
