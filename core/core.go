@@ -311,8 +311,6 @@ func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 }
 
 func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
-	// TODO Add support for order change detection of simple lists
-
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
@@ -334,30 +332,68 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 	fromLookup := createLookUpMap(from)
 	toLookup := createLookUpMap(to)
 
+	// Fill two lists with the names of the entries that are common to both provided lists
+	fromNames := make([]uint64, 0, fromLength)
+	toNames := make([]uint64, 0, fromLength)
+
 	for idxPos, fromValue := range from {
-		if _, ok := toLookup[calcHash(fromValue)]; !ok {
+		hash := calcHash(fromValue)
+		if _, ok := toLookup[hash]; !ok {
 			// `from` entry does not exist in `to` list
 			removals = append(removals, from[idxPos])
+
+		} else {
+			fromNames = append(fromNames, hash)
 		}
 	}
 
 	for idxPos, toValue := range to {
-		if _, ok := fromLookup[calcHash(toValue)]; !ok {
+		hash := calcHash(toValue)
+		if _, ok := fromLookup[hash]; !ok {
 			// `to` entry does not exist in `from` list
 			additions = append(additions, to[idxPos])
+
+		} else {
+			toNames = append(toNames, hash)
 		}
 	}
 
+	// prepare a diff for this path to added to the result set (if there are changes)
 	diff := Diff{Path: path, Details: []Detail{}}
 
+	// Try to find order changes ...
+	if len(fromNames) == len(toNames) {
+		for idx, hash := range fromNames {
+			if toNames[idx] != hash {
+				cnv := func(list []uint64, lookup map[uint64]int, content []interface{}) []interface{} {
+					result := make([]interface{}, 0, len(list))
+					for _, hash := range list {
+						result = append(result, content[lookup[hash]])
+					}
+
+					return result
+				}
+
+				diff.Details = append(diff.Details, Detail{
+					Kind: ORDERCHANGE,
+					From: cnv(fromNames, fromLookup, from),
+					To:   cnv(toNames, toLookup, to)})
+				break
+			}
+		}
+	}
+
+	// If there are removals, add them to the diff details list
 	if len(removals) > 0 {
 		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
 	}
 
+	// If there are additions, add them to the diff details list
 	if len(additions) > 0 {
 		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
 	}
 
+	// If there were changes added to the details list, we can safely add it to the result set, otherwise it the result set will be returned as-is
 	if len(diff.Details) > 0 {
 		result = append([]Diff{diff}, result...)
 	}

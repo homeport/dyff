@@ -499,6 +499,21 @@ listY: [ Yo, Yo, Yo ]
 					To:   []string{"A", "B", "C", "D"},
 				}))
 			})
+
+			It("should return order changes in simple lists (ignoring additions and removals)", func() {
+				from := yml(`list: [ A, C, B, D, E ]`)
+				to := yml(`list: [ A, X1, B, C, D, X2 ]`)
+				results := CompareDocuments(from, to)
+
+				Expect(results).NotTo(BeNil())
+				Expect(len(results)).To(BeEquivalentTo(1))
+				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
+				Expect(results[0].Details[0]).To(BeEquivalentTo(Detail{
+					Kind: ORDERCHANGE,
+					From: []interface{}{"A", "C", "B", "D"},
+					To:   []interface{}{"A", "B", "C", "D"},
+				}))
+			})
 		})
 	})
 })

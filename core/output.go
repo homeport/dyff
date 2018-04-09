@@ -119,23 +119,30 @@ func GenerateHumanDetailOutput(detail Detail) string {
 
 	case ORDERCHANGE:
 		output.WriteString(Yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
+		switch detail.From.(type) {
+		case []string:
+			from := detail.From.([]string)
+			to := detail.To.([]string)
+			const singleLineSeparator = ", "
 
-		from := detail.From.([]string)
-		to := detail.To.([]string)
-		const singleLineSeparator = ", "
+			threshold := GetTerminalWidth() / 2
+			fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
+			toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
+			if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
+				output.WriteString(Red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
+				output.WriteString(Green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
+				output.WriteString("\n")
 
-		threshold := GetTerminalWidth() / 2
-		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
-		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
-		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
-			output.WriteString(Red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
-			output.WriteString(Green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
-			output.WriteString("\n")
+			} else {
+				output.WriteString(Cols(" ", 2,
+					Red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
+					Green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
+			}
 
-		} else {
+		case []interface{}:
 			output.WriteString(Cols(" ", 2,
-				Red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
-				Green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
+				Red(fmt.Sprintf("%s", yamlString(detail.From.([]interface{})))),
+				Green(fmt.Sprintf("%s", yamlString(detail.To.([]interface{}))))))
 		}
 	}
 
