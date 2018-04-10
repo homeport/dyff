@@ -32,6 +32,7 @@ import (
 )
 
 var style string
+var swap bool
 
 // betweenCmd represents the between command
 var betweenCmd = &cobra.Command{
@@ -45,9 +46,14 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 	Args:    cobra.ExactArgs(2),
 	Aliases: []string{"bw"},
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO Add helper function to print absolute path in case it is not a URL, or STDIN indicator -
-		fromLocation := args[0]
-		toLocation := args[1]
+		var fromLocation, toLocation string
+		if swap {
+			fromLocation = args[1]
+			toLocation = args[0]
+		} else {
+			fromLocation = args[0]
+			toLocation = args[1]
+		}
 
 		from, to, err := core.LoadFiles(fromLocation, toLocation)
 		if err != nil {
@@ -102,10 +108,10 @@ func niceLocation(location string) string {
 func init() {
 	rootCmd.AddCommand(betweenCmd)
 
-	// TODO Add flag for swap
 	// TODO Add flag for filter on path
 	// TODO Add option to not load certs for output analysis
 	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "Specify the output style, e.g. 'human' (more to come ...)")
+	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap `from` and `to` for compare")
 	betweenCmd.PersistentFlags().BoolVarP(&core.NoTableStyle, "no-table-style", "t", false, "Disable the table output")
 	betweenCmd.PersistentFlags().BoolVarP(&core.UseGoPatchPaths, "use-go-patch-style", "g", false, "Use Go-Patch style paths instead of Spruce Dot-Style")
 }
