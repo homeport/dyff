@@ -25,6 +25,7 @@ import (
 	"os"
 
 	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/dyff/core"
 	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
@@ -52,6 +53,17 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+// ExitWithError exits program with given text and error message
+func ExitWithError(text string, err error) {
+	if err != nil {
+		fmt.Printf("%s: %s\n", text, core.Color(err.Error(), color.FgHiRed))
+	} else {
+		fmt.Printf(text)
+	}
+
+	os.Exit(1)
 }
 
 func init() {

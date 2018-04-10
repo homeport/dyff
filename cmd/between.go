@@ -57,7 +57,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		from, to, err := core.LoadFiles(fromLocation, toLocation)
 		if err != nil {
-			panic(err)
+			ExitWithError("Failed to load input files", err)
 		}
 
 		diffs := core.CompareDocuments(from, to)

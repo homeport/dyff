@@ -688,11 +688,6 @@ func LoadFile(location string) (interface{}, error) {
 			return nil, err
 		}
 
-	} else if _, err = os.Stat(location); err == nil {
-		if data, err = ioutil.ReadFile(location); err != nil {
-			return nil, err
-		}
-
 	} else if _, err = url.ParseRequestURI(location); err == nil {
 		var response *http.Response
 		response, err = http.Get(location)
@@ -704,6 +699,14 @@ func LoadFile(location string) (interface{}, error) {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(response.Body)
 		data = buf.Bytes()
+
+	} else if _, err = os.Stat(location); err == nil {
+		if data, err = ioutil.ReadFile(location); err != nil {
+			return nil, err
+		}
+
+	} else {
+		return nil, err
 	}
 
 	// Whatever was loaded into data, try to unmarshal it into a YAML MapSlice
