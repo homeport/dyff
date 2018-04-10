@@ -598,6 +598,17 @@ func createLookUpMap(list []interface{}) map[uint64]int {
 func calcHash(obj interface{}) uint64 {
 	var hash uint64
 	var err error
+
+	// Convert YAML MapSlices to maps first so that the order of keys does not matter for the hash value of this object
+	switch obj.(type) {
+	case yaml.MapSlice:
+		tmp := make(map[interface{}]interface{}, len(obj.(yaml.MapSlice)))
+		for _, entry := range obj.(yaml.MapSlice) {
+			tmp[entry.Key] = entry.Value
+		}
+		obj = tmp
+	}
+
 	if hash, err = hashstructure.Hash(obj, nil); err != nil {
 		panic(err)
 	}

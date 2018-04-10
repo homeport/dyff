@@ -277,6 +277,26 @@ some:
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, yml(`list: [ 3 ]`)[0].Value, nil)))
 			})
+
+			It("should not return a change if only the order in a hash was changed", func() {
+				from := yml(`---
+list:
+- enabled: true
+- foo: bar
+  version: 1
+`)
+
+				to := yml(`---
+list:
+- enabled: true
+- version: 1
+  foo: bar
+`)
+
+				result := CompareDocuments(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(0))
+			})
 		})
 
 		Context("Given two YAML structures with complext content", func() {
