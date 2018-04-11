@@ -692,12 +692,45 @@ func LoadFile(location string) (interface{}, error) {
 	var content = yaml.MapSlice{}
 	var err error
 
+	if data, err = GetBytesFromLocation(location); err != nil {
+		ExitWithError("Unable to load data", err)
+	}
+
+	// Whatever was loaded into data, try to unmarshal it into a YAML MapSlice
+
+	if err := yaml.UnmarshalStrict(data, &content); err != nil {
+		// return the raw text if it cannot be unmarshaled properly
+		return string(data), nil
+	}
+
+	// return the YAML structure
+	return content, nil
+}
+
+func GetBytesFromLocation(location string) ([]byte, error) {
+	var data []byte
+	var err error
+
+	// Handle special location "-" which referes to STDIN stream
 	if location == "-" {
 		if data, err = ioutil.ReadAll(os.Stdin); err != nil {
 			return nil, err
 		}
 
-	} else if _, err = url.ParseRequestURI(location); err == nil {
+		return data, nil
+	}
+
+	// Handle location as local file if there is a file at that location
+	if _, err = os.Stat(location); err == nil {
+		if data, err = ioutil.ReadFile(location); err != nil {
+			return nil, err
+		}
+
+		return data, nil
+	}
+
+	// Handle location as a URI if it looks like one
+	if _, err = url.ParseRequestURI(location); err == nil {
 		var response *http.Response
 		response, err = http.Get(location)
 		defer response.Body.Close()
@@ -709,23 +742,11 @@ func LoadFile(location string) (interface{}, error) {
 		buf.ReadFrom(response.Body)
 		data = buf.Bytes()
 
-	} else if _, err = os.Stat(location); err == nil {
-		if data, err = ioutil.ReadFile(location); err != nil {
-			return nil, err
-		}
-
-	} else {
-		return nil, err
+		return data, nil
 	}
 
-	// Whatever was loaded into data, try to unmarshal it into a YAML MapSlice
-	if err = yaml.UnmarshalStrict(data, &content); err != nil {
-		// return the raw text if it cannot be unmarshaled properly
-		return string(data), nil
-	}
-
-	// return the YAML structure
-	return content, nil
+	// In any other case, bail out ...
+	return nil, fmt.Errorf("Unable to get any content using location %s: it is not a file or usable URI", location)
 }
 
 // ToJSONString converts the provided object into a human readable JSON string.
