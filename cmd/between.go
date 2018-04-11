@@ -23,6 +23,7 @@ package cmd
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -94,12 +95,14 @@ func niceLocation(location string) string {
 		return core.Italic("<stdin>")
 	}
 
-	if _, err := url.ParseRequestURI(location); err == nil {
-		return core.Color(location, color.FgHiBlue, color.Underline)
+	if _, err := os.Stat(location); err == nil {
+		if abs, err := filepath.Abs(location); err == nil {
+			return core.Bold(abs)
+		}
 	}
 
-	if abs, err := filepath.Abs(location); err == nil {
-		return core.Bold(abs)
+	if _, err := url.ParseRequestURI(location); err == nil {
+		return core.Color(location, color.FgHiBlue, color.Underline)
 	}
 
 	return location
