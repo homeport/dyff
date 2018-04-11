@@ -32,7 +32,7 @@ func pathToString(path Path) string {
 func yamlString(input interface{}) string {
 	output, err := yaml.Marshal(input)
 	if err != nil {
-		panic(err)
+		ExitWithError("Failed to marshal input object", err)
 	}
 
 	return string(output)

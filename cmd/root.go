@@ -21,9 +21,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/dyff/core"
 	"github.com/HeavyWombat/yaml"
@@ -50,20 +47,8 @@ capabilities to transform YAML to JSON, or JSON to YAML.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		core.ExitWithError("Unable to execute root command", err)
 	}
-}
-
-// ExitWithError exits program with given text and error message
-func ExitWithError(text string, err error) {
-	if err != nil {
-		fmt.Printf("%s: %s\n", text, core.Color(err.Error(), color.FgHiRed))
-	} else {
-		fmt.Printf(text)
-	}
-
-	os.Exit(1)
 }
 
 func init() {

@@ -53,14 +53,14 @@ func path(path string) core.Path {
 	// path string looks like: /additions/named-entry-list-using-id/id=new
 
 	if path == "" {
-		panic("Unable to create path using an empty string")
+		panic("Implementation issue: Unable to create path using an empty string")
 	}
 
 	result := make([]core.PathElement, 0)
 	for i, section := range strings.Split(path, "/") {
 		if i == 0 {
 			if section != "" {
-				panic("Invalid Go-Patch style path, it cannot start with anything other than a slash")
+				panic("Implementation issue: Invalid Go-Patch style path, it cannot start with anything other than a slash")
 			}
 
 			continue
@@ -75,7 +75,7 @@ func path(path string) core.Path {
 			result = append(result, core.PathElement{Key: keyNameSplit[0], Name: keyNameSplit[1]})
 
 		default:
-			panic(fmt.Sprintf("Invalid Go-Patch style path, path element '%s' cannot contain more than one equal sign", section))
+			panic(fmt.Sprintf("Implementation issue: Invalid Go-Patch style path, path element '%s' cannot contain more than one equal sign", section))
 		}
 	}
 

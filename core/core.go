@@ -64,6 +64,17 @@ type Diff struct {
 	Details []Detail
 }
 
+// ExitWithError exits program with given text and error message
+func ExitWithError(text string, err error) {
+	if err != nil {
+		fmt.Printf("%s: %s\n", text, Color(err.Error(), color.FgHiRed))
+	} else {
+		fmt.Printf(text)
+	}
+
+	os.Exit(1)
+}
+
 // Bold returns the provided string in 'bold' format
 func Bold(text string) string {
 	return colorEachLine(color.New(color.Bold), text)
@@ -92,8 +103,8 @@ func Color(text string, attributes ...color.Attribute) string {
 
 // Plural returns a string with the number and noun in either singular or plural form.
 // If one text argument is given, the plural will be done with the plural s. If two
-// arguments are provided, the second text is the irregular plural. More than two
-// arguments are not supported and result in a Go panic.
+// arguments are provided, the second text is the irregular plural. If more than two
+// are provided, then the additional ones are simply ignored.
 func Plural(amount int, text ...string) string {
 	words := [...]string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"}
 
@@ -112,15 +123,12 @@ func Plural(amount int, text ...string) string {
 
 		return fmt.Sprintf("%s %ss", number, text[0])
 
-	case 2:
+	default:
 		if amount == 1 {
 			return fmt.Sprintf("%s %s", number, text[0])
 		}
 
 		return fmt.Sprintf("%s %s", number, text[1])
-
-	default:
-		panic("Wrong usage of Plural function, only one or two arguments supported")
 	}
 }
 
@@ -251,7 +259,8 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 		}
 
 	default:
-		panic(fmt.Sprintf("Unsupported type %s", reflect.TypeOf(from)))
+		ExitWithError("Failed to compare objects",
+			fmt.Errorf("Unsupported type %s", reflect.TypeOf(from)))
 	}
 
 	return result
@@ -527,7 +536,7 @@ func GetKeyValueOrPanic(mapslice yaml.MapSlice, key string) interface{} {
 		return value
 	}
 
-	panic(fmt.Sprintf("There is no key `%s` in MapSlice %v", key, mapslice))
+	panic(fmt.Sprintf("Implemenation issue: There is no key `%s` in MapSlice %v", key, mapslice))
 }
 
 func getNamesFromNamedList(list []interface{}, identifier string) []string {
@@ -610,7 +619,7 @@ func calcHash(obj interface{}) uint64 {
 	}
 
 	if hash, err = hashstructure.Hash(obj, nil); err != nil {
-		panic(err)
+		ExitWithError("Failed to calculate hash", err)
 	}
 
 	return hash

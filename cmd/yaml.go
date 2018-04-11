@@ -40,22 +40,23 @@ Converts input document into YAML format while preserving the order of all keys.
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			a, err := core.LoadFile(x)
+			obj, err := core.LoadFile(x)
 			if err != nil {
-				panic(err)
+				core.ExitWithError("Failed to load input file", err)
 			}
 
-			switch a.(type) {
+			switch obj.(type) {
 			case yaml.MapSlice:
-				output, yamlerr := core.ToYAMLString(a.(yaml.MapSlice))
+				output, yamlerr := core.ToYAMLString(obj.(yaml.MapSlice))
 				if yamlerr != nil {
-					panic(yamlerr)
+					core.ExitWithError("Failed to marshal object into YAML", err)
 				}
 
 				fmt.Print(output)
 
 			default:
-				panic(fmt.Errorf("Provided input file is not YAML compatible"))
+				core.ExitWithError("Failed to process file",
+					fmt.Errorf("Provided input file is not YAML compatible"))
 			}
 		}
 	},

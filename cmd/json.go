@@ -38,14 +38,14 @@ Converts input document into JSON format while preserving the order of all keys.
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			a, err := core.LoadFile(x)
+			obj, err := core.LoadFile(x)
 			if err != nil {
-				panic(err)
+				core.ExitWithError("Failed to load input file", err)
 			}
 
-			output, jsonerr := core.ToJSONString(a)
-			if jsonerr != nil {
-				panic(jsonerr)
+			output, err := core.ToJSONString(obj)
+			if err != nil {
+				core.ExitWithError("Failed to marshal object into JSON", err)
 			}
 
 			fmt.Printf("%s\n", output)
