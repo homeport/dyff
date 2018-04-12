@@ -11,8 +11,6 @@ import (
 
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
-
-	"github.com/grantae/certinfo"
 )
 
 // NoTableStyle disables output in table style
@@ -205,29 +203,37 @@ func LoadX509Certs(from, to string) (string, string, error) {
 		return "", "", err
 	}
 
-	// TODO Create an option to only display a few important fields, like:
-	// Common Name: www.example.com
-	// Organization: Company Name
-	// Organization Unit: Org
-	// Locality: Portland
-	// State: Oregon
-	// Country: US
-	// Valid From: April 2, 2018
-	// Valid To: April 2, 2019
-	// Issuer: www.example.com, Company Name
-	// Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
+	fromCertText := certificateSummaryAsYAML(fromCert)
+	toCertText := certificateSummaryAsYAML(toCert)
 
-	fromCertText, err := certinfo.CertificateText(fromCert)
-	if err != nil {
-		return "", "", err
-	}
+	return yamlString(fromCertText), yamlString(toCertText), nil
+}
 
-	toCertText, err := certinfo.CertificateText(toCert)
-	if err != nil {
-		return "", "", err
-	}
+// Create a YAML (hash with key/value) from a certificate to only display a few important fields (https://www.sslshopper.com/certificate-decoder.html):
+//   Common Name: www.example.com
+//   Organization: Company Name
+//   Organization Unit: Org
+//   Locality: Portland
+//   State: Oregon
+//   Country: US
+//   Valid From: April 2, 2018
+//   Valid To: April 2, 2019
+//   Issuer: www.example.com, Company Name
+//   Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
+func certificateSummaryAsYAML(cert *x509.Certificate) yaml.MapSlice {
+	result := yaml.MapSlice{}
+	result = append(result, yaml.MapItem{Key: "Common Name", Value: cert.Subject.CommonName})
+	result = append(result, yaml.MapItem{Key: "Organization", Value: strings.Join(cert.Subject.Organization, " ")})
+	result = append(result, yaml.MapItem{Key: "Organization Unit", Value: strings.Join(cert.Subject.OrganizationalUnit, " ")})
+	result = append(result, yaml.MapItem{Key: "Locality", Value: strings.Join(cert.Subject.Locality, " ")})
+	result = append(result, yaml.MapItem{Key: "State", Value: strings.Join(cert.Subject.Province, " ")})
+	result = append(result, yaml.MapItem{Key: "Country", Value: strings.Join(cert.Subject.Country, " ")})
+	result = append(result, yaml.MapItem{Key: "Valid From", Value: cert.NotBefore.Format("Jan 2 15:04:05 2006 MST")})
+	result = append(result, yaml.MapItem{Key: "Valid To", Value: cert.NotAfter.Format("Jan 2 15:04:05 2006 MST")})
+	result = append(result, yaml.MapItem{Key: "Issuer", Value: fmt.Sprintf("%s, %s", cert.Issuer.CommonName, strings.Join(cert.Issuer.Organization, " "))})
+	result = append(result, yaml.MapItem{Key: "Serial Number", Value: fmt.Sprintf("%d (%#x)", cert.SerialNumber, cert.SerialNumber)})
 
-	return fromCertText, toCertText, nil
+	return result
 }
 
 func isWhitespaceOnlyChange(from string, to string) bool {

@@ -14,12 +14,6 @@
   version = "v2.2.42"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/grantae/certinfo"
-  packages = ["."]
-  revision = "59d56a35515b3ab2326749924739cfe58facc991"
-
-[[projects]]
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
