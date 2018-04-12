@@ -1,0 +1,538 @@
+groups:
+- jobs:
+  - release-rundeck
+  name: misc
+- jobs:
+  - build-docker-image-docker-client
+  - build-docker-s3fs-image
+  - build-docker-golang-glide-image
+  name: docker-tools
+- jobs:
+  - build-opnsense-cli
+  - release-opnsense-cli
+  name: opnsense
+- jobs:
+  - build-docker-image-resource
+  - build-concourse-static-resource-image
+  name: concourse-resources
+- jobs:
+  - build-docker-image-concourse-worker
+  - build-docker-image-concourse-configurator
+  - build-docker-image-concourse-worker-configurator
+  name: concourse-docker-images
+- jobs:
+  - build-docker-images-confluence
+  - build-docker-images-jira
+  - release-bitbucket-image
+  name: atlassian-docker-images
+jobs:
+- build_logs_to_retain: 5
+  name: release-rundeck
+  plan:
+  - get: rundeck-version
+    trigger: true
+  - get: rundeck-repo
+  - file: rundeck-repo/ci/tasks/extract_version.yml
+    input_mapping:
+      rundeck-version: rundeck-version
+    output_mapping:
+      builds_args: build_args
+    task: extract_build_version
+  - get_params:
+      skip_download: true
+    params:
+      build: rundeck-repo
+      build_args_file: build_args/build_args.json
+      cache_tag: latest
+      tag: rundeck-version/number
+      tag_as_latest: true
+    put: rundeck-image
+  serial: true
+- build_logs_to_retain: 5
+  name: release-bitbucket-image
+  plan:
+  - get: bitbucket-version
+    trigger: true
+  - get: bitbucket-repo
+  - get: pipeline-src
+  - file: pipeline-src/ci/tasks/extract_version.yml
+    input_mapping:
+      input-version: bitbucket-version
+    output_mapping:
+      builds_args: build_args
+    task: extract_build_version
+  - get_params:
+      skip_download: true
+    params:
+      build: bitbucket-repo
+      build_args_file: build_args/build_args.json
+      cache_tag: latest
+      tag: bitbucket-version/number
+      tag_as_latest: true
+    put: bitbucket-image
+  serial: true
+- build_logs_to_retain: 5
+  name: build-opnsense-cli
+  plan:
+  - aggregate:
+    - get: kw-docker-lib
+    - get: opnsense-cli-repo
+      trigger: true
+  - file: kw-docker-lib/ci/tasks/golang-build.yml
+    input_mapping:
+      repo: opnsense-cli-repo
+    output_mapping:
+      artifact: opnsense-cli-dist
+    params:
+      GO_REPO_FOLDER: /go/src/github.com/eugenmayer/opnsense-cli
+      MAKE_COMMAND: build
+    task: build-dist
+  serial: true
+- build_logs_to_retain: 5
+  name: release-opnsense-cli
+  plan:
+  - aggregate:
+    - get: kw-docker-lib
+    - get: opnsense-cli-version
+      trigger: true
+    - get: opnsense-cli-repo
+  - file: kw-docker-lib/ci/tasks/golang-release.yml
+    input_mapping:
+      repo: opnsense-cli-repo
+      version: opnsense-cli-version
+    output_mapping:
+      artifact: opnsense-cli-dist
+    params:
+      GO_REPO_FOLDER: /go/src/github.com/eugenmayer/opnsense-cli
+      MAKE_COMMAND: release
+    task: build-dist
+  - put: release-opnsense-cli
+  - params:
+      globs:
+      - opnsense-cli-dist/opn-*
+      name: opnsense-cli-version/number
+      tag: opnsense-cli-version/number
+    put: release-opnsense-cli
+  serial: true
+- build_logs_to_retain: 5
+  name: build-docker-image-resource
+  plan:
+  - get: docker-image-resource
+    trigger: true
+  - file: docker-image-resource/ci/build.yml
+    input_mapping:
+      docker-image-resource: docker-image-resource
+    output_mapping:
+      built-resource: docker-built-context
+    task: build-docker-image-resource
+  - get_params:
+      skip_download: true
+    params:
+      build: docker-built-context
+      cache_tag: latest
+    put: eugenmayer-docker-image-resource
+  serial: true
+- build_logs_to_retain: 5
+  name: build-docker-image-concourse-worker
+  plan:
+  - get: docker-image-concourseci-worker-solid
+    trigger: true
+  - get: concourse-base-image
+    params:
+      skip_download: true
+    trigger: true
+  - params:
+      build: docker-image-concourseci-worker-solid
+      cache_tag: latest
+      dockerfile: docker-image-concourseci-worker-solid/Dockerfile_((concourse))
+      tag_static: ((concourse))
+    put: concourse-worker-solid-image
+  serial: true
+- build_logs_to_retain: 10
+  name: build-docker-image-concourse-configurator
+  plan:
+  - get: docker-image-concourseci-configurator-repo
+    trigger: true
+  - get: alpine-image
+    params:
+      skip_download: true
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: docker-image-concourseci-configurator-repo
+      cache_tag: latest
+    put: concourse-configurator-image
+  serial: true
+- build_logs_to_retain: 10
+  name: build-docker-image-concourse-worker-configurator
+  plan:
+  - get: docker-image-concourseci-worker-configurator-repo
+    trigger: true
+  - get: alpine-image
+    params:
+      skip_download: true
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: docker-image-concourseci-worker-configurator-repo
+      cache_tag: latest
+    put: concourse-worker-configurator-image
+  serial: true
+- build_logs_to_retain: 5
+  name: build-concourse-static-resource-image
+  plan:
+  - get: concourse-static-resource
+    trigger: true
+  - get: alpine-edge-image
+    params:
+      skip_download: true
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: concourse-static-resource
+      cache_tag: latest
+    put: concourse-static-resource-image
+  serial: true
+- build_logs_to_retain: 5
+  name: build-docker-golang-glide-image
+  plan:
+  - get: docker-image-golang-glide-repo
+    trigger: true
+  - get: golang-alpine-1.9-image
+    params:
+      skip_download: true
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: docker-image-golang-glide-repo
+      cache_tag: latest
+    put: eugenmayer-docker-image-golang-glide
+  serial: true
+- build_logs_to_retain: 5
+  name: build-docker-s3fs-image
+  plan:
+  - get: docker-image-s3fs
+    trigger: true
+  - get: debian-stretch-image
+    params:
+      skip_download: true
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: docker-image-s3fs
+      cache_tag: latest
+    put: eugenmayer-docker-image-aws-s3fs
+  serial: true
+- build_logs_to_retain: 5
+  name: build-docker-images-confluence
+  plan:
+  - get: pipeline-versions-src
+    trigger: true
+  - get: atlassian-confluence-docker-image-src
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: atlassian-confluence-docker-image-src
+      build_args:
+        CONFLUENCE_VERSION: ((confluence.early))
+      tag_static: ((confluence.early))
+    put: atlassian-confluence-docker-image
+  - get_params:
+      skip_download: true
+    params:
+      build: atlassian-confluence-docker-image-src
+      build_args:
+        CONFLUENCE_VERSION: ((confluence.latest))
+      tag_as_latest: true
+      tag_static: ((confluence.latest))
+    put: atlassian-confluence-docker-image
+  serial: true
+- build_logs_to_retain: 5
+  name: build-docker-images-jira
+  plan:
+  - get: pipeline-versions-src
+    trigger: true
+  - get: atlassian-jira-docker-image-src
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: atlassian-jira-docker-image-src
+      build_args:
+        JIRA_VERSION: ((jira.early))
+      tag_static: en-((jira.early))
+    put: atlassian-jira-docker-image
+  - get_params:
+      skip_download: true
+    params:
+      build: atlassian-jira-docker-image-src
+      build_args:
+        JIRA_VERSION: ((jira.latest))
+      tag_as_latest: true
+      tag_static: en-((jira.latest))
+    put: atlassian-jira-docker-image
+  serial: true
+- build_logs_to_retain: 10
+  name: build-docker-image-docker-client
+  plan:
+  - get: docker-client-docker-image-src
+    trigger: true
+  - get: docker-image
+    params:
+      skip_download: true
+    trigger: true
+  - get_params:
+      skip_download: true
+    params:
+      build: docker-client-docker-image-src
+      cache_tag: latest
+    put: docker-client-docker-image
+  serial: true
+resource_types:
+- name: docker-image-resource-ng
+  privileged: true
+  source:
+    repository: eugenmayer/concourse-docker-image-resource
+    tag: latest
+  type: docker-image
+- name: concourse-git-semver-tag
+  source:
+    repository: eugenmayer/concourse-git-semver-tag-resource
+  type: docker-image
+resources:
+- check_every: 5m
+  name: kw-docker-lib
+  source:
+    private_key: ((git_kw_ci_sshkey))
+    uri: ssh://git@code.kontextwork.de:2201/ci/docker_lib
+  type: git
+- name: docker-image-s3fs
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-s3fs
+  type: git
+- name: docker-image-golang-glide-repo
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-golang-glide
+  type: git
+- name: opnsense-cli-repo
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/opnsense-cli
+  type: git
+- name: opnsense-cli-version
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/opnsense-cli
+  type: concourse-git-semver-tag
+- name: rundeck-repo
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-rundeck
+  type: git
+- name: rundeck-version
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-rundeck
+  type: concourse-git-semver-tag
+- name: rundeck-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/rundeck
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: bitbucket-repo
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-atlassian-bitbucket
+  type: git
+- name: bitbucket-version
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-atlassian-bitbucket
+  type: concourse-git-semver-tag
+- name: bitbucket-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/bitbucket
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: atlassian-confluence-docker-image-src
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-atlassian-confluence
+  type: git
+- name: atlassian-confluence-docker-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/confluence
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: atlassian-jira-docker-image-src
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-atlassian-jira
+  type: git
+- name: atlassian-jira-docker-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/jira
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: release-opnsense-cli
+  source:
+    access_token: ((github_release_token.key))
+    owner: eugenmayer
+    repository: opnsense-cli
+  type: github-release
+- name: docker-client-docker-image-src
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-docker-client
+  type: git
+- name: docker-client-docker-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/docker-client
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: concourse-static-resource
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/concourse-static-resource
+  type: git
+- name: docker-image-resource
+  source:
+    branch: develop
+    uri: https://github.com/EugenMayer/docker-image-resource-ng
+  type: git
+- name: docker-image-concourseci-worker-solid
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-concourseci-worker-solid
+  type: git
+- name: docker-image-concourseci-configurator-repo
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-concourse-configurator
+  type: git
+- name: docker-image-concourseci-worker-configurator-repo
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/docker-image-concourse-worker-configurator
+  type: git
+- name: concourse-base-image
+  source:
+    password: ((dockerhub.password))
+    repository: concourse/concourse
+    tag: ((concourse))
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: concourse-worker-solid-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/concourse-worker-solid
+    tag: ((concourse))
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: concourse-configurator-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/concourse-configurator
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: concourse-worker-configurator-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/concourse-worker-configurator
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: eugenmayer-docker-image-resource
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/concourse-docker-image-resource
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image
+- name: concourse-static-resource-image
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/concourse-static-resource
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: debian-stretch-image
+  source:
+    password: ((dockerhub.password))
+    repository: debian
+    tag: stretch
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: golang-alpine-1.9-image
+  source:
+    password: ((dockerhub.password))
+    repository: golang
+    tag: 1.9-alpine
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: alpine-image
+  source:
+    password: ((dockerhub.password))
+    repository: alpine
+    tag: 3.6
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: docker-image
+  source:
+    password: ((dockerhub.password))
+    repository: docker
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: alpine-edge-image
+  source:
+    password: ((dockerhub.password))
+    repository: alpine
+    tag: edge
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: eugenmayer-docker-image-aws-s3fs
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/aws-s3fs
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: eugenmayer-docker-image-golang-glide
+  source:
+    password: ((dockerhub.password))
+    repository: eugenmayer/golang-glide
+    tag: latest
+    username: ((dockerhub.user))
+  type: docker-image-resource-ng
+- name: pipeline-src
+  source:
+    branch: master
+    uri: https://github.com/EugenMayer/concourse-our-open-pipelines
+  type: git
+- name: pipeline-versions-src
+  source:
+    branch: master
+    paths:
+    - ci/versions.yml
+    uri: https://github.com/EugenMayer/concourse-our-open-pipelines
+  type: git

@@ -28,6 +28,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var restructure bool
+
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{
 	Use:     "yaml",
@@ -47,7 +49,13 @@ Converts input document into YAML format while preserving the order of all keys.
 
 			switch obj.(type) {
 			case yaml.MapSlice:
-				output, yamlerr := core.ToYAMLString(obj.(yaml.MapSlice))
+				mapslice := obj.(yaml.MapSlice)
+
+				if restructure {
+					mapslice = core.RestructureMapSlice(mapslice)
+				}
+
+				output, yamlerr := core.ToYAMLString(mapslice)
 				if yamlerr != nil {
 					core.ExitWithError("Failed to marshal object into YAML", err)
 				}
@@ -64,4 +72,6 @@ Converts input document into YAML format while preserving the order of all keys.
 
 func init() {
 	rootCmd.AddCommand(yamlCmd)
+
+	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "Try to restructure YAML map keys in reasonable order")
 }
