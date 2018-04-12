@@ -17,7 +17,6 @@ import (
 	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
-	"golang.org/x/sys/unix"
 )
 
 // Debug log output
@@ -130,23 +129,6 @@ func Plural(amount int, text ...string) string {
 
 		return fmt.Sprintf("%s %s", number, text[1])
 	}
-}
-
-// GetTerminalSize return the current terminal size with width and height (columns and rows)
-func GetTerminalSize() (int, int) {
-	bounds, err := unix.IoctlGetWinsize(0, unix.TIOCGWINSZ)
-	if err != nil {
-		// TODO Add debug output that default terminal sizings were returned due to an error
-		return 80, 25
-	}
-
-	return int(bounds.Col), int(bounds.Row)
-}
-
-// GetTerminalWidth return the current terminal width
-func GetTerminalWidth() int {
-	width, _ := GetTerminalSize()
-	return width
 }
 
 func colorEachLine(color *color.Color, text string) string {
