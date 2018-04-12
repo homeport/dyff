@@ -18,6 +18,9 @@ import (
 // NoTableStyle disables output in table style
 var NoTableStyle = false
 
+// DoNotInspectCerts disables certificates inspection (compare text only)
+var DoNotInspectCerts = false
+
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
 
@@ -152,8 +155,8 @@ func GenerateHumanDetailOutput(detail Detail) string {
 func writeStringDiff(output *bytes.Buffer, from string, to string) {
 	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
 		WriteTextBlocks(output, 0,
-			Red(fmt.Sprintf("  - %v\n", fromCertText)),
-			Green(fmt.Sprintf("  + %v\n", toCertText)))
+			Red(Cols(" ", 0, string(REMOVAL), fromCertText)),
+			Green(Cols(" ", 0, string(ADDITION), toCertText)))
 
 	} else if isWhitespaceOnlyChange(from, to) {
 		output.WriteString(createStringWithPrefix("  - ", showWhitespaceCharacters(from), color.FgRed))
@@ -164,6 +167,11 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
 		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
 
+	} else if isMultiLine(from, to) {
+		WriteTextBlocks(output, 0,
+			Red(Cols(" ", 0, string(REMOVAL), from)),
+			Green(Cols(" ", 0, string(ADDITION), to)))
+
 	} else {
 		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
 		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
@@ -172,6 +180,11 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 
 // LoadX509Certs tries to load the provided strings as a cert each and returns a textual represenation of the certs, or an error if the strings are not X509 certs
 func LoadX509Certs(from, to string) (string, string, error) {
+	// Back out quickly if cert inspection is disabled
+	if DoNotInspectCerts {
+		return "", "", fmt.Errorf("Certificate inspection is disabled")
+	}
+
 	fromDecoded, _ := pem.Decode([]byte(from))
 	if fromDecoded == nil {
 		return "", "", fmt.Errorf("string '%s' is no PEM string", from)

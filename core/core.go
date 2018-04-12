@@ -651,6 +651,10 @@ func isMinorChange(from string, to string) bool {
 	return distanceVsLengthFactor < threshold
 }
 
+func isMultiLine(from string, to string) bool {
+	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
+}
+
 // LoadFiles concurrently loads two files from the provided locations
 func LoadFiles(locationA string, locationB string) (interface{}, interface{}, error) {
 	type resultPair struct {

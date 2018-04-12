@@ -112,9 +112,9 @@ func init() {
 	rootCmd.AddCommand(betweenCmd)
 
 	// TODO Add flag for filter on path
-	// TODO Add option to not load certs for output analysis
 	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "Specify the output style, e.g. 'human' (more to come ...)")
 	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap `from` and `to` for compare")
 	betweenCmd.PersistentFlags().BoolVarP(&core.NoTableStyle, "no-table-style", "t", false, "Disable the table output")
+	betweenCmd.PersistentFlags().BoolVarP(&core.DoNotInspectCerts, "no-cert-inspection", "c", false, "Disable certificate inspection (compare as raw text)")
 	betweenCmd.PersistentFlags().BoolVarP(&core.UseGoPatchPaths, "use-go-patch-style", "g", false, "Use Go-Patch style paths instead of Spruce Dot-Style")
 }
