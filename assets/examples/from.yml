@@ -16,6 +16,7 @@ yaml:
     listB: [ B, B, B ]
     type-change-1: string
     type-change-2: "12"
+    whitespaces: "Strings can  have whitespaces."
 
   simple-list:
   - A

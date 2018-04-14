@@ -16,6 +16,9 @@ yaml:
     listY: [ Yo, Yo, Yo ]
     type-change-1: 147
     type-change-2: 12
+    whitespaces: |+
+      Strings can  have whitespaces.
+
 
   simple-list:
   - A

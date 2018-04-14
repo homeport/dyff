@@ -480,6 +480,8 @@ listY: [ Yo, Yo, Yo ]
 
 					singleDiff("/yaml/map/type-change-2", MODIFICATION, "12", 12),
 
+					singleDiff("/yaml/map/whitespaces", MODIFICATION, "Strings can  have whitespaces.", "Strings can  have whitespaces.\n\n\n"),
+
 					doubleDiff("/yaml/simple-list",
 						REMOVAL, yml(`list: [ X, Z ]`)[0].Value, nil,
 						ADDITION, nil, yml(`list: [ D, E ]`)[0].Value),

@@ -13,6 +13,9 @@ import (
 	"github.com/HeavyWombat/yaml"
 )
 
+// TODO Separate code into different output source files: human, and the new stuff
+// TODO There are still too much line breaks in the human output in the no-table-style
+
 // NoTableStyle disables output in table style
 var NoTableStyle = false
 
@@ -100,19 +103,19 @@ func GenerateHumanDetailOutput(detail Detail) string {
 	case MODIFICATION:
 		fromType := reflect.TypeOf(detail.From).Kind()
 		toType := reflect.TypeOf(detail.To).Kind()
-		if fromType != toType {
-			output.WriteString(Yellow(fmt.Sprintf("%c changed type from %s to %s\n", MODIFICATION, Italic(fromType.String()), Italic(toType.String()))))
-
-		} else {
-			output.WriteString(Yellow(fmt.Sprintf("%c changed value\n", MODIFICATION)))
-		}
-
 		if fromType == reflect.String && toType == reflect.String {
 			// delegate to special string output
 			writeStringDiff(&output, detail.From.(string), detail.To.(string))
 
 		} else {
 			// default output
+			if fromType != toType {
+				output.WriteString(Yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, Italic(fromType.String()), Italic(toType.String()))))
+
+			} else {
+				output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+			}
+
 			output.WriteString(Red(fmt.Sprintf("  - %v\n", detail.From)))
 			output.WriteString(Green(fmt.Sprintf("  + %v\n", detail.To)))
 
@@ -151,26 +154,35 @@ func GenerateHumanDetailOutput(detail Detail) string {
 }
 
 func writeStringDiff(output *bytes.Buffer, from string, to string) {
+	// TODO Simplify code by only writing the output code once and
+	// set-up the respective strings in each if block.
+
 	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
+		output.WriteString(Yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
 		WriteTextBlocks(output, 0,
 			createStringWithPrefix("  - ", fromCertText, color.FgRed),
 			createStringWithPrefix("  + ", toCertText, color.FgGreen))
 
 	} else if isWhitespaceOnlyChange(from, to) {
-		output.WriteString(createStringWithPrefix("  - ", showWhitespaceCharacters(from), color.FgRed))
-		output.WriteString(createStringWithPrefix("  + ", showWhitespaceCharacters(to), color.FgGreen))
+		output.WriteString(Yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
+		WriteTextBlocks(output, 0,
+			createStringWithPrefix("  - ", showWhitespaceCharacters(from), color.FgRed),
+			createStringWithPrefix("  + ", showWhitespaceCharacters(to), color.FgGreen))
 
 	} else if isMinorChange(from, to) {
 		// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
+		output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
 		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
 
 	} else if isMultiLine(from, to) {
+		output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		WriteTextBlocks(output, 0,
 			createStringWithPrefix("  - ", from, color.FgRed),
 			createStringWithPrefix("  + ", to, color.FgGreen))
 
 	} else {
+		output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
 		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
 	}
@@ -246,7 +258,8 @@ func showWhitespaceCharacters(text string) string {
 
 func createStringWithPrefix(prefix string, obj interface{}, attributes ...color.Attribute) string {
 	var buf bytes.Buffer
-	for i, line := range strings.Split(fmt.Sprintf("%v", obj), "\n") {
+	var lines = strings.Split(fmt.Sprintf("%v", obj), "\n")
+	for i, line := range lines {
 		if i == 0 {
 			buf.WriteString(Color(prefix, color.Bold))
 
@@ -294,7 +307,8 @@ func WriteTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
 	// In case the line with blocks next to each other would surpass the terminal width, fall back to the no-table-style
 	if NoTableStyle || theoreticalMaxLineLength > GetTerminalWidth() {
 		for _, block := range blocks {
-			for _, line := range strings.Split(block, "\n") {
+			lines := strings.Split(block, "\n")
+			for _, line := range lines {
 				buf.WriteString(strings.Repeat(" ", indent))
 				buf.WriteString(line)
 				buf.WriteString("\n")
