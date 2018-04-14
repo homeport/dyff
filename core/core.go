@@ -17,6 +17,7 @@ import (
 	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 // Debug log output
@@ -72,6 +73,15 @@ func ExitWithError(text string, err error) {
 	}
 
 	os.Exit(1)
+}
+
+func GetTerminalWidth() int {
+	termWidth, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return 80
+	}
+
+	return termWidth
 }
 
 // Bold returns the provided string in 'bold' format
