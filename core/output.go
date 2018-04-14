@@ -153,8 +153,8 @@ func GenerateHumanDetailOutput(detail Detail) string {
 func writeStringDiff(output *bytes.Buffer, from string, to string) {
 	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
 		WriteTextBlocks(output, 0,
-			Red(Cols(" ", 0, string(REMOVAL), fromCertText)),
-			Green(Cols(" ", 0, string(ADDITION), toCertText)))
+			createStringWithPrefix("  - ", fromCertText, color.FgRed),
+			createStringWithPrefix("  + ", toCertText, color.FgGreen))
 
 	} else if isWhitespaceOnlyChange(from, to) {
 		output.WriteString(createStringWithPrefix("  - ", showWhitespaceCharacters(from), color.FgRed))
@@ -167,8 +167,8 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 
 	} else if isMultiLine(from, to) {
 		WriteTextBlocks(output, 0,
-			Red(Cols(" ", 0, string(REMOVAL), from)),
-			Green(Cols(" ", 0, string(ADDITION), to)))
+			createStringWithPrefix("  - ", from, color.FgRed),
+			createStringWithPrefix("  + ", to, color.FgGreen))
 
 	} else {
 		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
