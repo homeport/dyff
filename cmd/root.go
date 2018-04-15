@@ -27,12 +27,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NoColor is the gobal switch to decide whether strings should be colored in the output
-var NoColor = false
-
-// Debug is the global switch to enable debug output
-var Debug = false
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "dyff",
@@ -57,12 +51,13 @@ func init() {
 	// Here you will define your flags and configuration settings. Cobra supports
 	// persistent flags, which, if defined here, will be global for your
 	// application.
-	rootCmd.PersistentFlags().BoolVar(&NoColor, "no-color", false, "Disable colors in output")
-	rootCmd.PersistentFlags().BoolVar(&Debug, "debug", false, "Disable colors in output")
+	rootCmd.PersistentFlags().BoolVar(&core.NoColor, "no-color", false, "Disable colors in output")
+	rootCmd.PersistentFlags().BoolVar(&core.DebugMode, "debug", false, "Disable colors in output")
+	rootCmd.PersistentFlags().IntVar(&core.FixedTerminalWidth, "fixed-terminal-width", -1, "Disables terminal width detection by using fixed provided value")
 }
 
 func initSettings() {
-	if NoColor {
+	if core.NoColor {
 		color.NoColor = true
 		yaml.HighlightKeys = false
 	}

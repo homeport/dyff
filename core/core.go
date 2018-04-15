@@ -40,6 +40,15 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// DebugMode is the global switch to enable debug output
+var DebugMode = false
+
+// NoColor is the gobal switch to decide whether strings should be colored in the output
+var NoColor = false
+
+// FixedTerminalWidth disables terminal width detection and reset it with a fixed given value
+var FixedTerminalWidth = -1
+
 // Debug log output
 var Debug = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
 
@@ -96,6 +105,10 @@ func ExitWithError(text string, err error) {
 }
 
 func GetTerminalWidth() int {
+	if FixedTerminalWidth > 0 {
+		return FixedTerminalWidth
+	}
+
 	termWidth, _, err := terminal.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
 		return 80

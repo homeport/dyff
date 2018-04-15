@@ -42,6 +42,10 @@ func TestCore(t *testing.T) {
 var _ = BeforeSuite(func() {
 	yaml.HighlightKeys = false
 	color.NoColor = true
+
+	core.NoColor = false
+	core.DebugMode = false
+	core.FixedTerminalWidth = 80
 })
 
 func yml(input string) yaml.MapSlice {
