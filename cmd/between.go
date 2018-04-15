@@ -77,7 +77,6 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
  | (_| | |_| |  _|  _|
   \__,_|\__, |_| |_|   returned %s
         |___/
-
 `, niceLocation(fromLocation),
 				niceLocation(toLocation),
 				core.Bold(core.Plural(len(diffs), "difference")))

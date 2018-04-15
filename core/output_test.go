@@ -35,31 +35,31 @@ var _ = Describe("Core/Output", func() {
 		Context("reporting differences", func() {
 			It("should show a nice string difference", func() {
 				content := singleDiff("/some/yaml/structure/string", MODIFICATION, "foobar", "Foobar")
-				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.string
+				Expect(humanDiff(content)).To(BeEquivalentTo(`
+some.yaml.structure.string
   ± value change
     - foobar
     + Foobar
-
 `))
 			})
 
 			It("should show a nice integer difference", func() {
 				content := singleDiff("/some/yaml/structure/int", MODIFICATION, 12, 147)
-				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.int
+				Expect(humanDiff(content)).To(BeEquivalentTo(`
+some.yaml.structure.int
   ± value change
     - 12
     + 147
-
 `))
 			})
 
 			It("should show a type difference", func() {
 				content := singleDiff("/some/yaml/structure/test", MODIFICATION, 12, 12.0)
-				Expect(humanDiff(content)).To(BeEquivalentTo(`some.yaml.structure.test
+				Expect(humanDiff(content)).To(BeEquivalentTo(`
+some.yaml.structure.test
   ± type change from int to float64
     - 12
     + 12
-
 `))
 			})
 
@@ -89,11 +89,11 @@ input: |+
 					"This is a text with\nnewlines and stuff\nto show case whitespace\nissues.\n",
 					"This is a text with\nnewlines and stuff\nto show case whitespace\nissues.\n\n")))
 
-				Expect(humanDiff(result[0])).To(BeEquivalentTo("input\n  ± whitespace only change\n    - This·is·a·text·with↵         + This·is·a·text·with↵\n" +
+				Expect(humanDiff(result[0])).To(BeEquivalentTo("\ninput\n  ± whitespace only change\n    - This·is·a·text·with↵         + This·is·a·text·with↵\n" +
 					"      newlines·and·stuff↵            newlines·and·stuff↵\n" +
 					"      to·show·case·whitespace↵       to·show·case·whitespace↵\n" +
 					"      issues.↵                       issues.↵\n" +
-					"                                     ↵\n\n\n\n"))
+					"                                     ↵\n\n"))
 			})
 		})
 	})
@@ -125,8 +125,7 @@ Miss Foobar`
 #2  Mrs. Foobar  200
 #3  Miss Foobar  3000
 #4               40000
-                 500000
-`))
+                 500000`))
 			})
 
 			It("should show a nice table output with colored text", func() {
@@ -159,8 +158,7 @@ Miss Foobar`
 %s  Mrs. Foobar  200
 %s  Miss Foobar  3000
 %s               40000
-                 500000
-`, Color("#1", color.FgGreen), Color("#2", color.FgBlue), Color("#3", color.FgRed, color.Underline), Color("#4", color.FgYellow, color.Bold, color.Italic))))
+                 500000`, Color("#1", color.FgGreen), Color("#2", color.FgBlue), Color("#3", color.FgRed, color.Underline), Color("#4", color.FgYellow, color.Bold, color.Italic))))
 			})
 		})
 	})

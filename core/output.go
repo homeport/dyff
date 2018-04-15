@@ -74,10 +74,12 @@ func DiffsToHumanStyle(diffs []Diff) string {
 		GenerateHumanDiffOutput(&output, diff)
 	}
 
+	output.WriteString("\n")
 	return output.String()
 }
 
 func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
+	output.WriteString("\n")
 	output.WriteString(pathToString(diff.Path))
 	output.WriteString("\n")
 
@@ -155,7 +157,6 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
 				output.WriteString(Red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
 				output.WriteString(Green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
-				output.WriteString("\n")
 
 			} else {
 				output.WriteString(Cols(" ", 2,
@@ -373,9 +374,12 @@ func Cols(separator string, indent int, columns ...string) string {
 	}
 
 	var buf bytes.Buffer
-	for _, row := range mtrx {
+	for i, row := range mtrx {
 		buf.WriteString(strings.TrimRight(strings.Join(row, separator), " "))
-		buf.WriteString("\n")
+
+		if i < len(mtrx)-1 {
+			buf.WriteString("\n")
+		}
 	}
 
 	return buf.String()
