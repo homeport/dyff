@@ -11,4 +11,5 @@ install:
 - go get -u github.com/onsi/gomega/...
 - export PATH=$PATH:$HOME/gopath/bin
 
-script: $HOME/gopath/bin/ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace && go vet
+script: $HOME/gopath/bin/ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace && \
+        for DIR in $(find . -type f -name "*.go" -exec dirname {} \; | grep -v vendor | sort -u); do ( cd $DIR && go vet ); done
