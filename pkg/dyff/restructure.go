@@ -27,16 +27,16 @@ import (
 )
 
 var knownKeyOrders = [][]string{
-	[]string{"name", "director_uuid", "releases", "stemcells", "update", "instance_groups", "addons"},             // https://bosh.io/docs/manifest-v2.html
-	[]string{"name", "director_uuid", "releases", "instance_groups", "networks", "resource_pools", "compilation"}, // Random actual example ...
-	[]string{"jobs", "resources", "resource_types"},                                                               // https://concourse-ci.org/pipelines.html
-	[]string{"name", "type", "source"},                                                                            // https://concourse-ci.org/resources.html
-	[]string{"get"},                                                                                               // https://concourse-ci.org/steps.html
-	[]string{"put"},                                                                                               // https://concourse-ci.org/steps.html
-	[]string{"task"},                                                                                              // https://concourse-ci.org/steps.html
-	[]string{"name"},                                                                                              // Universal default #1 ... name should always be first
-	[]string{"key"},                                                                                               // Universal default #2 ... key should always be first
-	[]string{"id"},                                                                                                // Universal default #3 ... id should always be first
+	{"name", "director_uuid", "releases", "stemcells", "update", "instance_groups", "addons"},             // https://bosh.io/docs/manifest-v2.html
+	{"name", "director_uuid", "releases", "instance_groups", "networks", "resource_pools", "compilation"}, // Random actual example ...
+	{"jobs", "resources", "resource_types"},                                                               // https://concourse-ci.org/pipelines.html
+	{"name", "type", "source"},                                                                            // https://concourse-ci.org/resources.html
+	{"get"},                                                                                               // https://concourse-ci.org/steps.html
+	{"put"},                                                                                               // https://concourse-ci.org/steps.html
+	{"task"},                                                                                              // https://concourse-ci.org/steps.html
+	{"name"},                                                                                              // Universal default #1 ... name should always be first
+	{"key"},                                                                                               // Universal default #2 ... key should always be first
+	{"id"},                                                                                                // Universal default #3 ... id should always be first
 }
 
 func lookupMap(list []string) map[string]int {

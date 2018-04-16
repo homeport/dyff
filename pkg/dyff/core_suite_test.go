@@ -116,7 +116,7 @@ func humanDiff(diff Diff) string {
 func singleDiff(p string, change rune, from, to interface{}) Diff {
 	return Diff{
 		Path: path(p),
-		Details: []Detail{Detail{
+		Details: []Detail{{
 			Kind: change,
 			From: from,
 			To:   to,
@@ -127,12 +127,12 @@ func singleDiff(p string, change rune, from, to interface{}) Diff {
 func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, from2, to2 interface{}) Diff {
 	return Diff{
 		Path: path(p),
-		Details: []Detail{Detail{
+		Details: []Detail{{
 			Kind: change1,
 			From: from1,
 			To:   to1,
 		},
-			Detail{
+			{
 				Kind: change2,
 				From: from2,
 				To:   to2,

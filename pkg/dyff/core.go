@@ -240,16 +240,16 @@ func CompareDocuments(from interface{}, to interface{}) []Diff {
 func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
-		return []Diff{Diff{path, []Detail{Detail{Kind: ADDITION, From: from, To: to}}}}
+		return []Diff{{path, []Detail{{Kind: ADDITION, From: from, To: to}}}}
 
 	} else if from != nil && to == nil {
-		return []Diff{Diff{path, []Detail{Detail{Kind: REMOVAL, From: from, To: to}}}}
+		return []Diff{{path, []Detail{{Kind: REMOVAL, From: from, To: to}}}}
 
 	} else if from == nil && to == nil {
 		return []Diff{}
 
 	} else if reflect.TypeOf(from) != reflect.TypeOf(to) {
-		return []Diff{Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}}}
+		return []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}
 	}
 
 	result := make([]Diff, 0)
@@ -279,7 +279,7 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 		switch to.(type) {
 		case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
 			if from != to {
-				result = append(result, Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}})
+				result = append(result, Diff{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}})
 			}
 		}
 
@@ -517,7 +517,7 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 func compareStrings(path Path, from string, to string) []Diff {
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
-		result = append(result, Diff{path, []Detail{Detail{Kind: MODIFICATION, From: from, To: to}}})
+		result = append(result, Diff{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}})
 	}
 
 	return result
