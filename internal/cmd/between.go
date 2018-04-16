@@ -83,7 +83,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			fmt.Print(dyff.DiffsToHumanStyle(diffs))
 
 		default:
-			fmt.Printf("Unkown output style %s\n", style)
+			fmt.Printf("Unknown output style %s\n", style)
 			cmd.Usage()
 		}
 	},

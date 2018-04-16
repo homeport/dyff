@@ -61,7 +61,7 @@ var Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile
 // Error log output
 var Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
-// Constants to differenciate between the different kinds of differences
+// Constants to distinguish between the different kinds of differences
 const (
 	ADDITION     = '+'
 	REMOVAL      = '-'

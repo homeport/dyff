@@ -209,7 +209,7 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 	}
 }
 
-// LoadX509Certs tries to load the provided strings as a cert each and returns a textual represenation of the certs, or an error if the strings are not X509 certs
+// LoadX509Certs tries to load the provided strings as a cert each and returns a textual representation of the certs, or an error if the strings are not X509 certs
 func LoadX509Certs(from, to string) (string, string, error) {
 	// Back out quickly if cert inspection is disabled
 	if DoNotInspectCerts {

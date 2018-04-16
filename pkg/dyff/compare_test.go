@@ -319,7 +319,7 @@ list:
 			})
 		})
 
-		Context("Given two YAML structures with complext content", func() {
+		Context("Given two YAML structures with complex content", func() {
 			It("should return all differences in there", func() {
 				from := yml(`---
 instance_groups:
