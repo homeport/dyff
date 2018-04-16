@@ -1,6 +1,7 @@
 # δyƒƒ /ˈdʏf/
 A diff tool for YAML files, and sometimes JSON
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/HeavyWombat/dyff?style=flat-square)](https://goreportcard.com/report/github.com/HeavyWombat/dyff)
 [![Build Status](https://travis-ci.org/HeavyWombat/dyff.svg?branch=master)](https://travis-ci.org/HeavyWombat/dyff) [![GoDoc](https://godoc.org/github.com/HeavyWombat/dyff?status.svg)](https://godoc.org/github.com/HeavyWombat/dyff)
 
 ![dyff between example](docs/images/dyff-between-example.png?raw=true "dyff between example of two cf-deployment versions")
