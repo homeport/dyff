@@ -110,7 +110,7 @@ func GenerateHumanDetailOutput(detail Detail) string {
 		case yaml.MapSlice:
 			output.WriteString(Color(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 		}
-		WriteTextBlocks(&output, 2, Green(yamlString(detail.To)))
+		WriteTextBlocks(&output, 2, Green(yamlString(RestructureObject(detail.To))))
 
 	case REMOVAL:
 		switch detail.From.(type) {
@@ -120,7 +120,7 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			output.WriteString(Color(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 
 		}
-		WriteTextBlocks(&output, 2, Red(yamlString(detail.From)))
+		WriteTextBlocks(&output, 2, Red(yamlString(RestructureObject(detail.From))))
 
 	case MODIFICATION:
 		fromType := reflect.TypeOf(detail.From).Kind()
