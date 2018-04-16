@@ -20,7 +20,7 @@
 
 package main
 
-import "github.com/HeavyWombat/dyff/cmd"
+import "github.com/HeavyWombat/dyff/internal/cmd"
 
 func main() {
 	cmd.Execute()
