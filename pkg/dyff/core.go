@@ -762,10 +762,10 @@ func GetBytesFromLocation(location string) ([]byte, error) {
 	if _, err = url.ParseRequestURI(location); err == nil {
 		var response *http.Response
 		response, err = http.Get(location)
-		defer response.Body.Close()
 		if err != nil {
 			return nil, err
 		}
+		defer response.Body.Close()
 
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(response.Body)
