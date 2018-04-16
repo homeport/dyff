@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package core_test
+package dyff_test
 
 import (
-	. "github.com/HeavyWombat/dyff/core"
+	. "github.com/HeavyWombat/dyff/pkg/dyff"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -476,7 +476,7 @@ resource_pools:
 
 		Context("Given two YAML files", func() {
 			It("should return all differences between the files", func() {
-				results := CompareDocuments(yml("../assets/examples/from.yml"), yml("../assets/examples/to.yml"))
+				results := CompareDocuments(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))
 				expected := []Diff{
 					doubleDiff("/yaml/map",
 						REMOVAL, yml(`---

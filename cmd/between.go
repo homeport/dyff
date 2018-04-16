@@ -28,7 +28,7 @@ import (
 	"strings"
 
 	"github.com/HeavyWombat/color"
-	"github.com/HeavyWombat/dyff/core"
+	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/spf13/cobra"
 )
 
@@ -56,12 +56,12 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			toLocation = args[1]
 		}
 
-		from, to, err := core.LoadFiles(fromLocation, toLocation)
+		from, to, err := dyff.LoadFiles(fromLocation, toLocation)
 		if err != nil {
-			core.ExitWithError("Failed to load input files", err)
+			dyff.ExitWithError("Failed to load input files", err)
 		}
 
-		diffs := core.CompareDocuments(from, to)
+		diffs := dyff.CompareDocuments(from, to)
 
 		// TODO Add style Go-Patch
 		// TODO Add style Spruce
@@ -79,8 +79,8 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
         |___/
 `, niceLocation(fromLocation),
 				niceLocation(toLocation),
-				core.Bold(core.Plural(len(diffs), "difference")))
-			fmt.Print(core.DiffsToHumanStyle(diffs))
+				dyff.Bold(dyff.Plural(len(diffs), "difference")))
+			fmt.Print(dyff.DiffsToHumanStyle(diffs))
 
 		default:
 			fmt.Printf("Unkown output style %s\n", style)
@@ -91,17 +91,17 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 func niceLocation(location string) string {
 	if location == "-" {
-		return core.Italic("<stdin>")
+		return dyff.Italic("<stdin>")
 	}
 
 	if _, err := os.Stat(location); err == nil {
 		if abs, err := filepath.Abs(location); err == nil {
-			return core.Bold(abs)
+			return dyff.Bold(abs)
 		}
 	}
 
 	if _, err := url.ParseRequestURI(location); err == nil {
-		return core.Color(location, color.FgHiBlue, color.Underline)
+		return dyff.Color(location, color.FgHiBlue, color.Underline)
 	}
 
 	return location
@@ -113,7 +113,7 @@ func init() {
 	// TODO Add flag for filter on path
 	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "Specify the output style, e.g. 'human' (more to come ...)")
 	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap `from` and `to` for compare")
-	betweenCmd.PersistentFlags().BoolVarP(&core.NoTableStyle, "no-table-style", "t", false, "Disable the table output")
-	betweenCmd.PersistentFlags().BoolVarP(&core.DoNotInspectCerts, "no-cert-inspection", "c", false, "Disable certificate inspection (compare as raw text)")
-	betweenCmd.PersistentFlags().BoolVarP(&core.UseGoPatchPaths, "use-go-patch-style", "g", false, "Use Go-Patch style paths instead of Spruce Dot-Style")
+	betweenCmd.PersistentFlags().BoolVarP(&dyff.NoTableStyle, "no-table-style", "t", false, "Disable the table output")
+	betweenCmd.PersistentFlags().BoolVarP(&dyff.DoNotInspectCerts, "no-cert-inspection", "c", false, "Disable certificate inspection (compare as raw text)")
+	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "Use Go-Patch style paths instead of Spruce Dot-Style")
 }

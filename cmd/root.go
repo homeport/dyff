@@ -22,7 +22,7 @@ package cmd
 
 import (
 	"github.com/HeavyWombat/color"
-	"github.com/HeavyWombat/dyff/core"
+	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
@@ -41,7 +41,7 @@ capabilities to transform YAML to JSON, or JSON to YAML.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		core.ExitWithError("Unable to execute root command", err)
+		dyff.ExitWithError("Unable to execute root command", err)
 	}
 }
 
@@ -51,13 +51,13 @@ func init() {
 	// Here you will define your flags and configuration settings. Cobra supports
 	// persistent flags, which, if defined here, will be global for your
 	// application.
-	rootCmd.PersistentFlags().BoolVar(&core.NoColor, "no-color", false, "Disable colors in output")
-	rootCmd.PersistentFlags().BoolVar(&core.DebugMode, "debug", false, "Disable colors in output")
-	rootCmd.PersistentFlags().IntVar(&core.FixedTerminalWidth, "fixed-terminal-width", -1, "Disables terminal width detection by using fixed provided value")
+	rootCmd.PersistentFlags().BoolVar(&dyff.NoColor, "no-color", false, "Disable colors in output")
+	rootCmd.PersistentFlags().BoolVar(&dyff.DebugMode, "debug", false, "Disable colors in output")
+	rootCmd.PersistentFlags().IntVar(&dyff.FixedTerminalWidth, "fixed-terminal-width", -1, "Disables terminal width detection by using fixed provided value")
 }
 
 func initSettings() {
-	if core.NoColor {
+	if dyff.NoColor {
 		color.NoColor = true
 		yaml.HighlightKeys = false
 	}

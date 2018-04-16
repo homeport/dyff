@@ -3,7 +3,7 @@ A diff tool for YAML files, and sometimes JSON
 
 [![Build Status](https://travis-ci.org/HeavyWombat/dyff.svg?branch=master)](https://travis-ci.org/HeavyWombat/dyff) [![GoDoc](https://godoc.org/github.com/HeavyWombat/dyff?status.svg)](https://godoc.org/github.com/HeavyWombat/dyff)
 
-![dyff between example](doc/images/dyff-between-example.png?raw=true "dyff between example of two cf-deployment versions")
+![dyff between example](docs/images/dyff-between-example.png?raw=true "dyff between example of two cf-deployment versions")
 
 ## Objectives
 - Easy to use **command line interface** with natural language design

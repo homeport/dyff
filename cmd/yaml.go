@@ -23,7 +23,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/HeavyWombat/dyff/core"
+	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
@@ -42,9 +42,9 @@ Converts input document into YAML format while preserving the order of all keys.
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			obj, err := core.LoadFile(x)
+			obj, err := dyff.LoadFile(x)
 			if err != nil {
-				core.ExitWithError("Failed to load input file", err)
+				dyff.ExitWithError("Failed to load input file", err)
 			}
 
 			switch obj.(type) {
@@ -52,18 +52,18 @@ Converts input document into YAML format while preserving the order of all keys.
 				mapslice := obj.(yaml.MapSlice)
 
 				if restructure {
-					mapslice = core.RestructureMapSlice(mapslice)
+					mapslice = dyff.RestructureMapSlice(mapslice)
 				}
 
-				output, yamlerr := core.ToYAMLString(mapslice)
+				output, yamlerr := dyff.ToYAMLString(mapslice)
 				if yamlerr != nil {
-					core.ExitWithError("Failed to marshal object into YAML", err)
+					dyff.ExitWithError("Failed to marshal object into YAML", err)
 				}
 
 				fmt.Print(output)
 
 			default:
-				core.ExitWithError("Failed to process file",
+				dyff.ExitWithError("Failed to process file",
 					fmt.Errorf("Provided input file is not YAML compatible"))
 			}
 		}

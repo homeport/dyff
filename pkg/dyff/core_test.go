@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package core_test
+package dyff_test
 
 import (
-	. "github.com/HeavyWombat/dyff/core"
+	. "github.com/HeavyWombat/dyff/pkg/dyff"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -30,7 +30,7 @@ var _ = Describe("Core/Functions", func() {
 	Describe("common functions", func() {
 		Context("loading input data", func() {
 			It("should load input files from disk", func() {
-				from, to, err := LoadFiles("../assets/examples/from.yml", "../assets/examples/to.yml")
+				from, to, err := LoadFiles("../../assets/examples/from.yml", "../../assets/examples/to.yml")
 				Expect(err).To(BeNil())
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())

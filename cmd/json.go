@@ -23,7 +23,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/HeavyWombat/dyff/core"
+	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/spf13/cobra"
 )
 
@@ -38,14 +38,14 @@ Converts input document into JSON format while preserving the order of all keys.
 
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, x := range args {
-			obj, err := core.LoadFile(x)
+			obj, err := dyff.LoadFile(x)
 			if err != nil {
-				core.ExitWithError("Failed to load input file", err)
+				dyff.ExitWithError("Failed to load input file", err)
 			}
 
-			output, err := core.ToJSONString(obj)
+			output, err := dyff.ToJSONString(obj)
 			if err != nil {
-				core.ExitWithError("Failed to marshal object into JSON", err)
+				dyff.ExitWithError("Failed to marshal object into JSON", err)
 			}
 
 			fmt.Printf("%s\n", output)

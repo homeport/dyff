@@ -113,7 +113,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
+  revision = "a35a21de978d84ffc92f010a153705b170b2f9d1"
 
 [[projects]]
   branch = "master"
@@ -122,7 +122,7 @@
     "unix",
     "windows"
   ]
-  revision = "2281fa97ef7b0c26324634d5a22f04babdac8713"
+  revision = "2f57af4873d00d535c5c9028850aa2152e6a5566"
 
 [[projects]]
   name = "golang.org/x/text"

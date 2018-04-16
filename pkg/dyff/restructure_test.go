@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package core_test
+package dyff_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/HeavyWombat/dyff/core"
+	. "github.com/HeavyWombat/dyff/pkg/dyff"
 
 	"github.com/HeavyWombat/yaml"
 )
