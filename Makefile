@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright © 2018 Matthias Diester
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,42 +18,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set -euo pipefail
+.PHONY: clean
 
-BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="$(cd "$BASEDIR" && git describe --tags)"
-VERFILE="$BASEDIR/internal/cmd/version.go"
+all: test
 
-on_exit() {
-  if [[ -f "${VERFILE}.bak" ]]; then
-    mv "${VERFILE}.bak" "${VERFILE}"
-  fi
-}
+clean:
+	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
 
-# Run on exit function to clean-up
-trap on_exit EXIT
+vet:
+	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-vet.sh
 
-# Backup current version of the version subcommand and set current tag as version
-cp -p "${VERFILE}" "${VERFILE}.bak"
-perl -pi -e "s/const version = \"\\(development\\)\"/const version = \"${VERSION}\"/g" "${VERFILE}"
+fmt:
+	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-fmt.sh
 
-TARGET_PATH="${BASEDIR}/binaries"
-mkdir -p "$TARGET_PATH"
-while read -r OS ARCH; do
-  echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for OS \\033[1m${OS}\\033[0m and architecture \\033[1m${ARCH}\\033[0m"
-  TARGET_FILE="${TARGET_PATH}/dyff-${OS}-${ARCH}"
-  if [[ "${OS}" == "windows" ]]; then
-    TARGET_FILE="${TARGET_FILE}.exe"
-  fi
+build: clean vet fmt
+	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh
 
-  ( cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -o "$TARGET_FILE" cmd/dyff/main.go )
-
-done << EOL
-darwin	386
-darwin	amd64
-linux	386
-linux	amd64
-linux	s390x
-windows	386
-windows	amd64
-EOL
+test: vet fmt
+	@ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace

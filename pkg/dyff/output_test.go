@@ -86,8 +86,8 @@ input: |+
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/input",
 					MODIFICATION,
-					"This is a text with\nnewlines and stuff\nto show case whitespace\nissues.\n",
-					"This is a text with\nnewlines and stuff\nto show case whitespace\nissues.\n\n")))
+					"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n",
+					"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n\n")))
 
 				Expect(humanDiff(result[0])).To(BeEquivalentTo("\ninput\n  ± whitespace only change\n    - This·is·a·text·with↵         + This·is·a·text·with↵\n" +
 					"      newlines·and·stuff↵            newlines·and·stuff↵\n" +
