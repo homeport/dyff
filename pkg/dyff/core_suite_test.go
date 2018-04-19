@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -51,18 +52,22 @@ var _ = BeforeSuite(func() {
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {
-		var content interface{}
+		var content InputFile
 		var err error
 		if content, err = LoadFile(input); err != nil {
-			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %v", input, err))
+			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %s", input, err.Error()))
 		}
 
-		switch content.(type) {
+		if len(content.Documents) > 1 {
+			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Provided file contains more than one document", input))
+		}
+
+		switch content.Documents[0].(type) {
 		case yaml.MapSlice:
-			return content.(yaml.MapSlice)
+			return content.Documents[0].(yaml.MapSlice)
 		}
 
-		Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Input file is not YAML", input))
+		Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Document #0 in YAML is not of type MapSlice, but is %s", input, reflect.TypeOf(content.Documents[0])))
 	}
 
 	content := yaml.MapSlice{}
@@ -71,6 +76,15 @@ func yml(input string) yaml.MapSlice {
 	}
 
 	return content
+}
+
+func file(input string) InputFile {
+	inputfile, err := LoadFile(input)
+	if err != nil {
+		Fail(fmt.Sprintf("Failed to load input file from %s: %s", input, err.Error()))
+	}
+
+	return inputfile
 }
 
 func path(path string) Path {
@@ -103,12 +117,12 @@ func path(path string) Path {
 		}
 	}
 
-	return result
+	return Path{DocumentIdx: 0, PathElements: result}
 }
 
 func humanDiff(diff Diff) string {
 	var buf bytes.Buffer
-	GenerateHumanDiffOutput(&buf, diff)
+	GenerateHumanDiffOutput(&buf, diff, false)
 
 	return buf.String()
 }

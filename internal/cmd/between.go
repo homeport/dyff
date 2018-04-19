@@ -61,7 +61,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			dyff.ExitWithError("Failed to load input files", err)
 		}
 
-		diffs := dyff.CompareDocuments(from, to)
+		diffs := dyff.CompareInputFiles(from, to)
 
 		// TODO Add style Go-Patch
 		// TODO Add style Spruce

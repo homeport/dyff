@@ -47,24 +47,26 @@ Converts input document into YAML format while preserving the order of all keys.
 				dyff.ExitWithError("Failed to load input file", err)
 			}
 
-			switch obj.(type) {
-			case yaml.MapSlice:
-				mapslice := obj.(yaml.MapSlice)
+			for _, document := range obj.Documents {
+				switch document.(type) {
+				case yaml.MapSlice:
+					mapslice := document.(yaml.MapSlice)
 
-				if restructure {
-					mapslice = dyff.RestructureMapSlice(mapslice)
+					if restructure {
+						mapslice = dyff.RestructureMapSlice(mapslice)
+					}
+
+					output, yamlerr := dyff.ToYAMLString(mapslice)
+					if yamlerr != nil {
+						dyff.ExitWithError("Failed to marshal object into YAML", err)
+					}
+
+					fmt.Print(output)
+
+				default:
+					dyff.ExitWithError("Failed to process file",
+						fmt.Errorf("Provided input file is not YAML compatible"))
 				}
-
-				output, yamlerr := dyff.ToYAMLString(mapslice)
-				if yamlerr != nil {
-					dyff.ExitWithError("Failed to marshal object into YAML", err)
-				}
-
-				fmt.Print(output)
-
-			default:
-				dyff.ExitWithError("Failed to process file",
-					fmt.Errorf("Provided input file is not YAML compatible"))
 			}
 		}
 	},

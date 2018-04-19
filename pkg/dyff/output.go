@@ -45,12 +45,12 @@ var DoNotInspectCerts = false
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
 
-func pathToString(path Path) string {
+func pathToString(path Path, showDocumentIdx bool) string {
 	if UseGoPatchPaths {
-		return ToGoPatchStyle(path)
+		return ToGoPatchStyle(path, showDocumentIdx)
 	}
 
-	return ToDotStyle(path)
+	return ToDotStyle(path, showDocumentIdx)
 }
 
 func yamlString(input interface{}) string {
@@ -68,19 +68,22 @@ func yamlString(input interface{}) string {
 // But this means the coloring lib needs to be able to apply styles on already
 // styled text without making it look ugly.
 func DiffsToHumanStyle(diffs []Diff) string {
+	// TODO Check if there were multiple documents involved to enable or disable the output of the document id
+	showDocumentIdx := true
+
 	var output bytes.Buffer
 
 	for _, diff := range diffs {
-		GenerateHumanDiffOutput(&output, diff)
+		GenerateHumanDiffOutput(&output, diff, showDocumentIdx)
 	}
 
 	output.WriteString("\n")
 	return output.String()
 }
 
-func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
+func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) {
 	output.WriteString("\n")
-	output.WriteString(pathToString(diff.Path))
+	output.WriteString(pathToString(diff.Path, showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
@@ -91,7 +94,7 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	// For the use case in which only a path-less diff is suppose to be printed,
 	// omit the indent in this case since there is only one element to show
 	indent := 2
-	if len(diff.Path) == 0 {
+	if len(diff.Path.PathElements) == 0 {
 		indent = 0
 	}
 

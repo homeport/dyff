@@ -556,6 +556,25 @@ listY: [ Yo, Yo, Yo ]
 					To:   []interface{}{"A", "B", "C", "D"},
 				}))
 			})
+
+			// TODO Write multi document test case
+			// It("should return all differences between the files with multipe documents", func() {
+			// 	// results := CompareDocuments(yml("../../assets/kubernetes-yaml/from.yml"), yml("../../assets/kubernetes-yaml/to.yml"))
+			// 	results := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
+			// 	expected := []Diff{
+			//
+			// 		doubleDiff("/yaml/named-entry-list-using-id",
+			// 			REMOVAL, yml(`list: [ {id: X}, {id: Z} ]`)[0].Value, nil,
+			// 			ADDITION, nil, yml(`list: [ {id: D}, {id: E} ]`)[0].Value),
+			// 	}
+			//
+			// 	Expect(results).NotTo(BeNil())
+			// 	Expect(len(results)).To(BeEquivalentTo(len(expected)))
+			//
+			// 	for i, result := range results {
+			// 		Expect(result).To(BeEquivalentTo(expected[i]))
+			// 	}
+			// })
 		})
 	})
 })

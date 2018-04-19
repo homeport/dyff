@@ -24,10 +24,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
 	"reflect"
 	"strconv"
@@ -78,7 +75,10 @@ type PathElement struct {
 }
 
 // Path describes a position inside a YAML (or JSON) structure by providing a name to each hierarchy level (tree structure).
-type Path []PathElement
+type Path struct {
+	DocumentIdx  int
+	PathElements []PathElement
+}
 
 // Detail encapsulate the actual details of a change, mainly the kind of difference and the values.
 type Detail struct {
@@ -192,8 +192,8 @@ func colorEachLine(color *color.Color, text string) string {
 
 // ToDotStyle returns a path as a string in dot style separating each path element by a dot.
 // Please note that path elements that are named "." will look ugly.
-func ToDotStyle(path Path) string {
-	pathLength := len(path)
+func ToDotStyle(path Path, showDocumentIdx bool) string {
+	pathLength := len(path.PathElements)
 
 	// The Dot style does not really support the root level. An empty path
 	// will just return a text indicating the root level is meant
@@ -202,7 +202,7 @@ func ToDotStyle(path Path) string {
 	}
 
 	result := make([]string, 0, pathLength)
-	for _, element := range path {
+	for _, element := range path.PathElements {
 		if element.Key != "" {
 			result = append(result, Color(element.Name, color.Italic, color.Bold))
 		} else {
@@ -210,13 +210,17 @@ func ToDotStyle(path Path) string {
 		}
 	}
 
+	if showDocumentIdx {
+		return strings.Join(result, ".") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx), color.FgHiCyan)
+	}
+
 	return strings.Join(result, ".")
 }
 
 // ToGoPatchStyle returns a path as a string in Go-Patch (https://github.com/cppforlife/go-patch) style separating each path element by a slash. Named list entries will be shown with their respecitive identifier name such as "name", "key", or "id".
-func ToGoPatchStyle(path Path) string {
-	result := make([]string, 0, len(path))
-	for _, element := range path {
+func ToGoPatchStyle(path Path, showDocumentIdx bool) string {
+	result := make([]string, 0, len(path.PathElements))
+	for _, element := range path.PathElements {
 		if element.Key != "" {
 			result = append(result, fmt.Sprintf("%s=%s", Color(element.Key, color.Italic), Color(element.Name, color.Bold, color.Italic)))
 		} else {
@@ -224,11 +228,28 @@ func ToGoPatchStyle(path Path) string {
 		}
 	}
 
+	if showDocumentIdx {
+		return "/" + strings.Join(result, "/") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx), color.FgHiCyan)
+	}
+
 	return "/" + strings.Join(result, "/")
 }
 
 func (path Path) String() string {
-	return ToGoPatchStyle(path)
+	return ToGoPatchStyle(path, true)
+}
+
+func CompareInputFiles(from InputFile, to InputFile) []Diff {
+	if len(from.Documents) != len(to.Documents) {
+		ExitWithError("Failed to compare input files", fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported"))
+	}
+
+	result := make([]Diff, 0)
+	for idx := range from.Documents {
+		result = append(result, CompareObjects(Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])...)
+	}
+
+	return result
 }
 
 // CompareDocuments is the main entry point to compare two documents and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
@@ -524,11 +545,16 @@ func compareStrings(path Path, from string, to string) []Diff {
 }
 
 func newPath(path Path, key interface{}, name interface{}) Path {
-	result := make(Path, len(path))
-	copy(result, path)
+	result := make([]PathElement, len(path.PathElements))
+	copy(result, path.PathElements)
 
-	return append(result, PathElement{Key: fmt.Sprintf("%v", key),
+	result = append(result, PathElement{
+		Key:  fmt.Sprintf("%v", key),
 		Name: fmt.Sprintf("%v", name)})
+
+	return Path{
+		DocumentIdx:  path.DocumentIdx,
+		PathElements: result}
 }
 
 // GetMapItemByKeyFromMapSlice returns the MapItem (tuple of key/value) where the MapItem key matches the provided key. It will return an empty MapItem and bool false if the given MapSlice does not contain a suitable MapItem.
@@ -681,9 +707,9 @@ func isMultiLine(from string, to string) bool {
 }
 
 // LoadFiles concurrently loads two files from the provided locations
-func LoadFiles(locationA string, locationB string) (interface{}, interface{}, error) {
+func LoadFiles(locationA string, locationB string) (InputFile, InputFile, error) {
 	type resultPair struct {
-		result interface{}
+		result InputFile
 		err    error
 	}
 
@@ -702,80 +728,15 @@ func LoadFiles(locationA string, locationB string) (interface{}, interface{}, er
 
 	from := <-fromChan
 	if from.err != nil {
-		return nil, nil, from.err
+		return InputFile{}, InputFile{}, from.err
 	}
 
 	to := <-toChan
 	if to.err != nil {
-		return nil, nil, to.err
+		return InputFile{}, InputFile{}, to.err
 	}
 
 	return from.result, to.result, nil
-}
-
-// LoadFileFromLocation processes the provided input location to load a YAML (or JSON, or raw text)
-func LoadFile(location string) (interface{}, error) {
-	// TODO Generate error if file contains more than one document
-
-	var data []byte
-	var content = yaml.MapSlice{}
-	var err error
-
-	if data, err = GetBytesFromLocation(location); err != nil {
-		ExitWithError("Unable to load data", err)
-	}
-
-	// Whatever was loaded into data, try to unmarshal it into a YAML MapSlice
-
-	if err := yaml.UnmarshalStrict(data, &content); err != nil {
-		// return the raw text if it cannot be unmarshaled properly
-		return string(data), nil
-	}
-
-	// return the YAML structure
-	return content, nil
-}
-
-func GetBytesFromLocation(location string) ([]byte, error) {
-	var data []byte
-	var err error
-
-	// Handle special location "-" which referes to STDIN stream
-	if location == "-" {
-		if data, err = ioutil.ReadAll(os.Stdin); err != nil {
-			return nil, err
-		}
-
-		return data, nil
-	}
-
-	// Handle location as local file if there is a file at that location
-	if _, err = os.Stat(location); err == nil {
-		if data, err = ioutil.ReadFile(location); err != nil {
-			return nil, err
-		}
-
-		return data, nil
-	}
-
-	// Handle location as a URI if it looks like one
-	if _, err = url.ParseRequestURI(location); err == nil {
-		var response *http.Response
-		response, err = http.Get(location)
-		if err != nil {
-			return nil, err
-		}
-		defer response.Body.Close()
-
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(response.Body)
-		data = buf.Bytes()
-
-		return data, nil
-	}
-
-	// In any other case, bail out ...
-	return nil, fmt.Errorf("Unable to get any content using location %s: it is not a file or usable URI", location)
 }
 
 // ToJSONString converts the provided object into a human readable JSON string.
@@ -829,8 +790,8 @@ func ToJSONString(obj interface{}) (string, error) {
 	}
 }
 
-// ToYAMLString converts the provided YAML MapSlice into a human readable YAML string.
-func ToYAMLString(content yaml.MapSlice) (string, error) {
+// ToYAMLString converts the provided data into a human readable YAML string.
+func ToYAMLString(content interface{}) (string, error) {
 	out, err := yaml.Marshal(content)
 	if err != nil {
 		return "", err
