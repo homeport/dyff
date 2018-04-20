@@ -474,48 +474,37 @@ resource_pools:
 			})
 		})
 
-		// TODO Write list as root element test case
-		// 		Context("Given two YAMLs with a list as the root", func() {
-		// 			It("should return the differences the same way", func() {
-		// 				from := cmplxList(`---
-		// - type: replace
-		//   path: /instance_groups/name=bosh/jobs/-
-		//   value:
-		//     name: disable_agent
-		//     release: os-conf
-		//
-		// - type: replace
-		//   path: /instance_groups/name=bosh/properties/director/cpi_job?
-		//   value: warden_cpi
-		//
-		// - type: replace
-		//   path: /instance_groups/name=bosh/properties/director/ignore_missing_gateway?
-		//   value: true
-		// `)
-		//
-		// 				to := cmplxList(`---
-		// - type: replace
-		//   path: /instance_groups/name=bosh/jobs/-
-		//   value:
-		//     name: disable_agent
-		//     release: os-conf
-		//
-		// - type: replace
-		//   path: /instance_groups/name=bosh/properties/director/cpi_job?
-		//   value: warden_cpi
-		//
-		// - type: replace
-		//   path: /instance_groups/name=bosh/properties/director/ignore_missing_gateway?
-		//   value: false
-		// `)
-		//
-		// 				result := CompareDocuments(from, to)
-		// 				Expect(result).NotTo(BeNil())
-		// 				Expect(len(result)).To(BeEquivalentTo(1))
-		// 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/2/value",
-		// 					MODIFICATION, nil, nil)))
-		// 			})
-		// 		})
+		Context("Given two YAMLs with a list as the root", func() {
+			It("should return the differences the same way", func() {
+				from := cmplxList(`---
+- name: one
+  version: 1
+
+- name: two
+  version: 2
+
+- name: three
+  version: 4
+`)
+
+				to := cmplxList(`---
+- name: one
+  version: 1
+
+- name: two
+  version: 2
+
+- name: three
+  version: 3
+`)
+
+				result := CompareDocuments(from, to)
+				Expect(result).NotTo(BeNil())
+				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result[0]).To(BeEquivalentTo(singleDiff("/name=three/version",
+					MODIFICATION, 4, 3)))
+			})
+		})
 
 		Context("Given two YAML files", func() {
 			It("should return all differences between the files", func() {

@@ -72,26 +72,19 @@ func yml(input string) yaml.MapSlice {
 		Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Document #0 in YAML is not of type MapSlice, but is %s", input, reflect.TypeOf(content.Documents[0])))
 	}
 
-	content := yaml.MapSlice{}
-	if err := yaml.UnmarshalStrict([]byte(input), &content); err != nil {
-		Fail(fmt.Sprintf("Failed to create test YAML MapSlice from input string:\n%s\n\n%v", input, err))
+	// Load YAML by parsing the actual string as YAML if it was not a file location
+	doc := singleDoc(input)
+	switch doc.(type) {
+	case yaml.MapSlice:
+		return doc.(yaml.MapSlice)
 	}
 
-	return content
+	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a YAML MapSlice:\n%s\n", input))
+	return nil
 }
 
 func cmplxList(input string) []yaml.MapSlice {
-	docs, err := LoadDocuments([]byte(input))
-	if err != nil {
-		Fail(fmt.Sprintf("Failed to parse as YAML:\n%s\n\n%v", input, err))
-	}
-
-	// In the test case scenarios, this one should just be used for simple one document YAML
-	if len(docs) > 1 {
-		Fail(fmt.Sprintf("Failed to use YAML, because it contains multiple documents:\n%s\n", input))
-	}
-
-	doc := docs[0]
+	doc := singleDoc(input)
 
 	switch doc.(type) {
 	case []yaml.MapSlice:
@@ -100,6 +93,19 @@ func cmplxList(input string) []yaml.MapSlice {
 
 	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of YAML MapSlices:\n%s\n", input))
 	return nil
+}
+
+func singleDoc(input string) interface{} {
+	docs, err := LoadDocuments([]byte(input))
+	if err != nil {
+		Fail(fmt.Sprintf("Failed to parse as YAML:\n%s\n\n%v", input, err))
+	}
+
+	if len(docs) > 1 {
+		Fail(fmt.Sprintf("Failed to use YAML, because it contains multiple documents:\n%s\n", input))
+	}
+
+	return docs[0]
 }
 
 func file(input string) InputFile {
