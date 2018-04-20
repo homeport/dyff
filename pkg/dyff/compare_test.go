@@ -506,6 +506,19 @@ resource_pools:
 			})
 		})
 
+		Context("Given two files", func() {
+			It("should return differences in raw texts", func() {
+				from := file("../../assets/raw-text/from.txt")
+				to := file("../../assets/raw-text/to.txt")
+				Expect(len(from.Documents)).To(BeIdenticalTo(1))
+				Expect(len(to.Documents)).To(BeIdenticalTo(1))
+
+				results := CompareDocuments(from.Documents[0], to.Documents[0])
+				Expect(results).NotTo(BeNil())
+				Expect(len(results)).To(BeEquivalentTo(1))
+			})
+		})
+
 		Context("Given two YAML files", func() {
 			It("should return all differences between the files", func() {
 				results := CompareDocuments(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))

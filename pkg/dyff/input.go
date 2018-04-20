@@ -108,6 +108,11 @@ func LoadDocuments(input []byte) ([]interface{}, error) {
 			decoder.Decode(&value)
 			values[i] = value
 
+		case "string":
+			var value string
+			decoder.Decode(&value)
+			values[i] = value
+
 		default:
 			return nil, fmt.Errorf("Unsupported type %s in load document function", types[i])
 		}
