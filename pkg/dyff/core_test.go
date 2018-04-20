@@ -29,6 +29,22 @@ import (
 
 var _ = Describe("Core/Functions", func() {
 	Describe("common functions", func() {
+		Context("convenience test functions", func() {
+			It("should return nice lists", func() {
+				Expect(list(`[]`)).To(BeEquivalentTo([]interface{}{}))
+				Expect(list(`[1]`)).To(BeEquivalentTo([]interface{}{1}))
+				Expect(list(`[1,2,3]`)).To(BeEquivalentTo([]interface{}{1, 2, 3}))
+				Expect(list(`[A]`)).To(BeEquivalentTo([]interface{}{"A"}))
+				Expect(list(`[A,B]`)).To(BeEquivalentTo([]interface{}{"A", "B"}))
+
+				Expect(list(`[{A: B}]`)).To(BeEquivalentTo([]interface{}{yaml.MapSlice{yaml.MapItem{Key: "A", Value: "B"}}}))
+				Expect(list(`[{A: B}, {C: D}]`)).To(BeEquivalentTo([]interface{}{
+					yaml.MapSlice{yaml.MapItem{Key: "A", Value: "B"}},
+					yaml.MapSlice{yaml.MapItem{Key: "C", Value: "D"}},
+				}))
+			})
+		})
+
 		Context("loading input data", func() {
 			It("should load input files from disk", func() {
 				from, to, err := LoadFiles("../../assets/examples/from.yml", "../../assets/examples/to.yml")

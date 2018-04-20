@@ -216,7 +216,7 @@ some:
 				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, yml(`list: [ three ]`)[0].Value)))
+				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ three ]`))))
 			})
 
 			It("should return that an integer list entry was added", func() {
@@ -243,7 +243,7 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, yml(`list: [ 3 ]`)[0].Value)))
+				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ 3 ]`))))
 			})
 
 			It("should return that a string list entry was removed", func() {
@@ -269,7 +269,7 @@ some:
 				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, yml(`list: [ three ]`)[0].Value, nil)))
+				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ three ]`), nil)))
 			})
 
 			It("should return that an integer list entry was removed", func() {
@@ -295,7 +295,7 @@ some:
 				result := CompareDocuments(from, to)
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, yml(`list: [ 3 ]`)[0].Value, nil)))
+				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ 3 ]`), nil)))
 			})
 
 			It("should not return a change if only the order in a hash was changed", func() {
@@ -396,11 +396,11 @@ instance_groups:
 				Expect(len(result)).To(BeEquivalentTo(7))
 
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", MODIFICATION, "192.168.1.1", "192.168.0.1")))
-				Expect(result[1]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, yml(`list: [ { release: custom, name: logger } ]`)[0].Value)))
+				Expect(result[1]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, list(`[ { release: custom, name: logger } ]`))))
 				Expect(result[2]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
 				Expect(result[3]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/development_mode", MODIFICATION, true, false)))
 				Expect(result[4]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/instances", MODIFICATION, 1, 2)))
-				Expect(result[5]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/networks", REMOVAL, yml(`list: [ { name: testnet } ]`)[0].Value, nil)))
+				Expect(result[5]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/networks", REMOVAL, list(`[ { name: testnet } ]`), nil)))
 				Expect(result[6]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password", MODIFICATION, "supersecret", "zwX#(;P=%hTfFzM[")))
 			})
 
@@ -469,14 +469,14 @@ resource_pools:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(doubleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters",
-					REMOVAL, yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`)[0].Value, nil,
-					ADDITION, nil, yml(`list: [ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`)[0].Value)))
+					REMOVAL, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`), nil,
+					ADDITION, nil, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`))))
 			})
 		})
 
 		Context("Given two YAMLs with a list as the root", func() {
 			It("should return the differences the same way", func() {
-				from := cmplxList(`---
+				from := list(`---
 - name: one
   version: 1
 
@@ -487,7 +487,7 @@ resource_pools:
   version: 4
 `)
 
-				to := cmplxList(`---
+				to := list(`---
 - name: one
   version: 1
 
@@ -535,20 +535,20 @@ listY: [ Yo, Yo, Yo ]
 					singleDiff("/yaml/map/whitespaces", MODIFICATION, "Strings can  have whitespaces.", "Strings can  have whitespaces.\n\n\n"),
 
 					doubleDiff("/yaml/simple-list",
-						REMOVAL, yml(`list: [ X, Z ]`)[0].Value, nil,
-						ADDITION, nil, yml(`list: [ D, E ]`)[0].Value),
+						REMOVAL, list(`[ X, Z ]`), nil,
+						ADDITION, nil, list(`[ D, E ]`)),
 
 					doubleDiff("/yaml/named-entry-list-using-name",
-						REMOVAL, yml(`list: [ {name: X}, {name: Z} ]`)[0].Value, nil,
-						ADDITION, nil, yml(`list: [ {name: D}, {name: E} ]`)[0].Value),
+						REMOVAL, list(`[ {name: X}, {name: Z} ]`), nil,
+						ADDITION, nil, list(`[ {name: D}, {name: E} ]`)),
 
 					doubleDiff("/yaml/named-entry-list-using-key",
-						REMOVAL, yml(`list: [ {key: X}, {key: Z} ]`)[0].Value, nil,
-						ADDITION, nil, yml(`list: [ {key: D}, {key: E} ]`)[0].Value),
+						REMOVAL, list(`[ {key: X}, {key: Z} ]`), nil,
+						ADDITION, nil, list(`[ {key: D}, {key: E} ]`)),
 
 					doubleDiff("/yaml/named-entry-list-using-id",
-						REMOVAL, yml(`list: [ {id: X}, {id: Z} ]`)[0].Value, nil,
-						ADDITION, nil, yml(`list: [ {id: D}, {id: E} ]`)[0].Value),
+						REMOVAL, list(`[ {id: X}, {id: Z} ]`), nil,
+						ADDITION, nil, list(`[ {id: D}, {id: E} ]`)),
 				}
 
 				Expect(results).NotTo(BeNil())
@@ -595,8 +595,8 @@ listY: [ Yo, Yo, Yo ]
 
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", MODIFICATION, "100m", "1000m"),
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/memory", MODIFICATION, "100Mi", "10Gi"),
-					singleDiff("#0/spec/template/spec/containers/name=registry/ports", ADDITION, nil, yml(`list: [ {containerPort: 5001, name: backdoor, protocol: TCP} ]`)[0].Value),
-					singleDiff("#1/spec/ports", ADDITION, nil, yml(`list: [ {name: backdoor, port: 5001, protocol: TCP} ]`)[0].Value),
+					singleDiff("#0/spec/template/spec/containers/name=registry/ports", ADDITION, nil, list(`[ {containerPort: 5001, name: backdoor, protocol: TCP} ]`)),
+					singleDiff("#1/spec/ports", ADDITION, nil, list(`[ {name: backdoor, port: 5001, protocol: TCP} ]`)),
 				}
 
 				Expect(results).NotTo(BeNil())

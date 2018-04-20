@@ -59,13 +59,13 @@ func LoadFile(location string) (InputFile, error) {
 
 func LoadDocuments(input []byte) ([]interface{}, error) {
 	var (
-		types   []reflect.Kind
+		types   []string
 		values  []interface{}
 		decoder *yaml.Decoder
 	)
 
 	// First pass: decode all documents and save the actual types
-	types = make([]reflect.Kind, 0)
+	types = make([]string, 0)
 	decoder = yaml.NewDecoder(bytes.NewReader(input))
 	for {
 		var value interface{}
@@ -73,7 +73,19 @@ func LoadDocuments(input []byte) ([]interface{}, error) {
 			break
 		}
 
-		types = append(types, reflect.TypeOf(value).Kind())
+		valueType := reflect.TypeOf(value).Kind()
+		switch valueType {
+		case reflect.Slice:
+			if isComplexSlice(value.([]interface{})) {
+				types = append(types, "complex-slice")
+
+			} else {
+				types = append(types, valueType.String())
+			}
+
+		default:
+			types = append(types, valueType.String())
+		}
 	}
 
 	// Second pass: Based on the types, initialise a proper variable to unmarshal data into
@@ -81,12 +93,17 @@ func LoadDocuments(input []byte) ([]interface{}, error) {
 	decoder = yaml.NewDecoder(bytes.NewReader(input))
 	for i := 0; i < len(types); i++ {
 		switch types[i] {
-		case reflect.Map:
+		case "map":
 			var value yaml.MapSlice
 			decoder.Decode(&value)
 			values[i] = value
 
-		case reflect.Slice:
+		case "slice":
+			var value []interface{}
+			decoder.Decode(&value)
+			values[i] = value
+
+		case "complex-slice":
 			var value []yaml.MapSlice
 			decoder.Decode(&value)
 			values[i] = value
@@ -139,4 +156,22 @@ func GetBytesFromLocation(location string) ([]byte, error) {
 
 	// In any other case, bail out ...
 	return nil, fmt.Errorf("Unable to get any content using location %s: it is not a file or usable URI", location)
+}
+
+func isComplexSlice(slice []interface{}) bool {
+	// This is kind of a weird case, but by definition an empty list is a simple slice
+	if len(slice) == 0 {
+		return false
+	}
+
+	// Count the number of entries which are maps or YAML MapSlices
+	counter := 0
+	for _, entry := range slice {
+		switch entry.(type) {
+		case map[interface{}]interface{}, yaml.MapSlice:
+			counter++
+		}
+	}
+
+	return counter == len(slice)
 }

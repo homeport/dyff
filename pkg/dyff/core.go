@@ -373,16 +373,7 @@ func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 
 func compareListOfMapSlices(path Path, from []yaml.MapSlice, to []yaml.MapSlice) []Diff {
 	// TODO Check if there is another way to do this, or if we can save time by doing something else
-	simplifyList := func(input []yaml.MapSlice) []interface{} {
-		result := make([]interface{}, len(input))
-		for i := range input {
-			result[i] = input[i]
-		}
-
-		return result
-	}
-
-	return compareLists(path, simplifyList(from), simplifyList(to))
+	return compareLists(path, SimplifyList(from), SimplifyList(to))
 }
 
 func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
@@ -724,6 +715,15 @@ func isMinorChange(from string, to string) bool {
 
 func isMultiLine(from string, to string) bool {
 	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
+}
+
+func SimplifyList(input []yaml.MapSlice) []interface{} {
+	result := make([]interface{}, len(input))
+	for i := range input {
+		result[i] = input[i]
+	}
+
+	return result
 }
 
 // LoadFiles concurrently loads two files from the provided locations

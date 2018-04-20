@@ -50,7 +50,6 @@ var _ = BeforeSuite(func() {
 	FixedTerminalWidth = 80
 })
 
-// TODO Break up the yml function into separate function for load from file, load from string ...
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {
@@ -83,15 +82,18 @@ func yml(input string) yaml.MapSlice {
 	return nil
 }
 
-func cmplxList(input string) []yaml.MapSlice {
+func list(input string) []interface{} {
 	doc := singleDoc(input)
 
 	switch doc.(type) {
+	case []interface{}:
+		return doc.([]interface{})
+
 	case []yaml.MapSlice:
-		return doc.([]yaml.MapSlice)
+		return SimplifyList(doc.([]yaml.MapSlice))
 	}
 
-	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of YAML MapSlices:\n%s\n", input))
+	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of any kind:\n%s\nIt was parsed as: %#v", input, doc))
 	return nil
 }
 
