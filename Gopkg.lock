@@ -82,6 +82,12 @@
   version = "v1.3.0"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/spf13/cobra"
   packages = ["."]
   revision = "a1f051bc3eba734da4772d60e2d677f47cf93ef4"
@@ -103,7 +109,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "d6449816ce06963d9d136eee5a56fca5b0616e7e"
+  revision = "e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7"
 
 [[projects]]
   branch = "master"
@@ -113,7 +119,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "a35a21de978d84ffc92f010a153705b170b2f9d1"
+  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
 
 [[projects]]
   branch = "master"
@@ -122,7 +128,7 @@
     "unix",
     "windows"
   ]
-  revision = "2f57af4873d00d535c5c9028850aa2152e6a5566"
+  revision = "79b0c6888797020a994db17c8510466c72fe75d9"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -157,6 +163,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1ca71e7854e3149cf1d59b5e855a8f1e73d2c20aeef167d198e874b75f252eef"
+  inputs-digest = "358051c2ada38648c0148cdd1b04b8c49e1711729769c2f0c7f76d16c1395760"
   solver-name = "gps-cdcl"
   solver-version = 1

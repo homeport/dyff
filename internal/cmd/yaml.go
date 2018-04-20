@@ -24,7 +24,6 @@ import (
 	"fmt"
 
 	"github.com/HeavyWombat/dyff/pkg/dyff"
-	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
 
@@ -47,24 +46,17 @@ Converts input document into YAML format while preserving the order of all keys.
 				dyff.ExitWithError("Failed to load input file", err)
 			}
 
-			switch obj.(type) {
-			case yaml.MapSlice:
-				mapslice := obj.(yaml.MapSlice)
-
+			for _, document := range obj.Documents {
 				if restructure {
-					mapslice = dyff.RestructureMapSlice(mapslice)
+					document = dyff.RestructureObject(document)
 				}
 
-				output, yamlerr := dyff.ToYAMLString(mapslice)
+				output, yamlerr := dyff.ToYAMLString(document)
 				if yamlerr != nil {
 					dyff.ExitWithError("Failed to marshal object into YAML", err)
 				}
 
 				fmt.Print(output)
-
-			default:
-				dyff.ExitWithError("Failed to process file",
-					fmt.Errorf("Provided input file is not YAML compatible"))
 			}
 		}
 	},

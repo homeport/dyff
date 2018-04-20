@@ -34,7 +34,6 @@ import (
 )
 
 // TODO Separate code into different output source files: human, and the new stuff
-// TODO There are still too much line breaks in the human output in the no-table-style
 
 // NoTableStyle disables output in table style
 var NoTableStyle = false
@@ -45,12 +44,12 @@ var DoNotInspectCerts = false
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
 
-func pathToString(path Path) string {
+func pathToString(path Path, showDocumentIdx bool) string {
 	if UseGoPatchPaths {
-		return ToGoPatchStyle(path)
+		return ToGoPatchStyle(path, showDocumentIdx)
 	}
 
-	return ToDotStyle(path)
+	return ToDotStyle(path, showDocumentIdx)
 }
 
 func yamlString(input interface{}) string {
@@ -68,19 +67,29 @@ func yamlString(input interface{}) string {
 // But this means the coloring lib needs to be able to apply styles on already
 // styled text without making it look ugly.
 func DiffsToHumanStyle(diffs []Diff) string {
-	var output bytes.Buffer
-
+	// Map the different document indicies listed in the paths of the diffs
+	counterMap := make(map[int]struct{}, 0)
 	for _, diff := range diffs {
-		GenerateHumanDiffOutput(&output, diff)
+		counterMap[diff.Path.DocumentIdx] = struct{}{}
 	}
 
+	// Only show the document index if there is more than one document to show
+	showDocumentIdx := len(counterMap) != 1
+
+	// Again, loop over the diff and generate each report into the buffer
+	var output bytes.Buffer
+	for _, diff := range diffs {
+		GenerateHumanDiffOutput(&output, diff, showDocumentIdx)
+	}
+
+	// Finish with one last newline so that we do not end next to the prompt
 	output.WriteString("\n")
 	return output.String()
 }
 
-func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
+func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) {
 	output.WriteString("\n")
-	output.WriteString(pathToString(diff.Path))
+	output.WriteString(pathToString(diff.Path, showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
@@ -91,7 +100,7 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff) {
 	// For the use case in which only a path-less diff is suppose to be printed,
 	// omit the indent in this case since there is only one element to show
 	indent := 2
-	if len(diff.Path) == 0 {
+	if len(diff.Path.PathElements) == 0 {
 		indent = 0
 	}
 

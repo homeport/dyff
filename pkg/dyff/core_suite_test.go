@@ -24,6 +24,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -51,26 +53,70 @@ var _ = BeforeSuite(func() {
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {
-		var content interface{}
+		var content InputFile
 		var err error
 		if content, err = LoadFile(input); err != nil {
-			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %v", input, err))
+			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %s", input, err.Error()))
 		}
 
-		switch content.(type) {
+		if len(content.Documents) > 1 {
+			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Provided file contains more than one document", input))
+		}
+
+		switch content.Documents[0].(type) {
 		case yaml.MapSlice:
-			return content.(yaml.MapSlice)
+			return content.Documents[0].(yaml.MapSlice)
 		}
 
-		Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Input file is not YAML", input))
+		Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Document #0 in YAML is not of type MapSlice, but is %s", input, reflect.TypeOf(content.Documents[0])))
 	}
 
-	content := yaml.MapSlice{}
-	if err := yaml.UnmarshalStrict([]byte(input), &content); err != nil {
-		Fail(fmt.Sprintf("Failed to create test YAML MapSlice from input string:\n%s\n\n%v", input, err))
+	// Load YAML by parsing the actual string as YAML if it was not a file location
+	doc := singleDoc(input)
+	switch doc.(type) {
+	case yaml.MapSlice:
+		return doc.(yaml.MapSlice)
 	}
 
-	return content
+	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a YAML MapSlice:\n%s\n", input))
+	return nil
+}
+
+func list(input string) []interface{} {
+	doc := singleDoc(input)
+
+	switch doc.(type) {
+	case []interface{}:
+		return doc.([]interface{})
+
+	case []yaml.MapSlice:
+		return SimplifyList(doc.([]yaml.MapSlice))
+	}
+
+	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of any kind:\n%s\nIt was parsed as: %#v", input, doc))
+	return nil
+}
+
+func singleDoc(input string) interface{} {
+	docs, err := LoadDocuments([]byte(input))
+	if err != nil {
+		Fail(fmt.Sprintf("Failed to parse as YAML:\n%s\n\n%v", input, err))
+	}
+
+	if len(docs) > 1 {
+		Fail(fmt.Sprintf("Failed to use YAML, because it contains multiple documents:\n%s\n", input))
+	}
+
+	return docs[0]
+}
+
+func file(input string) InputFile {
+	inputfile, err := LoadFile(input)
+	if err != nil {
+		Fail(fmt.Sprintf("Failed to load input file from %s: %s", input, err.Error()))
+	}
+
+	return inputfile
 }
 
 func path(path string) Path {
@@ -80,11 +126,22 @@ func path(path string) Path {
 		panic("Implementation issue: Unable to create path using an empty string")
 	}
 
+	documentIdx := 0
+
 	result := make([]PathElement, 0)
 	for i, section := range strings.Split(path, "/") {
 		if i == 0 {
 			if section != "" {
-				panic("Implementation issue: Invalid Go-Patch style path, it cannot start with anything other than a slash")
+				if !strings.HasPrefix(section, "#") {
+					panic("Implementation issue: Invalid Go-Patch style path, it cannot start with anything other than a slash, or a document idx using #<number>")
+				}
+
+				num, err := strconv.Atoi(section[1:])
+				if err != nil {
+					panic("Implementation issue: Invalid Go-Patch style path, document idx must be a number")
+				}
+
+				documentIdx = num
 			}
 
 			continue
@@ -103,12 +160,12 @@ func path(path string) Path {
 		}
 	}
 
-	return result
+	return Path{DocumentIdx: documentIdx, PathElements: result}
 }
 
 func humanDiff(diff Diff) string {
 	var buf bytes.Buffer
-	GenerateHumanDiffOutput(&buf, diff)
+	GenerateHumanDiffOutput(&buf, diff, false)
 
 	return buf.String()
 }
