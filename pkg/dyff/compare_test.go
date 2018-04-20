@@ -557,24 +557,23 @@ listY: [ Yo, Yo, Yo ]
 				}))
 			})
 
-			// TODO Write multi document test case
-			// It("should return all differences between the files with multipe documents", func() {
-			// 	// results := CompareDocuments(yml("../../assets/kubernetes-yaml/from.yml"), yml("../../assets/kubernetes-yaml/to.yml"))
-			// 	results := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
-			// 	expected := []Diff{
-			//
-			// 		doubleDiff("/yaml/named-entry-list-using-id",
-			// 			REMOVAL, yml(`list: [ {id: X}, {id: Z} ]`)[0].Value, nil,
-			// 			ADDITION, nil, yml(`list: [ {id: D}, {id: E} ]`)[0].Value),
-			// 	}
-			//
-			// 	Expect(results).NotTo(BeNil())
-			// 	Expect(len(results)).To(BeEquivalentTo(len(expected)))
-			//
-			// 	for i, result := range results {
-			// 		Expect(result).To(BeEquivalentTo(expected[i]))
-			// 	}
-			// })
+			It("should return all differences between the files with multipe documents", func() {
+				results := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
+				expected := []Diff{
+
+					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", MODIFICATION, "100m", "1000m"),
+					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/memory", MODIFICATION, "100Mi", "10Gi"),
+					singleDiff("#0/spec/template/spec/containers/name=registry/ports", ADDITION, nil, yml(`list: [ {containerPort: 5001, name: backdoor, protocol: TCP} ]`)[0].Value),
+					singleDiff("#1/spec/ports", ADDITION, nil, yml(`list: [ {name: backdoor, port: 5001, protocol: TCP} ]`)[0].Value),
+				}
+
+				Expect(results).NotTo(BeNil())
+				Expect(len(results)).To(BeEquivalentTo(len(expected)))
+
+				for i, result := range results {
+					Expect(result).To(BeEquivalentTo(expected[i]))
+				}
+			})
 		})
 	})
 })

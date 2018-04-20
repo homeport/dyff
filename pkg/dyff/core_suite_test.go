@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -94,11 +95,22 @@ func path(path string) Path {
 		panic("Implementation issue: Unable to create path using an empty string")
 	}
 
+	documentIdx := 0
+
 	result := make([]PathElement, 0)
 	for i, section := range strings.Split(path, "/") {
 		if i == 0 {
 			if section != "" {
-				panic("Implementation issue: Invalid Go-Patch style path, it cannot start with anything other than a slash")
+				if !strings.HasPrefix(section, "#") {
+					panic("Implementation issue: Invalid Go-Patch style path, it cannot start with anything other than a slash, or a document idx using #<number>")
+				}
+
+				num, err := strconv.Atoi(section[1:])
+				if err != nil {
+					panic("Implementation issue: Invalid Go-Patch style path, document idx must be a number")
+				}
+
+				documentIdx = num
 			}
 
 			continue
@@ -117,7 +129,7 @@ func path(path string) Path {
 		}
 	}
 
-	return Path{DocumentIdx: 0, PathElements: result}
+	return Path{DocumentIdx: documentIdx, PathElements: result}
 }
 
 func humanDiff(diff Diff) string {
