@@ -50,6 +50,7 @@ var _ = BeforeSuite(func() {
 	FixedTerminalWidth = 80
 })
 
+// TODO Break up the yml function into separate function for load from file, load from string ...
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {
@@ -77,6 +78,28 @@ func yml(input string) yaml.MapSlice {
 	}
 
 	return content
+}
+
+func cmplxList(input string) []yaml.MapSlice {
+	docs, err := LoadDocuments([]byte(input))
+	if err != nil {
+		Fail(fmt.Sprintf("Failed to parse as YAML:\n%s\n\n%v", input, err))
+	}
+
+	// In the test case scenarios, this one should just be used for simple one document YAML
+	if len(docs) > 1 {
+		Fail(fmt.Sprintf("Failed to use YAML, because it contains multiple documents:\n%s\n", input))
+	}
+
+	doc := docs[0]
+
+	switch doc.(type) {
+	case []yaml.MapSlice:
+		return doc.([]yaml.MapSlice)
+	}
+
+	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of YAML MapSlices:\n%s\n", input))
+	return nil
 }
 
 func file(input string) InputFile {

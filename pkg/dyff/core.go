@@ -289,6 +289,12 @@ func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
 			result = append(result, compareLists(path, from.([]interface{}), to.([]interface{}))...)
 		}
 
+	case []yaml.MapSlice:
+		switch to.(type) {
+		case []yaml.MapSlice:
+			result = append(result, compareListOfMapSlices(path, from.([]yaml.MapSlice), to.([]yaml.MapSlice))...)
+		}
+
 	case string:
 		switch to.(type) {
 		case string:
@@ -363,6 +369,20 @@ func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 	}
 
 	return compareSimpleLists(path, from, to)
+}
+
+func compareListOfMapSlices(path Path, from []yaml.MapSlice, to []yaml.MapSlice) []Diff {
+	// TODO Check if there is another way to do this, or if we can save time by doing something else
+	simplifyList := func(input []yaml.MapSlice) []interface{} {
+		result := make([]interface{}, len(input))
+		for i := range input {
+			result[i] = input[i]
+		}
+
+		return result
+	}
+
+	return compareLists(path, simplifyList(from), simplifyList(to))
 }
 
 func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
