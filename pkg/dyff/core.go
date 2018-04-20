@@ -211,7 +211,7 @@ func ToDotStyle(path Path, showDocumentIdx bool) string {
 	}
 
 	if showDocumentIdx {
-		return strings.Join(result, ".") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx), color.FgHiCyan)
+		return strings.Join(result, ".") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), color.FgHiCyan)
 	}
 
 	return strings.Join(result, ".")
@@ -229,7 +229,7 @@ func ToGoPatchStyle(path Path, showDocumentIdx bool) string {
 	}
 
 	if showDocumentIdx {
-		return "/" + strings.Join(result, "/") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx), color.FgHiCyan)
+		return "/" + strings.Join(result, "/") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), color.FgHiCyan)
 	}
 
 	return "/" + strings.Join(result, "/")

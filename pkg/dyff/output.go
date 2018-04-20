@@ -34,7 +34,6 @@ import (
 )
 
 // TODO Separate code into different output source files: human, and the new stuff
-// TODO There are still too much line breaks in the human output in the no-table-style
 
 // NoTableStyle disables output in table style
 var NoTableStyle = false
@@ -68,15 +67,22 @@ func yamlString(input interface{}) string {
 // But this means the coloring lib needs to be able to apply styles on already
 // styled text without making it look ugly.
 func DiffsToHumanStyle(diffs []Diff) string {
-	// TODO Check if there were multiple documents involved to enable or disable the output of the document id
-	showDocumentIdx := true
+	// Map the different document indicies listed in the paths of the diffs
+	counterMap := make(map[int]struct{}, 0)
+	for _, diff := range diffs {
+		counterMap[diff.Path.DocumentIdx] = struct{}{}
+	}
 
+	// Only show the document index if there is more than one document to show
+	showDocumentIdx := len(counterMap) != 1
+
+	// Again, loop over the diff and generate each report into the buffer
 	var output bytes.Buffer
-
 	for _, diff := range diffs {
 		GenerateHumanDiffOutput(&output, diff, showDocumentIdx)
 	}
 
+	// Finish with one last newline so that we do not end next to the prompt
 	output.WriteString("\n")
 	return output.String()
 }
