@@ -602,7 +602,7 @@ listY: [ Yo, Yo, Yo ]
 				}))
 			})
 
-			It("should return all differences between the files with multipe documents", func() {
+			It("should return all differences between the files with multiple documents", func() {
 				results := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
 				expected := []Diff{
 
