@@ -6,6 +6,7 @@ go:
 
 install:
 - go get -v -t ./...
+- go get honnef.co/go/tools/cmd/unused
 - go get golang.org/x/tools/cmd/cover
 - go get -u github.com/onsi/ginkgo/ginkgo
 - go get -u github.com/onsi/gomega/...
