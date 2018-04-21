@@ -104,7 +104,7 @@ func ExitWithError(text string, err error) {
 	os.Exit(1)
 }
 
-func GetTerminalWidth() int {
+func getTerminalWidth() int {
 	if FixedTerminalWidth > 0 {
 		return FixedTerminalWidth
 	}

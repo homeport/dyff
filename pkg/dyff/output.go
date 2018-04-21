@@ -160,7 +160,7 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			to := detail.To.([]string)
 			const singleLineSeparator = ", "
 
-			threshold := GetTerminalWidth() / 2
+			threshold := getTerminalWidth() / 2
 			fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
 			toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
 			if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
@@ -335,7 +335,7 @@ func WriteTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
 	}
 
 	// In case the line with blocks next to each other would surpass the terminal width, fall back to the no-table-style
-	if NoTableStyle || theoreticalMaxLineLength > GetTerminalWidth() {
+	if NoTableStyle || theoreticalMaxLineLength > getTerminalWidth() {
 		for _, block := range blocks {
 			lines := strings.Split(block, "\n")
 			for _, line := range lines {
