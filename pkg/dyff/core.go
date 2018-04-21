@@ -581,7 +581,6 @@ func GetMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.
 
 // GetKeyValue returns the value (and true) for a given key in a provided MapSlice, or nil with false if there is no such entry. This is comparable to getting a value from a map with `foobar[key]`.
 func GetKeyValue(mapslice yaml.MapSlice, key string) (interface{}, bool) {
-	// TODO Search for other functions that could use this function (other than just getNamesFromNamedList)
 	for _, element := range mapslice {
 		if element.Key == key {
 			return element.Value, true
@@ -599,17 +598,6 @@ func GetKeyValueOrPanic(mapslice yaml.MapSlice, key string) interface{} {
 	}
 
 	panic(fmt.Sprintf("Implemenation issue: There is no key `%s` in MapSlice %v", key, mapslice))
-}
-
-func getNamesFromNamedList(list []interface{}, identifier string) []string {
-	result := make([]string, 0, len(list))
-	for _, entry := range list {
-		if name, ok := GetKeyValue(entry.(yaml.MapSlice), identifier); ok {
-			result = append(result, name.(string))
-		}
-	}
-
-	return result
 }
 
 // GetEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
