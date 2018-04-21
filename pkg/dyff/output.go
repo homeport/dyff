@@ -23,6 +23,7 @@ package dyff
 import (
 	"bytes"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"reflect"
@@ -52,15 +53,6 @@ func pathToString(path Path, showDocumentIdx bool) string {
 	return ToDotStyle(path, showDocumentIdx)
 }
 
-func yamlString(input interface{}) string {
-	output, err := yaml.Marshal(input)
-	if err != nil {
-		ExitWithError("Failed to marshal input object", err)
-	}
-
-	return string(output)
-}
-
 // DiffsToHumanStyle creates a string with human readable report of the differences
 // For this to work, dyff relies on modified versions of the YAML lib and the
 // coloring lib we use here. The YAML lib adds ANSI styles to make keys bold.
@@ -87,6 +79,7 @@ func DiffsToHumanStyle(diffs []Diff) string {
 	return output.String()
 }
 
+// GenerateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
 func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) {
 	output.WriteString("\n")
 	output.WriteString(pathToString(diff.Path, showDocumentIdx))
@@ -94,7 +87,7 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bo
 
 	blocks := make([]string, len(diff.Details))
 	for i, detail := range diff.Details {
-		blocks[i] = GenerateHumanDetailOutput(detail)
+		blocks[i] = generateHumanDetailOutput(detail)
 	}
 
 	// For the use case in which only a path-less diff is suppose to be printed,
@@ -104,10 +97,10 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bo
 		indent = 0
 	}
 
-	WriteTextBlocks(output, indent, blocks...)
+	writeTextBlocks(output, indent, blocks...)
 }
 
-func GenerateHumanDetailOutput(detail Detail) string {
+func generateHumanDetailOutput(detail Detail) string {
 	var output bytes.Buffer
 
 	// TODO Externalise part of code into separate functions for readability
@@ -119,7 +112,7 @@ func GenerateHumanDetailOutput(detail Detail) string {
 		case yaml.MapSlice:
 			output.WriteString(Color(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 		}
-		WriteTextBlocks(&output, 2, Green(yamlString(RestructureObject(detail.To))))
+		writeTextBlocks(&output, 2, green(yamlString(RestructureObject(detail.To))))
 
 	case REMOVAL:
 		switch detail.From.(type) {
@@ -129,7 +122,7 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			output.WriteString(Color(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 
 		}
-		WriteTextBlocks(&output, 2, Red(yamlString(RestructureObject(detail.From))))
+		writeTextBlocks(&output, 2, red(yamlString(RestructureObject(detail.From))))
 
 	case MODIFICATION:
 		fromType := reflect.TypeOf(detail.From).Kind()
@@ -141,19 +134,19 @@ func GenerateHumanDetailOutput(detail Detail) string {
 		} else {
 			// default output
 			if fromType != toType {
-				output.WriteString(Yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, Italic(fromType.String()), Italic(toType.String()))))
+				output.WriteString(yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, italic(fromType.String()), italic(toType.String()))))
 
 			} else {
-				output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+				output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 			}
 
-			output.WriteString(Red(fmt.Sprintf("  - %v\n", detail.From)))
-			output.WriteString(Green(fmt.Sprintf("  + %v\n", detail.To)))
+			output.WriteString(red(fmt.Sprintf("  - %v\n", detail.From)))
+			output.WriteString(green(fmt.Sprintf("  + %v\n", detail.To)))
 
 		}
 
 	case ORDERCHANGE:
-		output.WriteString(Yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
+		output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
 		switch detail.From.(type) {
 		case []string:
 			from := detail.From.([]string)
@@ -164,19 +157,19 @@ func GenerateHumanDetailOutput(detail Detail) string {
 			fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
 			toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
 			if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
-				output.WriteString(Red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
-				output.WriteString(Green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
+				output.WriteString(red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
+				output.WriteString(green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
 
 			} else {
-				output.WriteString(Cols(" ", 2,
-					Red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
-					Green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
+				output.WriteString(CreateTableStyleString(" ", 2,
+					red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
+					green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
 			}
 
 		case []interface{}:
-			output.WriteString(Cols(" ", 2,
-				Red(fmt.Sprintf("%s", yamlString(detail.From.([]interface{})))),
-				Green(fmt.Sprintf("%s", yamlString(detail.To.([]interface{}))))))
+			output.WriteString(CreateTableStyleString(" ", 2,
+				red(fmt.Sprintf("%s", yamlString(detail.From.([]interface{})))),
+				green(fmt.Sprintf("%s", yamlString(detail.To.([]interface{}))))))
 		}
 	}
 
@@ -184,35 +177,34 @@ func GenerateHumanDetailOutput(detail Detail) string {
 }
 
 func writeStringDiff(output *bytes.Buffer, from string, to string) {
-	// TODO Simplify code by only writing the output code once and
-	// set-up the respective strings in each if block.
+	// TODO Simplify code by only writing the output code once and set-up the respective strings in each if block.
 
 	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
-		output.WriteString(Yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
-		WriteTextBlocks(output, 0,
+		output.WriteString(yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
+		writeTextBlocks(output, 0,
 			createStringWithPrefix("  - ", fromCertText, color.FgRed),
 			createStringWithPrefix("  + ", toCertText, color.FgGreen))
 
 	} else if isWhitespaceOnlyChange(from, to) {
-		output.WriteString(Yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
-		WriteTextBlocks(output, 0,
+		output.WriteString(yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
+		writeTextBlocks(output, 0,
 			createStringWithPrefix("  - ", showWhitespaceCharacters(from), color.FgRed),
 			createStringWithPrefix("  + ", showWhitespaceCharacters(to), color.FgGreen))
 
 	} else if isMinorChange(from, to) {
 		// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
-		output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
 		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
 
 	} else if isMultiLine(from, to) {
-		output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-		WriteTextBlocks(output, 0,
+		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+		writeTextBlocks(output, 0,
 			createStringWithPrefix("  - ", from, color.FgRed),
 			createStringWithPrefix("  + ", to, color.FgGreen))
 
 	} else {
-		output.WriteString(Yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
 		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
 	}
@@ -283,7 +275,7 @@ func isWhitespaceOnlyChange(from string, to string) bool {
 }
 
 func showWhitespaceCharacters(text string) string {
-	return strings.Replace(strings.Replace(text, "\n", Bold("↵\n"), -1), " ", Bold("·"), -1)
+	return strings.Replace(strings.Replace(text, "\n", bold("↵\n"), -1), " ", bold("·"), -1)
 }
 
 func createStringWithPrefix(prefix string, obj interface{}, attributes ...color.Attribute) string {
@@ -317,8 +309,8 @@ func stringArrayLen(list []string) int {
 	return result
 }
 
-// WriteTextBlocks writes strings into the provided buffer in either a table style (each string a column) or list style (each string a row)
-func WriteTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
+// writeTextBlocks writes strings into the provided buffer in either a table style (each string a column) or list style (each string a row)
+func writeTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
 	const separator = "   "
 
 	// Calcuclate the theoretical maximum line length if blocks would be rendered next to each other
@@ -346,11 +338,12 @@ func WriteTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
 		}
 
 	} else {
-		buf.WriteString(Cols(separator, indent, blocks...))
+		buf.WriteString(CreateTableStyleString(separator, indent, blocks...))
 	}
 }
 
-func Cols(separator string, indent int, columns ...string) string {
+// CreateTableStyleString takes the multi-line input strings as columns and arranges an output string to create a table-style output format with proper padding so that the text blocks can be arranged next to each other.
+func CreateTableStyleString(separator string, indent int, columns ...string) string {
 	cols := len(columns)
 	rows := -1
 	max := make([]int, cols)
@@ -392,4 +385,75 @@ func Cols(separator string, indent int, columns ...string) string {
 	}
 
 	return buf.String()
+}
+
+// ToJSONString converts the provided object into a human readable JSON string.
+func ToJSONString(obj interface{}) (string, error) {
+	switch v := obj.(type) {
+
+	case []interface{}:
+		result := make([]string, 0)
+		for _, i := range v {
+			value, err := ToJSONString(i)
+			if err != nil {
+				return "", err
+			}
+			result = append(result, value)
+		}
+
+		return fmt.Sprintf("[%s]", strings.Join(result, ", ")), nil
+
+	case yaml.MapSlice:
+		result := make([]string, 0)
+		for _, i := range v {
+			value, err := ToJSONString(i)
+			if err != nil {
+				return "", err
+			}
+			result = append(result, value)
+		}
+
+		return fmt.Sprintf("{%s}", strings.Join(result, ", ")), nil
+
+	case yaml.MapItem:
+		key, keyError := ToJSONString(v.Key)
+		if keyError != nil {
+			return "", keyError
+		}
+
+		value, valueError := ToJSONString(v.Value)
+		if valueError != nil {
+			return "", valueError
+		}
+
+		return fmt.Sprintf("%s: %s", key, value), nil
+
+	default:
+		bytes, err := json.Marshal(v)
+		if err != nil {
+			return "", err
+		}
+
+		return fmt.Sprintf("%s", string(bytes)), nil
+	}
+}
+
+func yamlString(input interface{}) string {
+	// TODO Consolidate this function with ToYAMLString. There is no need to have to so similar functions.
+	output, err := yaml.Marshal(input)
+	if err != nil {
+		ExitWithError("Failed to marshal input object", err)
+	}
+
+	return string(output)
+}
+
+// ToYAMLString converts the provided data into a human readable YAML string.
+func ToYAMLString(content interface{}) (string, error) {
+	out, err := yaml.Marshal(content)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("---\n%s\n", string(out)), nil
 }

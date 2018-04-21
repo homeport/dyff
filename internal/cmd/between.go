@@ -22,9 +22,6 @@ package cmd
 
 import (
 	"fmt"
-	"net/url"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/HeavyWombat/color"
@@ -63,6 +60,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		diffs := dyff.CompareInputFiles(from, to)
 
+		// TODO Move the dyff banner and its information strings into the dyff package code (keep it short and simple here)
 		// TODO Add style Go-Patch
 		// TODO Add style Spruce
 		// TODO Add style JSON report
@@ -77,9 +75,9 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
  | (_| | |_| |  _|  _|
   \__,_|\__, |_| |_|   returned %s
         |___/
-`, niceLocation(fromLocation),
-				niceLocation(toLocation),
-				dyff.Bold(dyff.Plural(len(diffs), "difference")))
+`, dyff.HumanReadableLocationInformation(fromLocation),
+				dyff.HumanReadableLocationInformation(toLocation),
+				dyff.Color(dyff.Plural(len(diffs), "difference"), color.Bold))
 			fmt.Print(dyff.DiffsToHumanStyle(diffs))
 
 		default:
@@ -87,24 +85,6 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			cmd.Usage()
 		}
 	},
-}
-
-func niceLocation(location string) string {
-	if location == "-" {
-		return dyff.Italic("<stdin>")
-	}
-
-	if _, err := os.Stat(location); err == nil {
-		if abs, err := filepath.Abs(location); err == nil {
-			return dyff.Bold(abs)
-		}
-	}
-
-	if _, err := url.ParseRequestURI(location); err == nil {
-		return dyff.Color(location, color.FgHiBlue, color.Underline)
-	}
-
-	return location
 }
 
 func init() {

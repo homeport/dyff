@@ -28,14 +28,69 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 
+	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
 	"github.com/pkg/errors"
 )
 
+// InputFile represents the actual input file (either local, or fetched remotely) that needs to be processed. It can contain multiple documents, where a document is a map or a list of things.
 type InputFile struct {
 	Documents []interface{}
+}
+
+// HumanReadableLocationInformation create a nicely decorated information about the provided input location. It will output the absolut path of the file (rather than the possibly relative location), or it will show the URL in the usual look-and-feel of URIs.
+func HumanReadableLocationInformation(location string) string {
+	if location == "-" {
+		return Color("<STDIN>", color.Italic)
+	}
+
+	if _, err := os.Stat(location); err == nil {
+		if abs, err := filepath.Abs(location); err == nil {
+			return Color(abs, color.Bold)
+		}
+	}
+
+	if _, err := url.ParseRequestURI(location); err == nil {
+		return Color(location, color.FgHiBlue, color.Underline)
+	}
+
+	return location
+}
+
+// LoadFiles concurrently loads two files from the provided locations
+func LoadFiles(locationA string, locationB string) (InputFile, InputFile, error) {
+	type resultPair struct {
+		result InputFile
+		err    error
+	}
+
+	fromChan := make(chan resultPair, 1)
+	toChan := make(chan resultPair, 1)
+
+	go func() {
+		result, err := LoadFile(locationA)
+		fromChan <- resultPair{result, err}
+	}()
+
+	go func() {
+		result, err := LoadFile(locationB)
+		toChan <- resultPair{result, err}
+	}()
+
+	from := <-fromChan
+	if from.err != nil {
+		return InputFile{}, InputFile{}, from.err
+	}
+
+	to := <-toChan
+	if to.err != nil {
+		return InputFile{}, InputFile{}, to.err
+	}
+
+	return from.result, to.result, nil
 }
 
 // LoadFile processes the provided input location to load a YAML (or JSON, or raw text)
@@ -46,7 +101,7 @@ func LoadFile(location string) (InputFile, error) {
 		err       error
 	)
 
-	if data, err = GetBytesFromLocation(location); err != nil {
+	if data, err = getBytesFromLocation(location); err != nil {
 		return InputFile{}, errors.Wrap(err, fmt.Sprintf("Unable to load data from %s", location))
 	}
 
@@ -57,6 +112,7 @@ func LoadFile(location string) (InputFile, error) {
 	return InputFile{Documents: documents}, nil
 }
 
+// LoadDocuments reads the provided input bytes as a YAML file with potential multiple documents. Each document in the YAML string results in a entry of the result slice. This function performs two decoding passes over the input string, the first one to detect the respective types in use. And a second one to properly unmarshal the data in the most suitable Go types available so that key orders in hashes are preserved.
 func LoadDocuments(input []byte) ([]interface{}, error) {
 	var (
 		types   []string
@@ -121,7 +177,7 @@ func LoadDocuments(input []byte) ([]interface{}, error) {
 	return values, nil
 }
 
-func GetBytesFromLocation(location string) ([]byte, error) {
+func getBytesFromLocation(location string) ([]byte, error) {
 	var data []byte
 	var err error
 

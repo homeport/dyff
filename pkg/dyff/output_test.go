@@ -120,7 +120,7 @@ Miss Foobar`
 40000
 500000`
 
-				Expect(Cols("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(`
+				Expect(CreateTableStyleString("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(`
 #1  Mr. Foobar   10
 #2  Mrs. Foobar  200
 #3  Miss Foobar  3000
@@ -153,7 +153,7 @@ Miss Foobar`
 40000
 500000`
 
-				Expect(Cols("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(fmt.Sprintf(`
+				Expect(CreateTableStyleString("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(fmt.Sprintf(`
 %s  Mr. Foobar   10
 %s  Mrs. Foobar  200
 %s  Miss Foobar  3000

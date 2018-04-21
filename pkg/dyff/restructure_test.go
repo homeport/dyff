@@ -33,7 +33,7 @@ var _ = Describe("Restructure", func() {
 	Context("YAML MapSlice key reorderings of the MapSlice itself", func() {
 		It("should restructure Concourse root level keys", func() {
 			input := yml("{ groups: [], jobs: [], resources: [], resource_types: [] }")
-			output := RestructureMapSlice(input)
+			output := RestructureObject(input).(yaml.MapSlice)
 
 			keys, err := ListStringKeys(output)
 			Expect(err).To(BeNil())
@@ -42,7 +42,7 @@ var _ = Describe("Restructure", func() {
 
 		It("should restructure Concourse resource and resource_type keys", func() {
 			input := yml("{ source: {}, name: {}, type: {}, privileged: {} }")
-			output := RestructureMapSlice(input)
+			output := RestructureObject(input).(yaml.MapSlice)
 
 			keys, err := ListStringKeys(output)
 			Expect(err).To(BeNil())
@@ -53,7 +53,7 @@ var _ = Describe("Restructure", func() {
 	Context("YAML MapSlice key reorderings of the MapSlice values", func() {
 		It("should restructure Concourse resource keys as part as part of a MapSlice value", func() {
 			input := yml("{ resources: [ { privileged: false, source: { branch: foo, paths: [] }, name: myname, type: mytype } ] }")
-			output := RestructureMapSlice(input)
+			output := RestructureObject(input).(yaml.MapSlice)
 
 			value := output[0].Value.([]interface{})
 			obj := value[0].(yaml.MapSlice)

@@ -22,7 +22,6 @@ package dyff
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -117,28 +116,29 @@ func getTerminalWidth() int {
 	return termWidth
 }
 
-// Bold returns the provided string in 'bold' format
-func Bold(text string) string {
+// bold returns the provided string in 'bold' format
+func bold(text string) string {
 	return colorEachLine(color.New(color.Bold), text)
 }
 
-// Italic returns the provided string in 'italic' format
-func Italic(text string) string {
+// italic returns the provided string in 'italic' format
+func italic(text string) string {
 	return colorEachLine(color.New(color.Italic), text)
 }
 
-func Green(text string) string {
+func green(text string) string {
 	return colorEachLine(color.New(color.FgGreen), text)
 }
 
-func Red(text string) string {
+func red(text string) string {
 	return colorEachLine(color.New(color.FgRed), text)
 }
 
-func Yellow(text string) string {
+func yellow(text string) string {
 	return colorEachLine(color.New(color.FgYellow), text)
 }
 
+// Color returns the provided text with the also provided varargs list of ANSI text decorations and colors.
 func Color(text string, attributes ...color.Attribute) string {
 	return colorEachLine(color.New(attributes...), text)
 }
@@ -239,6 +239,7 @@ func (path Path) String() string {
 	return ToGoPatchStyle(path, true)
 }
 
+// CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
 func CompareInputFiles(from InputFile, to InputFile) []Diff {
 	if len(from.Documents) != len(to.Documents) {
 		ExitWithError("Failed to compare input files", fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported"))
@@ -246,19 +247,18 @@ func CompareInputFiles(from InputFile, to InputFile) []Diff {
 
 	result := make([]Diff, 0)
 	for idx := range from.Documents {
-		result = append(result, CompareObjects(Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])...)
+		result = append(result, compareObjects(Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])...)
 	}
 
 	return result
 }
 
-// CompareDocuments is the main entry point to compare two documents and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
+// CompareDocuments is one of the convenience main entry points to compare two documents and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
 func CompareDocuments(from interface{}, to interface{}) []Diff {
-	return CompareObjects(Path{}, from, to)
+	return compareObjects(Path{}, from, to)
 }
 
-// CompareObjects returns a list of differences between `from` and `to`
-func CompareObjects(path Path, from interface{}, to interface{}) []Diff {
+func compareObjects(path Path, from interface{}, to interface{}) []Diff {
 	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
 		return []Diff{{path, []Detail{{Kind: ADDITION, From: from, To: to}}}}
@@ -326,9 +326,9 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 
 	for _, fromItem := range from {
 		key := fromItem.Key
-		if toItem, ok := GetMapItemByKeyFromMapSlice(key, to); ok {
+		if toItem, ok := getMapItemByKeyFromMapSlice(key, to); ok {
 			// `from` and `to` contain the same `key` -> require comparison
-			result = append(result, CompareObjects(newPath(path, "", key), fromItem.Value, toItem.Value)...)
+			result = append(result, compareObjects(newPath(path, "", key), fromItem.Value, toItem.Value)...)
 
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
@@ -338,7 +338,7 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 
 	for _, toItem := range to {
 		key := toItem.Key
-		if _, ok := GetMapItemByKeyFromMapSlice(key, from); !ok {
+		if _, ok := getMapItemByKeyFromMapSlice(key, from); !ok {
 			// `to` contains a `key` that `from` does not have -> addition
 			additions = append(additions, toItem)
 		}
@@ -392,7 +392,7 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 
 	// Special case if both lists only contain one entry: directly compare the two entries with each other
 	if fromLength == 1 && fromLength == toLength {
-		return CompareObjects(newPath(path, "", 0), from[0], to[0])
+		return compareObjects(newPath(path, "", 0), from[0], to[0])
 	}
 
 	fromLookup := createLookUpMap(from)
@@ -487,10 +487,10 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 	// Find entries that are common to both lists to compare them separately, and find entries that are only in from, but not to and are therefore removed
 	for _, fromEntry := range from {
-		name := GetKeyValueOrPanic(fromEntry.(yaml.MapSlice), identifier)
-		if toEntry, ok := GetEntryFromNamedList(to, identifier, name); ok {
+		name := getKeyValueOrPanic(fromEntry.(yaml.MapSlice), identifier)
+		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
 			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
-			result = append(result, CompareObjects(newPath(path, identifier, name), fromEntry, toEntry)...)
+			result = append(result, compareObjects(newPath(path, identifier, name), fromEntry, toEntry)...)
 			fromNames = append(fromNames, name.(string))
 
 		} else {
@@ -501,8 +501,8 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 	// Find entries that are only in to, but not from and are therefore added
 	for _, toEntry := range to {
-		name := GetKeyValueOrPanic(toEntry.(yaml.MapSlice), identifier)
-		if _, ok := GetEntryFromNamedList(from, identifier, name); ok {
+		name := getKeyValueOrPanic(toEntry.(yaml.MapSlice), identifier)
+		if _, ok := getEntryFromNamedList(from, identifier, name); ok {
 			// `to` and `from` have the same entry idenfified by identifier and name (comparison already covered by previous range)
 			toNames = append(toNames, name.(string))
 
@@ -568,8 +568,8 @@ func newPath(path Path, key interface{}, name interface{}) Path {
 		PathElements: result}
 }
 
-// GetMapItemByKeyFromMapSlice returns the MapItem (tuple of key/value) where the MapItem key matches the provided key. It will return an empty MapItem and bool false if the given MapSlice does not contain a suitable MapItem.
-func GetMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.MapItem, bool) {
+// getMapItemByKeyFromMapSlice returns the MapItem (tuple of key/value) where the MapItem key matches the provided key. It will return an empty MapItem and bool false if the given MapSlice does not contain a suitable MapItem.
+func getMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.MapItem, bool) {
 	for _, mapitem := range mapslice {
 		if mapitem.Key == key {
 			return mapitem, true
@@ -579,8 +579,8 @@ func GetMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.
 	return yaml.MapItem{}, false
 }
 
-// GetKeyValue returns the value (and true) for a given key in a provided MapSlice, or nil with false if there is no such entry. This is comparable to getting a value from a map with `foobar[key]`.
-func GetKeyValue(mapslice yaml.MapSlice, key string) (interface{}, bool) {
+// getValueByKey returns the value (and true) for a given key in a provided MapSlice, or nil with false if there is no such entry. This is comparable to getting a value from a map with `foobar[key]`.
+func getValueByKey(mapslice yaml.MapSlice, key string) (interface{}, bool) {
 	for _, element := range mapslice {
 		if element.Key == key {
 			return element.Value, true
@@ -590,18 +590,18 @@ func GetKeyValue(mapslice yaml.MapSlice, key string) (interface{}, bool) {
 	return nil, false
 }
 
-// GetKeyValueOrPanic returns the value for a given key in a provided MapSlice. This is comparable to getting a value from a map with `foobar[key]`. Function will panic if there is no such key. This is only intended to be used in scenarios where you know a key has to be present.
-func GetKeyValueOrPanic(mapslice yaml.MapSlice, key string) interface{} {
-	// TODO Either rewrite the code that relies on that function to work with errors or find yet another better solution
-	if value, ok := GetKeyValue(mapslice, key); ok {
+// getKeyValueOrPanic returns the value for a given key in a provided MapSlice. This is comparable to getting a value from a map with `foobar[key]`. Function will panic if there is no such key. This is only intended to be used in scenarios where you know a key has to be present.
+func getKeyValueOrPanic(mapslice yaml.MapSlice, key string) interface{} {
+	// TODO Remove this function by only using getValueByKey. It should create an error to be returned to the caller rather than a hard panic.
+	if value, ok := getValueByKey(mapslice, key); ok {
 		return value
 	}
 
 	panic(fmt.Sprintf("Implemenation issue: There is no key `%s` in MapSlice %v", key, mapslice))
 }
 
-// GetEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
-func GetEntryFromNamedList(list []interface{}, identifier string, name interface{}) (interface{}, bool) {
+// getEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
+func getEntryFromNamedList(list []interface{}, identifier string, name interface{}) (interface{}, bool) {
 	for _, listEntry := range list {
 		mapslice := listEntry.(yaml.MapSlice)
 
@@ -705,6 +705,7 @@ func isMultiLine(from string, to string) bool {
 	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
 }
 
+// SimplifyList will cast a slice of YAML MapSlices into a slice of interfaces.
 func SimplifyList(input []yaml.MapSlice) []interface{} {
 	result := make([]interface{}, len(input))
 	for i := range input {
@@ -712,98 +713,4 @@ func SimplifyList(input []yaml.MapSlice) []interface{} {
 	}
 
 	return result
-}
-
-// LoadFiles concurrently loads two files from the provided locations
-func LoadFiles(locationA string, locationB string) (InputFile, InputFile, error) {
-	type resultPair struct {
-		result InputFile
-		err    error
-	}
-
-	fromChan := make(chan resultPair, 1)
-	toChan := make(chan resultPair, 1)
-
-	go func() {
-		result, err := LoadFile(locationA)
-		fromChan <- resultPair{result, err}
-	}()
-
-	go func() {
-		result, err := LoadFile(locationB)
-		toChan <- resultPair{result, err}
-	}()
-
-	from := <-fromChan
-	if from.err != nil {
-		return InputFile{}, InputFile{}, from.err
-	}
-
-	to := <-toChan
-	if to.err != nil {
-		return InputFile{}, InputFile{}, to.err
-	}
-
-	return from.result, to.result, nil
-}
-
-// ToJSONString converts the provided object into a human readable JSON string.
-func ToJSONString(obj interface{}) (string, error) {
-	switch v := obj.(type) {
-
-	case []interface{}:
-		result := make([]string, 0)
-		for _, i := range v {
-			value, err := ToJSONString(i)
-			if err != nil {
-				return "", err
-			}
-			result = append(result, value)
-		}
-
-		return fmt.Sprintf("[%s]", strings.Join(result, ", ")), nil
-
-	case yaml.MapSlice:
-		result := make([]string, 0)
-		for _, i := range v {
-			value, err := ToJSONString(i)
-			if err != nil {
-				return "", err
-			}
-			result = append(result, value)
-		}
-
-		return fmt.Sprintf("{%s}", strings.Join(result, ", ")), nil
-
-	case yaml.MapItem:
-		key, keyError := ToJSONString(v.Key)
-		if keyError != nil {
-			return "", keyError
-		}
-
-		value, valueError := ToJSONString(v.Value)
-		if valueError != nil {
-			return "", valueError
-		}
-
-		return fmt.Sprintf("%s: %s", key, value), nil
-
-	default:
-		bytes, err := json.Marshal(v)
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("%s", string(bytes)), nil
-	}
-}
-
-// ToYAMLString converts the provided data into a human readable YAML string.
-func ToYAMLString(content interface{}) (string, error) {
-	out, err := yaml.Marshal(content)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("---\n%s\n", string(out)), nil
 }
