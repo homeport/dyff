@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright © 2018 Matthias Diester
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,29 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-.PHONY: clean
+set -euo pipefail
 
-all: test
+BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-clean:
-	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
-
-sanity-check: unused lint fmt vet
-
-vet:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-vet.sh
-
-fmt:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-fmt.sh
-
-lint:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-lint.sh
-
-unused:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/unused.sh
-
-build: clean unused vet fmt
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh
-
-test: unused vet fmt
-	@ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace
+( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs golint -set_exit_status )
