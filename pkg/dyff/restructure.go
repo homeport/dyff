@@ -79,9 +79,11 @@ func reorderMapsliceKeys(input yaml.MapSlice, keys []string) yaml.MapSlice {
 	// Rebuild a new YAML MapSlice key by key using in provided keys list for the order
 	result := yaml.MapSlice{}
 	for _, key := range keys {
+		// It is safe to ignore the error field here since we know what keys there are
+		value, _ := getValueByKey(input, key)
 		result = append(result, yaml.MapItem{
 			Key:   key,
-			Value: getKeyValueOrPanic(input, key),
+			Value: value,
 		})
 	}
 

@@ -21,6 +21,9 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/HeavyWombat/yaml"
@@ -41,7 +44,7 @@ capabilities to transform YAML to JSON, or JSON to YAML.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		dyff.ExitWithError("Unable to execute root command", err)
+		exitWithError("Unable to execute root command", err)
 	}
 }
 
@@ -61,4 +64,16 @@ func initSettings() {
 		color.NoColor = true
 		yaml.HighlightKeys = false
 	}
+}
+
+// exitWithError exits program with given text and error message
+func exitWithError(text string, err error) {
+	if err != nil {
+		fmt.Printf("%s: %s\n", text, dyff.Color(err.Error(), color.FgHiRed))
+
+	} else {
+		fmt.Printf(text)
+	}
+
+	os.Exit(1)
 }

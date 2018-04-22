@@ -81,7 +81,8 @@ input: |+
 
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/input",

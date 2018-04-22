@@ -46,7 +46,8 @@ some:
       version: v1
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(len(result[0].Details)).To(BeEquivalentTo(1))
@@ -70,7 +71,8 @@ some:
       version: v1
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/name", MODIFICATION, 1, 2)))
@@ -93,7 +95,8 @@ some:
       level: 2.7182818284
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/level", MODIFICATION, 3.14159265359, 2.7182818284)))
@@ -116,7 +119,8 @@ some:
       enabled: true
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/enabled", MODIFICATION, false, true)))
@@ -138,7 +142,8 @@ some:
       version: v1
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure", ADDITION, nil, yml(`version: v1`))))
@@ -160,7 +165,8 @@ some:
       name: foobar
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure", REMOVAL, yml(`version: v1`), nil)))
@@ -183,7 +189,8 @@ some:
       release: v1
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(doubleDiff("/some/yaml/structure",
@@ -213,7 +220,8 @@ some:
       - three
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ three ]`))))
@@ -239,10 +247,10 @@ some:
       - 3
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ 3 ]`))))
 			})
 
@@ -266,7 +274,8 @@ some:
       - two
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ three ]`), nil)))
@@ -292,7 +301,8 @@ some:
       - 2
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ 3 ]`), nil)))
@@ -313,7 +323,8 @@ list:
   foo: bar
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(0))
 			})
@@ -391,10 +402,10 @@ instance_groups:
           password: "zwX#(;P=%hTfFzM["
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(7))
-
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", MODIFICATION, "192.168.1.1", "192.168.0.1")))
 				Expect(result[1]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, list(`[ { release: custom, name: logger } ]`))))
 				Expect(result[2]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
@@ -438,7 +449,8 @@ resource_pools:
           resource_pool: new-vsphere-res-pool
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters/0/CLS_PAAS_SFT_035/resource_pool", MODIFICATION, "other-vsphere-res-pool", "new-vsphere-res-pool")))
@@ -465,7 +477,8 @@ resource_pools:
       - CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(doubleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters",
@@ -498,7 +511,8 @@ resource_pools:
   version: 3
 `)
 
-				result := CompareDocuments(from, to)
+				result, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeEquivalentTo(singleDiff("/name=three/version",
@@ -513,7 +527,8 @@ resource_pools:
 				Expect(len(from.Documents)).To(BeIdenticalTo(1))
 				Expect(len(to.Documents)).To(BeIdenticalTo(1))
 
-				results := CompareDocuments(from.Documents[0], to.Documents[0])
+				results, err := CompareDocuments(from.Documents[0], to.Documents[0])
+				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))
 			})
@@ -521,7 +536,8 @@ resource_pools:
 
 		Context("Given two YAML files", func() {
 			It("should return all differences between the files", func() {
-				results := CompareDocuments(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))
+				results, err := CompareDocuments(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))
+				Expect(err).To(BeNil())
 				expected := []Diff{
 					doubleDiff("/yaml/map",
 						REMOVAL, yml(`---
@@ -575,8 +591,8 @@ listY: [ Yo, Yo, Yo ]
 			It("should return order changes in named entry lists (ignoring additions and removals)", func() {
 				from := yml(`list: [ {name: A}, {name: C}, {name: B}, {name: D}, {name: E} ]`)
 				to := yml(`list: [ {name: A}, {name: X1}, {name: B}, {name: C}, {name: D}, {name: X2} ]`)
-				results := CompareDocuments(from, to)
-
+				results, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))
 				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
@@ -590,8 +606,8 @@ listY: [ Yo, Yo, Yo ]
 			It("should return order changes in simple lists (ignoring additions and removals)", func() {
 				from := yml(`list: [ A, C, B, D, E ]`)
 				to := yml(`list: [ A, X1, B, C, D, X2 ]`)
-				results := CompareDocuments(from, to)
-
+				results, err := CompareDocuments(from, to)
+				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))
 				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
@@ -603,15 +619,15 @@ listY: [ Yo, Yo, Yo ]
 			})
 
 			It("should return all differences between the files with multiple documents", func() {
-				results := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
+				results, err := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
 				expected := []Diff{
-
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", MODIFICATION, "100m", "1000m"),
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/memory", MODIFICATION, "100Mi", "10Gi"),
 					singleDiff("#0/spec/template/spec/containers/name=registry/ports", ADDITION, nil, list(`[ {containerPort: 5001, name: backdoor, protocol: TCP} ]`)),
 					singleDiff("#1/spec/ports", ADDITION, nil, list(`[ {name: backdoor, port: 5001, protocol: TCP} ]`)),
 				}
 
+				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(len(expected)))
 

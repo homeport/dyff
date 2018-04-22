@@ -32,6 +32,7 @@ import (
 
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
+	"github.com/pkg/errors"
 )
 
 // TODO Separate code into different output source files: human, and the new stuff
@@ -80,14 +81,19 @@ func DiffsToHumanStyle(diffs []Diff) string {
 }
 
 // GenerateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
-func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) {
+func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) error {
 	output.WriteString("\n")
 	output.WriteString(pathToString(diff.Path, showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
 	for i, detail := range diff.Details {
-		blocks[i] = generateHumanDetailOutput(detail)
+		generatedOutput, err := generateHumanDetailOutput(detail)
+		if err != nil {
+			return err
+		}
+
+		blocks[i] = generatedOutput
 	}
 
 	// For the use case in which only a path-less diff is suppose to be printed,
@@ -98,9 +104,10 @@ func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bo
 	}
 
 	writeTextBlocks(output, indent, blocks...)
+	return nil
 }
 
-func generateHumanDetailOutput(detail Detail) string {
+func generateHumanDetailOutput(detail Detail) (string, error) {
 	var output bytes.Buffer
 
 	// TODO Externalise part of code into separate functions for readability
@@ -112,7 +119,11 @@ func generateHumanDetailOutput(detail Detail) string {
 		case yaml.MapSlice:
 			output.WriteString(Color(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 		}
-		writeTextBlocks(&output, 2, green(yamlString(RestructureObject(detail.To))))
+		yamlOutput, err := yamlString(RestructureObject(detail.To))
+		if err != nil {
+			return "", err
+		}
+		writeTextBlocks(&output, 2, green(yamlOutput))
 
 	case REMOVAL:
 		switch detail.From.(type) {
@@ -122,7 +133,11 @@ func generateHumanDetailOutput(detail Detail) string {
 			output.WriteString(Color(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
 
 		}
-		writeTextBlocks(&output, 2, red(yamlString(RestructureObject(detail.From))))
+		yamlOutput, err := yamlString(RestructureObject(detail.From))
+		if err != nil {
+			return "", err
+		}
+		writeTextBlocks(&output, 2, red(yamlOutput))
 
 	case MODIFICATION:
 		fromType := reflect.TypeOf(detail.From).Kind()
@@ -167,13 +182,21 @@ func generateHumanDetailOutput(detail Detail) string {
 			}
 
 		case []interface{}:
-			output.WriteString(CreateTableStyleString(" ", 2,
-				red(fmt.Sprintf("%s", yamlString(detail.From.([]interface{})))),
-				green(fmt.Sprintf("%s", yamlString(detail.To.([]interface{}))))))
+			fromOutput, err := yamlString(detail.From.([]interface{}))
+			if err != nil {
+				return "", err
+			}
+
+			toOutput, err := yamlString(detail.To.([]interface{}))
+			if err != nil {
+				return "", err
+			}
+
+			output.WriteString(CreateTableStyleString(" ", 2, red(fromOutput), green(toOutput)))
 		}
 	}
 
-	return output.String()
+	return output.String(), nil
 }
 
 func writeStringDiff(output *bytes.Buffer, from string, to string) {
@@ -240,7 +263,17 @@ func LoadX509Certs(from, to string) (string, string, error) {
 	fromCertText := certificateSummaryAsYAML(fromCert)
 	toCertText := certificateSummaryAsYAML(toCert)
 
-	return yamlString(fromCertText), yamlString(toCertText), nil
+	yamlStringFrom, err := yamlString(fromCertText)
+	if err != nil {
+		return "", "", err
+	}
+
+	yamlStringTo, err := yamlString(toCertText)
+	if err != nil {
+		return "", "", err
+	}
+
+	return yamlStringFrom, yamlStringTo, nil
 }
 
 // Create a YAML (hash with key/value) from a certificate to only display a few important fields (https://www.sslshopper.com/certificate-decoder.html):
@@ -438,22 +471,22 @@ func ToJSONString(obj interface{}) (string, error) {
 	}
 }
 
-func yamlString(input interface{}) string {
+func yamlString(input interface{}) (string, error) {
 	// TODO Consolidate this function with ToYAMLString. There is no need to have to so similar functions.
 	output, err := yaml.Marshal(input)
 	if err != nil {
-		ExitWithError("Failed to marshal input object", err)
+		return "", errors.Wrap(err, fmt.Sprintf("Failed to marshal input object %#v", input))
 	}
 
-	return string(output)
+	return string(output), nil
 }
 
 // ToYAMLString converts the provided data into a human readable YAML string.
 func ToYAMLString(content interface{}) (string, error) {
-	out, err := yaml.Marshal(content)
+	output, err := yamlString(content)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("---\n%s\n", string(out)), nil
+	return fmt.Sprintf("---\n%s\n", output), nil
 }

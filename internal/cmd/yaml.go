@@ -43,7 +43,7 @@ Converts input document into YAML format while preserving the order of all keys.
 		for _, x := range args {
 			obj, err := dyff.LoadFile(x)
 			if err != nil {
-				dyff.ExitWithError("Failed to load input file", err)
+				exitWithError("Failed to load input file", err)
 			}
 
 			for _, document := range obj.Documents {
@@ -53,7 +53,7 @@ Converts input document into YAML format while preserving the order of all keys.
 
 				output, yamlerr := dyff.ToYAMLString(document)
 				if yamlerr != nil {
-					dyff.ExitWithError("Failed to marshal object into YAML", err)
+					exitWithError("Failed to marshal object into YAML", err)
 				}
 
 				fmt.Print(output)

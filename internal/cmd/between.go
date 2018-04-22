@@ -55,10 +55,13 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		from, to, err := dyff.LoadFiles(fromLocation, toLocation)
 		if err != nil {
-			dyff.ExitWithError("Failed to load input files", err)
+			exitWithError("Failed to load input files", err)
 		}
 
-		diffs := dyff.CompareInputFiles(from, to)
+		diffs, err := dyff.CompareInputFiles(from, to)
+		if err != nil {
+			exitWithError("Failed to compare input files", err)
+		}
 
 		// TODO Move the dyff banner and its information strings into the dyff package code (keep it short and simple here)
 		// TODO Add style Go-Patch

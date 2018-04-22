@@ -32,6 +32,7 @@ import (
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
+	"github.com/pkg/errors"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -90,17 +91,6 @@ type Detail struct {
 type Diff struct {
 	Path    Path
 	Details []Detail
-}
-
-// ExitWithError exits program with given text and error message
-func ExitWithError(text string, err error) {
-	if err != nil {
-		fmt.Printf("%s: %s\n", text, Color(err.Error(), color.FgHiRed))
-	} else {
-		fmt.Printf(text)
-	}
-
-	os.Exit(1)
 }
 
 func getTerminalWidth() int {
@@ -240,65 +230,75 @@ func (path Path) String() string {
 }
 
 // CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
-func CompareInputFiles(from InputFile, to InputFile) []Diff {
+func CompareInputFiles(from InputFile, to InputFile) ([]Diff, error) {
 	if len(from.Documents) != len(to.Documents) {
-		ExitWithError("Failed to compare input files", fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported"))
+		return nil, fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported")
 	}
 
 	result := make([]Diff, 0)
 	for idx := range from.Documents {
-		result = append(result, compareObjects(Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])...)
+		diffs, err := compareObjects(Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, diffs...)
 	}
 
-	return result
+	return result, nil
 }
 
 // CompareDocuments is one of the convenience main entry points to compare two documents and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
-func CompareDocuments(from interface{}, to interface{}) []Diff {
-	return compareObjects(Path{}, from, to)
-}
-
-func compareObjects(path Path, from interface{}, to interface{}) []Diff {
-	// Save some time and process some simple nil and type-change use cases immediately
-	if from == nil && to != nil {
-		return []Diff{{path, []Detail{{Kind: ADDITION, From: from, To: to}}}}
-
-	} else if from != nil && to == nil {
-		return []Diff{{path, []Detail{{Kind: REMOVAL, From: from, To: to}}}}
-
-	} else if from == nil && to == nil {
-		return []Diff{}
-
-	} else if reflect.TypeOf(from) != reflect.TypeOf(to) {
-		return []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}
+func CompareDocuments(from interface{}, to interface{}) ([]Diff, error) {
+	diffs, err := compareObjects(Path{}, from, to)
+	if err != nil {
+		return nil, err
 	}
 
-	result := make([]Diff, 0)
+	return diffs, nil
+}
 
+func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error) {
+	// Save some time and process some simple nil and type-change use cases immediately
+	if from == nil && to != nil {
+		return []Diff{{path, []Detail{{Kind: ADDITION, From: from, To: to}}}}, nil
+
+	} else if from != nil && to == nil {
+		return []Diff{{path, []Detail{{Kind: REMOVAL, From: from, To: to}}}}, nil
+
+	} else if from == nil && to == nil {
+		return []Diff{}, nil
+
+	} else if reflect.TypeOf(from) != reflect.TypeOf(to) {
+		return []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}, nil
+	}
+
+	var diffs []Diff
+	var err error
 	switch from.(type) {
 	case yaml.MapSlice:
 		switch to.(type) {
 		case yaml.MapSlice:
-			result = append(result, compareMapSlices(path, from.(yaml.MapSlice), to.(yaml.MapSlice))...)
+			diffs, err = compareMapSlices(path, from.(yaml.MapSlice), to.(yaml.MapSlice))
 
 		}
 
 	case []interface{}:
 		switch to.(type) {
 		case []interface{}:
-			result = append(result, compareLists(path, from.([]interface{}), to.([]interface{}))...)
+			diffs, err = compareLists(path, from.([]interface{}), to.([]interface{}))
 		}
 
 	case []yaml.MapSlice:
 		switch to.(type) {
 		case []yaml.MapSlice:
-			result = append(result, compareListOfMapSlices(path, from.([]yaml.MapSlice), to.([]yaml.MapSlice))...)
+			diffs, err = compareListOfMapSlices(path, from.([]yaml.MapSlice), to.([]yaml.MapSlice))
 		}
 
 	case string:
 		switch to.(type) {
 		case string:
-			result = append(result, compareStrings(path, from.(string), to.(string))...)
+			diffs, err = compareStrings(path, from.(string), to.(string))
 
 		}
 
@@ -306,19 +306,23 @@ func compareObjects(path Path, from interface{}, to interface{}) []Diff {
 		switch to.(type) {
 		case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
 			if from != to {
-				result = append(result, Diff{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}})
+				diffs = []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}
+				err = nil
 			}
 		}
 
 	default:
-		ExitWithError("Failed to compare objects",
-			fmt.Errorf("Unsupported type %s", reflect.TypeOf(from)))
+		return nil, fmt.Errorf("Failed to compare objects due to unsupported type %s", reflect.TypeOf(from))
 	}
 
-	return result
+	if err != nil {
+		return nil, err
+	}
+
+	return diffs, nil
 }
 
-func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
+func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, error) {
 	removals := yaml.MapSlice{}
 	additions := yaml.MapSlice{}
 
@@ -328,7 +332,11 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 		key := fromItem.Key
 		if toItem, ok := getMapItemByKeyFromMapSlice(key, to); ok {
 			// `from` and `to` contain the same `key` -> require comparison
-			result = append(result, compareObjects(newPath(path, "", key), fromItem.Value, toItem.Value)...)
+			diffs, err := compareObjects(newPath(path, "", key), fromItem.Value, toItem.Value)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, diffs...)
 
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
@@ -358,10 +366,10 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) []Diff {
 		result = append([]Diff{diff}, result...)
 	}
 
-	return result
+	return result, nil
 }
 
-func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
+func compareLists(path Path, from []interface{}, to []interface{}) ([]Diff, error) {
 	if fromIdentifier := GetIdentifierFromNamedList(from); fromIdentifier != "" {
 		if toIdentifier := GetIdentifierFromNamedList(to); fromIdentifier == toIdentifier {
 			return compareNamedEntryLists(path, fromIdentifier, from, to)
@@ -371,12 +379,12 @@ func compareLists(path Path, from []interface{}, to []interface{}) []Diff {
 	return compareSimpleLists(path, from, to)
 }
 
-func compareListOfMapSlices(path Path, from []yaml.MapSlice, to []yaml.MapSlice) []Diff {
+func compareListOfMapSlices(path Path, from []yaml.MapSlice, to []yaml.MapSlice) ([]Diff, error) {
 	// TODO Check if there is another way to do this, or if we can save time by doing something else
 	return compareLists(path, SimplifyList(from), SimplifyList(to))
 }
 
-func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff {
+func compareSimpleLists(path Path, from []interface{}, to []interface{}) ([]Diff, error) {
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
@@ -387,7 +395,7 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 
 	// Back out immediately if both lists are empty
 	if fromLength == 0 && fromLength == toLength {
-		return result
+		return result, nil
 	}
 
 	// Special case if both lists only contain one entry: directly compare the two entries with each other
@@ -395,15 +403,26 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 		return compareObjects(newPath(path, "", 0), from[0], to[0])
 	}
 
-	fromLookup := createLookUpMap(from)
-	toLookup := createLookUpMap(to)
+	fromLookup, err := createLookUpMap(from)
+	if err != nil {
+		return nil, err
+	}
+
+	toLookup, err := createLookUpMap(to)
+	if err != nil {
+		return nil, err
+	}
 
 	// Fill two lists with the names of the entries that are common to both provided lists
 	fromNames := make([]uint64, 0, fromLength)
 	toNames := make([]uint64, 0, fromLength)
 
 	for idxPos, fromValue := range from {
-		hash := calcHash(fromValue)
+		hash, err := calcHash(fromValue)
+		if err != nil {
+			return nil, err
+		}
+
 		if _, ok := toLookup[hash]; !ok {
 			// `from` entry does not exist in `to` list
 			removals = append(removals, from[idxPos])
@@ -414,7 +433,11 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 	}
 
 	for idxPos, toValue := range to {
-		hash := calcHash(toValue)
+		hash, err := calcHash(toValue)
+		if err != nil {
+			return nil, err
+		}
+
 		if _, ok := fromLookup[hash]; !ok {
 			// `to` entry does not exist in `from` list
 			additions = append(additions, to[idxPos])
@@ -464,10 +487,10 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) []Diff 
 		result = append([]Diff{diff}, result...)
 	}
 
-	return result
+	return result, nil
 }
 
-func compareNamedEntryLists(path Path, identifier string, from []interface{}, to []interface{}) []Diff {
+func compareNamedEntryLists(path Path, identifier string, from []interface{}, to []interface{}) ([]Diff, error) {
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
@@ -478,7 +501,7 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 	// Bail out quickly if there is nothing to check
 	if fromLength == 0 && toLength == 0 {
-		return result
+		return result, nil
 	}
 
 	// Fill two lists with the names of the entries that are common to both provided lists
@@ -487,10 +510,18 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 	// Find entries that are common to both lists to compare them separately, and find entries that are only in from, but not to and are therefore removed
 	for _, fromEntry := range from {
-		name := getKeyValueOrPanic(fromEntry.(yaml.MapSlice), identifier)
+		name, err := getValueByKey(fromEntry.(yaml.MapSlice), identifier)
+		if err != nil {
+			return nil, err
+		}
+
 		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
 			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
-			result = append(result, compareObjects(newPath(path, identifier, name), fromEntry, toEntry)...)
+			diffs, err := compareObjects(newPath(path, identifier, name), fromEntry, toEntry)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, diffs...)
 			fromNames = append(fromNames, name.(string))
 
 		} else {
@@ -501,7 +532,11 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 	// Find entries that are only in to, but not from and are therefore added
 	for _, toEntry := range to {
-		name := getKeyValueOrPanic(toEntry.(yaml.MapSlice), identifier)
+		name, err := getValueByKey(toEntry.(yaml.MapSlice), identifier)
+		if err != nil {
+			return nil, err
+		}
+
 		if _, ok := getEntryFromNamedList(from, identifier, name); ok {
 			// `to` and `from` have the same entry idenfified by identifier and name (comparison already covered by previous range)
 			toNames = append(toNames, name.(string))
@@ -543,16 +578,16 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 		result = append([]Diff{diff}, result...)
 	}
 
-	return result
+	return result, nil
 }
 
-func compareStrings(path Path, from string, to string) []Diff {
+func compareStrings(path Path, from string, to string) ([]Diff, error) {
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
 		result = append(result, Diff{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}})
 	}
 
-	return result
+	return result, nil
 }
 
 func newPath(path Path, key interface{}, name interface{}) Path {
@@ -579,25 +614,15 @@ func getMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.
 	return yaml.MapItem{}, false
 }
 
-// getValueByKey returns the value (and true) for a given key in a provided MapSlice, or nil with false if there is no such entry. This is comparable to getting a value from a map with `foobar[key]`.
-func getValueByKey(mapslice yaml.MapSlice, key string) (interface{}, bool) {
+// getValueByKey returns the value for a given key in a provided MapSlice, or nil with an error if there is no such entry. This is comparable to getting a value from a map with `foobar[key]`.
+func getValueByKey(mapslice yaml.MapSlice, key string) (interface{}, error) {
 	for _, element := range mapslice {
 		if element.Key == key {
-			return element.Value, true
+			return element.Value, nil
 		}
 	}
 
-	return nil, false
-}
-
-// getKeyValueOrPanic returns the value for a given key in a provided MapSlice. This is comparable to getting a value from a map with `foobar[key]`. Function will panic if there is no such key. This is only intended to be used in scenarios where you know a key has to be present.
-func getKeyValueOrPanic(mapslice yaml.MapSlice, key string) interface{} {
-	// TODO Remove this function by only using getValueByKey. It should create an error to be returned to the caller rather than a hard panic.
-	if value, ok := getValueByKey(mapslice, key); ok {
-		return value
-	}
-
-	panic(fmt.Sprintf("Implemenation issue: There is no key `%s` in MapSlice %v", key, mapslice))
+	return nil, fmt.Errorf("no map key %s found in %v", key, mapslice)
 }
 
 // getEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
@@ -645,16 +670,20 @@ func GetIdentifierFromNamedList(list []interface{}) string {
 	return ""
 }
 
-func createLookUpMap(list []interface{}) map[uint64]int {
+func createLookUpMap(list []interface{}) (map[uint64]int, error) {
 	result := make(map[uint64]int, len(list))
 	for idx, entry := range list {
-		result[calcHash(entry)] = idx
+		hash, err := calcHash(entry)
+		if err != nil {
+			return nil, err
+		}
+		result[hash] = idx
 	}
 
-	return result
+	return result, nil
 }
 
-func calcHash(obj interface{}) uint64 {
+func calcHash(obj interface{}) (uint64, error) {
 	var hash uint64
 	var err error
 
@@ -669,10 +698,10 @@ func calcHash(obj interface{}) uint64 {
 	}
 
 	if hash, err = hashstructure.Hash(obj, nil); err != nil {
-		ExitWithError("Failed to calculate hash", err)
+		return 0, errors.Wrap(err, "Failed to calculate hash")
 	}
 
-	return hash
+	return hash, nil
 }
 
 func min(a, b int) int {

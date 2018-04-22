@@ -40,12 +40,12 @@ Converts input document into JSON format while preserving the order of all keys.
 		for _, x := range args {
 			obj, err := dyff.LoadFile(x)
 			if err != nil {
-				dyff.ExitWithError("Failed to load input file", err)
+				exitWithError("Failed to load input file", err)
 			}
 
 			output, err := dyff.ToJSONString(obj)
 			if err != nil {
-				dyff.ExitWithError("Failed to marshal object into JSON", err)
+				exitWithError("Failed to marshal object into JSON", err)
 			}
 
 			fmt.Printf("%s\n", output)
