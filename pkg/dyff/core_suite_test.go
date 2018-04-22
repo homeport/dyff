@@ -196,3 +196,15 @@ func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, fr
 			}},
 	}
 }
+
+func compare(from interface{}, to interface{}) ([]Diff, error) {
+	diffs, err := CompareInputFiles(
+		InputFile{Documents: []interface{}{from}},
+		InputFile{Documents: []interface{}{to}})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return diffs, nil
+}

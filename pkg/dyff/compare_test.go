@@ -46,7 +46,7 @@ some:
       version: v1
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -71,7 +71,7 @@ some:
       version: v1
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -95,7 +95,7 @@ some:
       level: 2.7182818284
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -119,7 +119,7 @@ some:
       enabled: true
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -142,7 +142,7 @@ some:
       version: v1
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -165,7 +165,7 @@ some:
       name: foobar
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -189,7 +189,7 @@ some:
       release: v1
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -220,7 +220,7 @@ some:
       - three
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -247,7 +247,7 @@ some:
       - 3
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -274,7 +274,7 @@ some:
       - two
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -301,7 +301,7 @@ some:
       - 2
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -323,7 +323,7 @@ list:
   foo: bar
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(0))
@@ -402,7 +402,7 @@ instance_groups:
           password: "zwX#(;P=%hTfFzM["
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(7))
@@ -449,7 +449,7 @@ resource_pools:
           resource_pool: new-vsphere-res-pool
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -477,7 +477,7 @@ resource_pools:
       - CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -511,7 +511,7 @@ resource_pools:
   version: 3
 `)
 
-				result, err := CompareDocuments(from, to)
+				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
@@ -527,7 +527,7 @@ resource_pools:
 				Expect(len(from.Documents)).To(BeIdenticalTo(1))
 				Expect(len(to.Documents)).To(BeIdenticalTo(1))
 
-				results, err := CompareDocuments(from.Documents[0], to.Documents[0])
+				results, err := compare(from.Documents[0], to.Documents[0])
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))
@@ -536,7 +536,7 @@ resource_pools:
 
 		Context("Given two YAML files", func() {
 			It("should return all differences between the files", func() {
-				results, err := CompareDocuments(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))
+				results, err := compare(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))
 				Expect(err).To(BeNil())
 				expected := []Diff{
 					doubleDiff("/yaml/map",
@@ -591,7 +591,7 @@ listY: [ Yo, Yo, Yo ]
 			It("should return order changes in named entry lists (ignoring additions and removals)", func() {
 				from := yml(`list: [ {name: A}, {name: C}, {name: B}, {name: D}, {name: E} ]`)
 				to := yml(`list: [ {name: A}, {name: X1}, {name: B}, {name: C}, {name: D}, {name: X2} ]`)
-				results, err := CompareDocuments(from, to)
+				results, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))
@@ -606,7 +606,7 @@ listY: [ Yo, Yo, Yo ]
 			It("should return order changes in simple lists (ignoring additions and removals)", func() {
 				from := yml(`list: [ A, C, B, D, E ]`)
 				to := yml(`list: [ A, X1, B, C, D, X2 ]`)
-				results, err := CompareDocuments(from, to)
+				results, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))

@@ -248,16 +248,6 @@ func CompareInputFiles(from InputFile, to InputFile) ([]Diff, error) {
 	return result, nil
 }
 
-// CompareDocuments is one of the convenience main entry points to compare two documents and returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
-func CompareDocuments(from interface{}, to interface{}) ([]Diff, error) {
-	diffs, err := compareObjects(Path{}, from, to)
-	if err != nil {
-		return nil, err
-	}
-
-	return diffs, nil
-}
-
 func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error) {
 	// Save some time and process some simple nil and type-change use cases immediately
 	if from == nil && to != nil {
