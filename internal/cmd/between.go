@@ -58,7 +58,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			exitWithError("Failed to load input files", err)
 		}
 
-		diffs, err := dyff.CompareInputFiles(from, to)
+		report, err := dyff.CompareInputFiles(from, to)
 		if err != nil {
 			exitWithError("Failed to compare input files", err)
 		}
@@ -80,8 +80,8 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
         |___/
 `, dyff.HumanReadableLocationInformation(fromLocation),
 				dyff.HumanReadableLocationInformation(toLocation),
-				dyff.Color(dyff.Plural(len(diffs), "difference"), color.Bold))
-			fmt.Print(dyff.DiffsToHumanStyle(diffs))
+				dyff.Color(dyff.Plural(len(report.Diffs), "difference"), color.Bold))
+			fmt.Print(dyff.CreateHumanStyleReport(report))
 
 		default:
 			fmt.Printf("Unknown output style %s\n", style)

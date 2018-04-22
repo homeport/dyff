@@ -93,6 +93,13 @@ type Diff struct {
 	Details []Detail
 }
 
+// Report encapsulates the actual end-result of the comparison: The input data and the list of differences.
+type Report struct {
+	From  InputFile
+	To    InputFile
+	Diffs []Diff
+}
+
 func getTerminalWidth() int {
 	if FixedTerminalWidth > 0 {
 		return FixedTerminalWidth
@@ -229,23 +236,23 @@ func (path Path) String() string {
 	return ToGoPatchStyle(path, true)
 }
 
-// CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
-func CompareInputFiles(from InputFile, to InputFile) ([]Diff, error) {
+// CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a report with the list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
+func CompareInputFiles(from InputFile, to InputFile) (Report, error) {
 	if len(from.Documents) != len(to.Documents) {
-		return nil, fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported")
+		return Report{}, fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported")
 	}
 
 	result := make([]Diff, 0)
 	for idx := range from.Documents {
 		diffs, err := compareObjects(Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])
 		if err != nil {
-			return nil, err
+			return Report{}, err
 		}
 
 		result = append(result, diffs...)
 	}
 
-	return result, nil
+	return Report{from, to, result}, nil
 }
 
 func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error) {

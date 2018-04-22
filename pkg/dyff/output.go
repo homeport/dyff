@@ -54,15 +54,11 @@ func pathToString(path Path, showDocumentIdx bool) string {
 	return ToDotStyle(path, showDocumentIdx)
 }
 
-// DiffsToHumanStyle creates a string with human readable report of the differences
-// For this to work, dyff relies on modified versions of the YAML lib and the
-// coloring lib we use here. The YAML lib adds ANSI styles to make keys bold.
-// But this means the coloring lib needs to be able to apply styles on already
-// styled text without making it look ugly.
-func DiffsToHumanStyle(diffs []Diff) string {
+// CreateHumanStyleReport creates a string with human readable report of the differences. For this to work, dyff relies on modified versions of the YAML lib and the coloring lib we use here. The YAML lib adds ANSI styles to make keys bold. But this means the coloring lib needs to be able to apply styles on already styled text without making it look ugly.
+func CreateHumanStyleReport(report Report) string {
 	// Map the different document indicies listed in the paths of the diffs
 	counterMap := make(map[int]struct{}, 0)
-	for _, diff := range diffs {
+	for _, diff := range report.Diffs {
 		counterMap[diff.Path.DocumentIdx] = struct{}{}
 	}
 
@@ -71,7 +67,7 @@ func DiffsToHumanStyle(diffs []Diff) string {
 
 	// Again, loop over the diff and generate each report into the buffer
 	var output bytes.Buffer
-	for _, diff := range diffs {
+	for _, diff := range report.Diffs {
 		GenerateHumanDiffOutput(&output, diff, showDocumentIdx)
 	}
 

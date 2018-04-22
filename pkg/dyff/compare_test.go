@@ -629,9 +629,10 @@ listY: [ Yo, Yo, Yo ]
 
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
-				Expect(len(results)).To(BeEquivalentTo(len(expected)))
+				Expect(results.Diffs).NotTo(BeNil())
+				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
 
-				for i, result := range results {
+				for i, result := range results.Diffs {
 					Expect(result).To(BeEquivalentTo(expected[i]))
 				}
 			})
