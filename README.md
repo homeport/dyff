@@ -1,10 +1,10 @@
-# δyƒƒ /ˈdʏf/
-A diff tool for YAML files, and sometimes JSON
-
 [![License](https://img.shields.io/github/license/HeavyWombat/dyff.svg)](https://github.com/HeavyWombat/dyff/blob/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/HeavyWombat/dyff)](https://goreportcard.com/report/github.com/HeavyWombat/dyff)
 [![Build Status](https://travis-ci.org/HeavyWombat/dyff.svg?branch=master)](https://travis-ci.org/HeavyWombat/dyff) [![GoDoc](https://godoc.org/github.com/HeavyWombat/dyff?status.svg)](https://godoc.org/github.com/HeavyWombat/dyff)
 [![Release](https://img.shields.io/github/release/HeavyWombat/dyff.svg)](https://github.com/HeavyWombat/dyff/releases/latest)
+
+# δyƒƒ /ˈdʏf/
+A diff tool for YAML files, and sometimes JSON
 
 ![dyff between example](docs/images/dyff-between-example.png?raw=true "dyff between example of two cf-deployment versions")
 
