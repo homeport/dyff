@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/spf13/cobra"
 )
@@ -63,7 +62,6 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			exitWithError("Failed to compare input files", err)
 		}
 
-		// TODO Move the dyff banner and its information strings into the dyff package code (keep it short and simple here)
 		// TODO Add style Go-Patch
 		// TODO Add style Spruce
 		// TODO Add style JSON report
@@ -72,16 +70,7 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		switch strings.ToLower(style) {
 		case "human", "bosh":
-			fmt.Printf(`      _        __  __
-    _| |_   _ / _|/ _|  between %s
-  / _' | | | | |_| |_       and %s
- | (_| | |_| |  _|  _|
-  \__,_|\__, |_| |_|   returned %s
-        |___/
-`, dyff.HumanReadableLocationInformation(fromLocation),
-				dyff.HumanReadableLocationInformation(toLocation),
-				dyff.Color(dyff.Plural(len(report.Diffs), "difference"), color.Bold))
-			fmt.Print(dyff.CreateHumanStyleReport(report))
+			fmt.Print(dyff.CreateHumanStyleReport(report, true))
 
 		default:
 			fmt.Printf("Unknown output style %s\n", style)

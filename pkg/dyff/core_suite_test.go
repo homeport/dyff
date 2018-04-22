@@ -163,7 +163,7 @@ func path(path string) Path {
 }
 
 func humanDiff(diff Diff) string {
-	return CreateHumanStyleReport(Report{Diffs: []Diff{diff}})
+	return CreateHumanStyleReport(Report{Diffs: []Diff{diff}}, false)
 }
 
 func singleDiff(p string, change rune, from, to interface{}) Diff {

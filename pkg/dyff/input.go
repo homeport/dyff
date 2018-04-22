@@ -38,26 +38,37 @@ import (
 
 // InputFile represents the actual input file (either local, or fetched remotely) that needs to be processed. It can contain multiple documents, where a document is a map or a list of things.
 type InputFile struct {
+	Location  string
 	Documents []interface{}
 }
 
 // HumanReadableLocationInformation create a nicely decorated information about the provided input location. It will output the absolut path of the file (rather than the possibly relative location), or it will show the URL in the usual look-and-feel of URIs.
-func HumanReadableLocationInformation(location string) string {
+func HumanReadableLocationInformation(inputFile InputFile) string {
+	location := inputFile.Location
+	documents := len(inputFile.Documents)
+
+	var buf bytes.Buffer
+
 	if location == "-" {
-		return Color("<STDIN>", color.Italic)
-	}
+		buf.WriteString(Color("<STDIN>", color.Italic))
 
-	if _, err := os.Stat(location); err == nil {
+	} else if _, err := os.Stat(location); err == nil {
 		if abs, err := filepath.Abs(location); err == nil {
-			return Color(abs, color.Bold)
+			buf.WriteString(Color(abs, color.Bold))
+		} else {
+			buf.WriteString(Color(location, color.Bold))
 		}
+
+	} else if _, err := url.ParseRequestURI(location); err == nil {
+		buf.WriteString(Color(location, color.FgHiBlue, color.Underline))
 	}
 
-	if _, err := url.ParseRequestURI(location); err == nil {
-		return Color(location, color.FgHiBlue, color.Underline)
+	// Add an information about how many documents are in the provided input file
+	if documents > 1 {
+		buf.WriteString(Color(" ("+Plural(documents, "document")+")", color.FgHiCyan))
 	}
 
-	return location
+	return buf.String()
 }
 
 // LoadFiles concurrently loads two files from the provided locations
@@ -109,7 +120,7 @@ func LoadFile(location string) (InputFile, error) {
 		return InputFile{}, errors.Wrap(err, fmt.Sprintf("Unable to parse data from %s", location))
 	}
 
-	return InputFile{Documents: documents}, nil
+	return InputFile{Location: location, Documents: documents}, nil
 }
 
 // LoadDocuments reads the provided input bytes as a YAML file with potential multiple documents. Each document in the YAML string results in a entry of the result slice. This function performs two decoding passes over the input string, the first one to detect the respective types in use. And a second one to properly unmarshal the data in the most suitable Go types available so that key orders in hashes are preserved.
