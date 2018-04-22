@@ -40,6 +40,7 @@ some.yaml.structure.string
   ± value change
     - foobar
     + Foobar
+
 `))
 			})
 
@@ -50,6 +51,7 @@ some.yaml.structure.int
   ± value change
     - 12
     + 147
+
 `))
 			})
 
@@ -60,6 +62,7 @@ some.yaml.structure.test
   ± type change from int to float64
     - 12
     + 12
+
 `))
 			})
 
@@ -94,7 +97,7 @@ input: |+
 					"      newlines·and·stuff↵            newlines·and·stuff↵\n" +
 					"      to·show·case·whitespace↵       to·show·case·whitespace↵\n" +
 					"      issues.↵                       issues.↵\n" +
-					"                                     ↵\n\n"))
+					"                                     ↵\n\n\n"))
 			})
 		})
 	})

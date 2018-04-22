@@ -35,8 +35,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO Separate code into different output source files: human, and the new stuff
-
 // NoTableStyle disables output in table style
 var NoTableStyle = false
 
@@ -68,7 +66,7 @@ func CreateHumanStyleReport(report Report) string {
 	// Again, loop over the diff and generate each report into the buffer
 	var output bytes.Buffer
 	for _, diff := range report.Diffs {
-		GenerateHumanDiffOutput(&output, diff, showDocumentIdx)
+		generateHumanDiffOutput(&output, diff, showDocumentIdx)
 	}
 
 	// Finish with one last newline so that we do not end next to the prompt
@@ -76,8 +74,8 @@ func CreateHumanStyleReport(report Report) string {
 	return output.String()
 }
 
-// GenerateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
-func GenerateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) error {
+// generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
+func generateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) error {
 	output.WriteString("\n")
 	output.WriteString(pathToString(diff.Path, showDocumentIdx))
 	output.WriteString("\n")
