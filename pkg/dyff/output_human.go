@@ -23,7 +23,6 @@ package dyff
 import (
 	"bytes"
 	"crypto/x509"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"reflect"
@@ -32,7 +31,6 @@ import (
 
 	"github.com/HeavyWombat/color"
 	"github.com/HeavyWombat/yaml"
-	"github.com/pkg/errors"
 )
 
 // NoTableStyle disables output in table style
@@ -412,75 +410,4 @@ func CreateTableStyleString(separator string, indent int, columns ...string) str
 	}
 
 	return buf.String()
-}
-
-// ToJSONString converts the provided object into a human readable JSON string.
-func ToJSONString(obj interface{}) (string, error) {
-	switch v := obj.(type) {
-
-	case []interface{}:
-		result := make([]string, 0)
-		for _, i := range v {
-			value, err := ToJSONString(i)
-			if err != nil {
-				return "", err
-			}
-			result = append(result, value)
-		}
-
-		return fmt.Sprintf("[%s]", strings.Join(result, ", ")), nil
-
-	case yaml.MapSlice:
-		result := make([]string, 0)
-		for _, i := range v {
-			value, err := ToJSONString(i)
-			if err != nil {
-				return "", err
-			}
-			result = append(result, value)
-		}
-
-		return fmt.Sprintf("{%s}", strings.Join(result, ", ")), nil
-
-	case yaml.MapItem:
-		key, keyError := ToJSONString(v.Key)
-		if keyError != nil {
-			return "", keyError
-		}
-
-		value, valueError := ToJSONString(v.Value)
-		if valueError != nil {
-			return "", valueError
-		}
-
-		return fmt.Sprintf("%s: %s", key, value), nil
-
-	default:
-		bytes, err := json.Marshal(v)
-		if err != nil {
-			return "", err
-		}
-
-		return fmt.Sprintf("%s", string(bytes)), nil
-	}
-}
-
-func yamlString(input interface{}) (string, error) {
-	// TODO Consolidate this function with ToYAMLString. There is no need to have to so similar functions.
-	output, err := yaml.Marshal(input)
-	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to marshal input object %#v", input))
-	}
-
-	return string(output), nil
-}
-
-// ToYAMLString converts the provided data into a human readable YAML string.
-func ToYAMLString(content interface{}) (string, error) {
-	output, err := yamlString(content)
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("---\n%s\n", output), nil
 }
