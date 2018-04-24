@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Copyright © 2018 Matthias Diester
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,35 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-.PHONY: clean
+set -euo pipefail
 
-all: test
+if ! hash gocyclo > /dev/null 2>&1; then
+  echo 'Unable to find tool `gocyclo` in the path. Run `go get github.com/fzipp/gocyclo` to install it.'
+  exit 1
+fi
 
-clean:
-	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
+BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-sanity-check: unused misspell lint fmt vet gocyclo
-
-vet:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-vet.sh
-
-fmt:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-fmt.sh
-
-lint:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-lint.sh
-
-gocyclo:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-cyclo.sh
-
-unused:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/unused.sh
-
-misspell:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/misspell.sh
-
-build: clean sanity-check
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh
-
-test: unused vet fmt
-	@ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace
+( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs gocyclo -over 25 )
