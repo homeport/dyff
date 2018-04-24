@@ -619,7 +619,11 @@ func getValueByKey(mapslice yaml.MapSlice, key string) (interface{}, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("no map key %s found in %v", key, mapslice)
+	if names, err := ListStringKeys(mapslice); err == nil {
+		return nil, fmt.Errorf("no key '%s' found in map, available keys are: %s", key, strings.Join(names, ", "))
+	}
+
+	return nil, fmt.Errorf("no key '%s' found in map and also failed to get a list of key for this map", key)
 }
 
 // getEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
@@ -665,6 +669,26 @@ func GetIdentifierFromNamedList(list []interface{}) string {
 	}
 
 	return ""
+}
+
+func listNamesOfNamedList(list []interface{}, identifier string) ([]string, error) {
+	result := make([]string, len(list))
+	for i, entry := range list {
+		switch entry.(type) {
+		case yaml.MapSlice:
+			value, err := getValueByKey(entry.(yaml.MapSlice), identifier)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to list names of a names list")
+			}
+
+			result[i] = value.(string)
+
+		default:
+			return nil, fmt.Errorf("unable to list names of a names list, because list entry #%d is not a YAML map but %s", i, typeToName(entry))
+		}
+	}
+
+	return result, nil
 }
 
 func createLookUpMap(list []interface{}) (map[uint64]int, error) {
@@ -739,4 +763,193 @@ func SimplifyList(input []yaml.MapSlice) []interface{} {
 	}
 
 	return result
+}
+
+// StringToPath creates a new Path using the provided serialized path string. In case of Spruce paths, we need the actual tree as a reference to create the correct path.
+func StringToPath(path string, obj interface{}) (Path, error) {
+	elements := make([]PathElement, 0)
+
+	if strings.HasPrefix(path, "/") { // Go-path path in case it starts with a slash
+		for i, section := range strings.Split(path, "/") {
+			if i == 0 {
+				continue
+			}
+
+			keyNameSplit := strings.Split(section, "=")
+			switch len(keyNameSplit) {
+			case 1:
+				elements = append(elements, PathElement{Name: keyNameSplit[0]})
+
+			case 2:
+				elements = append(elements, PathElement{Key: keyNameSplit[0], Name: keyNameSplit[1]})
+
+			default:
+				return Path{}, fmt.Errorf("invalid Go-patch style path, element '%s' cannot contain more than one equal sign", section)
+			}
+		}
+
+	} else { // Spruce path
+		pointer := obj
+		for _, section := range strings.Split(path, ".") {
+			if isMapSlice(pointer) {
+				mapslice := pointer.(yaml.MapSlice)
+				value, err := getValueByKey(mapslice, section)
+				if err != nil {
+					return Path{}, errors.Wrap(err, "foobar #1")
+				}
+
+				pointer = value
+				elements = append(elements, PathElement{Name: section})
+
+			} else if isList(pointer) {
+				list := pointer.([]interface{})
+				if id, err := strconv.Atoi(section); err == nil {
+					if id < 0 || id >= len(list) {
+						return Path{}, fmt.Errorf("failed to parse path %s, provided list index %d is not in range: 0..%d", path, id, len(list)-1)
+					}
+
+					pointer = list[id]
+					elements = append(elements, PathElement{Name: section})
+
+				} else {
+					identifier := GetIdentifierFromNamedList(list)
+					value, ok := getEntryFromNamedList(list, identifier, section)
+					if !ok {
+						names, err := listNamesOfNamedList(list, identifier)
+						if err != nil {
+							return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list", path, section)
+						}
+
+						return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list, available names are: %s", path, section, strings.Join(names, ", "))
+					}
+
+					pointer = value
+					elements = append(elements, PathElement{Key: identifier, Name: section})
+				}
+			}
+		}
+	}
+
+	return Path{DocumentIdx: 0, PathElements: elements}, nil
+}
+
+func isList(obj interface{}) bool {
+	switch obj.(type) {
+	case []interface{}:
+		return true
+
+	default:
+		return false
+	}
+}
+
+func isMapSlice(obj interface{}) bool {
+	switch obj.(type) {
+	case yaml.MapSlice:
+		return true
+
+	default:
+		return false
+	}
+}
+
+// Grab get the value from the provided YAML tree using a path to traverse through the tree structure
+func Grab(obj interface{}, pathString string) (interface{}, error) {
+	path, err := StringToPath(pathString, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	pointer := obj
+	pointerPath := Path{DocumentIdx: path.DocumentIdx}
+
+	for _, element := range path.PathElements {
+		if element.Key != "" { // List
+			if !isList(pointer) {
+				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), ToGoPatchStyle(pointerPath, false))
+			}
+
+			entry, ok := getEntryFromNamedList(pointer.([]interface{}), element.Key, element.Name)
+			if !ok {
+				return nil, fmt.Errorf("there is no entry %s: %s in the list", element.Key, element.Name)
+			}
+
+			pointer = entry
+
+		} else if id, err := strconv.Atoi(element.Name); err == nil { // List (entry referenced by its index)
+			if !isList(pointer) {
+				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), ToGoPatchStyle(pointerPath, false))
+			}
+
+			list := pointer.([]interface{})
+			if id < 0 || id >= len(list) {
+				return nil, fmt.Errorf("failed to traverse tree, provided list index %d is not in range: 0..%d", id, len(list)-1)
+			}
+
+			pointer = list[id]
+
+		} else { // Map
+			if !isMapSlice(pointer) {
+				return nil, fmt.Errorf("failed to traverse tree, expected a YAML map but found type %s at %s", typeToName(pointer), ToGoPatchStyle(pointerPath, false))
+			}
+
+			entry, err := getValueByKey(pointer.(yaml.MapSlice), element.Name)
+			if err != nil {
+				return nil, err
+			}
+
+			pointer = entry
+		}
+
+		// Update the path that the current pointer has (only used in error case to point to the right position)
+		pointerPath.PathElements = append(pointerPath.PathElements, element)
+	}
+
+	return pointer, nil
+}
+
+// ChangeRoot changes the root of an input file to a position inside its document based on the given path. Input files with more than one document are not supported, since they could have multiple elements with that path.
+func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool) error {
+	if len(inputFile.Documents) != 1 {
+		return fmt.Errorf("change root for an input file is only possible if there is only one document, but %s contains %s",
+			inputFile.Location,
+			Plural(len(inputFile.Documents), "document"))
+	}
+
+	// Find the object at the given path
+	obj, err := Grab(inputFile.Documents[0], path)
+	if err != nil {
+		return err
+	}
+
+	if translateListToDocuments && isList(obj) {
+		// Change root of input file main document to a new list of documents based on the the list that was found
+		inputFile.Documents = obj.([]interface{})
+
+	} else {
+		// Change root of input file main document to the object that was found
+		inputFile.Documents = []interface{}{obj}
+	}
+
+	// Parse path string and create nicely formatted output path
+	if resolvedPath, err := StringToPath(path, obj); err == nil {
+		path = PathToString(resolvedPath, false)
+	}
+
+	inputFile.Note = fmt.Sprintf("YAML root was changed to %s", path)
+
+	return nil
+}
+
+func typeToName(obj interface{}) string {
+	switch obj.(type) {
+	case yaml.MapSlice:
+		return "YAML map"
+
+	case []yaml.MapSlice, []interface{}:
+		return "YAML list"
+
+	default:
+		return reflect.TypeOf(obj).Kind().String()
+	}
 }

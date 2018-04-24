@@ -245,5 +245,63 @@ list:
 				Expect(output).To(BeEmpty())
 			})
 		})
+
+		Context("Grabing values by path", func() {
+			It("should create the same path using Go-patch and Spruce style", func() {
+				obj := yml("../../assets/bosh-yaml/manifest.yml")
+				Expect(obj).ToNot(BeNil())
+
+				Expect(pathFromString("/name", obj)).To(
+					BeEquivalentTo(pathFromString("name", obj)))
+
+				Expect(pathFromString("/releases/name=concourse", obj)).To(
+					BeEquivalentTo(pathFromString("releases.concourse", obj)))
+
+				Expect(pathFromString("/instance_groups/name=web/networks/name=concourse/static_ips/0", obj)).To(
+					BeEquivalentTo(pathFromString("instance_groups.web.networks.concourse.static_ips.0", obj)))
+
+				Expect(pathFromString("/networks/name=concourse/subnets/0/cloud_properties/name", obj)).To(
+					BeEquivalentTo(pathFromString("networks.concourse.subnets.0.cloud_properties.name", obj)))
+			})
+
+			It("should return the value referenced by the path", func() {
+				var example yaml.MapSlice
+
+				example = yml("../../assets/examples/from.yml")
+				Expect(example).ToNot(BeNil())
+
+				Expect(grab(example, "/yaml/map/before")).To(BeEquivalentTo("after"))
+				Expect(grab(example, "/yaml/map/intA")).To(BeEquivalentTo(42))
+				Expect(grab(example, "/yaml/map/mapA")).To(BeEquivalentTo(yml(`{ key0: A, key1: A }`)))
+				Expect(grab(example, "/yaml/map/listA")).To(BeEquivalentTo(list(`[ A, A, A ]`)))
+
+				Expect(grab(example, "/yaml/named-entry-list-using-name/name=B")).To(BeEquivalentTo(yml(`{ name: B }`)))
+				Expect(grab(example, "/yaml/named-entry-list-using-key/key=B")).To(BeEquivalentTo(yml(`{ key: B }`)))
+				Expect(grab(example, "/yaml/named-entry-list-using-id/id=B")).To(BeEquivalentTo(yml(`{ id: B }`)))
+
+				Expect(grab(example, "/yaml/simple-list/1")).To(BeEquivalentTo("B"))
+				Expect(grab(example, "/yaml/named-entry-list-using-key/3")).To(BeEquivalentTo(yml(`{ key: X }`)))
+
+				// --- --- ---
+
+				example = yml("../../assets/bosh-yaml/manifest.yml")
+				Expect(example).ToNot(BeNil())
+
+				Expect(grab(example, "/instance_groups/name=web/networks/name=concourse/static_ips/0")).To(BeEquivalentTo("XX.XX.XX.XX"))
+				Expect(grab(example, "/instance_groups/name=worker/jobs/name=baggageclaim/properties")).To(BeEquivalentTo(yml(`{}`)))
+			})
+
+			It("should return the value referenced by the path", func() {
+				example := yml("../../assets/examples/from.yml")
+				Expect(example).ToNot(BeNil())
+
+				Expect(grabError(example, "/yaml/simple-list/-1")).To(BeEquivalentTo("failed to traverse tree, provided list index -1 is not in range: 0..4"))
+				Expect(grabError(example, "/yaml/does-not-exist")).To(BeEquivalentTo("no key 'does-not-exist' found in map, available keys are: map, simple-list, named-entry-list-using-name, named-entry-list-using-key, named-entry-list-using-id"))
+				Expect(grabError(example, "/yaml/0")).To(BeEquivalentTo("failed to traverse tree, expected a list but found type YAML map at /yaml"))
+				Expect(grabError(example, "/yaml/simple-list/foobar")).To(BeEquivalentTo("failed to traverse tree, expected a YAML map but found type YAML list at /yaml/simple-list"))
+				Expect(grabError(example, "/yaml/map/foobar=0")).To(BeEquivalentTo("failed to traverse tree, expected a list but found type YAML map at /yaml/map"))
+				Expect(grabError(example, "/yaml/named-entry-list-using-id/id=0")).To(BeEquivalentTo("there is no entry id: 0 in the list"))
+			})
+		})
 	})
 })

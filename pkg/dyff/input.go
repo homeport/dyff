@@ -39,12 +39,14 @@ import (
 // InputFile represents the actual input file (either local, or fetched remotely) that needs to be processed. It can contain multiple documents, where a document is a map or a list of things.
 type InputFile struct {
 	Location  string
+	Note      string
 	Documents []interface{}
 }
 
 // HumanReadableLocationInformation create a nicely decorated information about the provided input location. It will output the absolut path of the file (rather than the possibly relative location), or it will show the URL in the usual look-and-feel of URIs.
 func HumanReadableLocationInformation(inputFile InputFile) string {
 	location := inputFile.Location
+	note := inputFile.Note
 	documents := len(inputFile.Documents)
 
 	var buf bytes.Buffer
@@ -63,9 +65,16 @@ func HumanReadableLocationInformation(inputFile InputFile) string {
 		buf.WriteString(Color(location, color.FgHiBlue, color.Underline))
 	}
 
+	// Add additional note if it is set
+	if note != "" {
+		buf.WriteString(", ")
+		buf.WriteString(Color(note, color.FgCyan))
+	}
+
 	// Add an information about how many documents are in the provided input file
 	if documents > 1 {
-		buf.WriteString(Color(" ("+Plural(documents, "document")+")", color.FgHiCyan))
+		buf.WriteString(", ")
+		buf.WriteString(Color(Plural(documents, "document"), color.FgHiCyan, color.Bold))
 	}
 
 	return buf.String()
