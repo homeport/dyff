@@ -637,5 +637,40 @@ listY: [ Yo, Yo, Yo ]
 				}
 			})
 		})
+
+		Context("change root for comparison", func() {
+			It("should change the root of an input file", func() {
+				from := InputFile{Location: "/ginkgo/compare/test/from", Documents: loadTestDocuments(`---
+a: foo
+---
+b: bar
+`)}
+
+				to := InputFile{Location: "/ginkgo/compare/test/to", Documents: loadTestDocuments(`{
+"items": [
+  {"a": "Foo"},
+  {"b": "Bar"}
+]
+}`)}
+
+				err := ChangeRoot(&to, "/items", true)
+				if err != nil {
+					Fail(err.Error())
+				}
+
+				results, err := CompareInputFiles(from, to)
+				Expect(err).To(BeNil())
+
+				expected := []Diff{
+					singleDiff("#0/a", MODIFICATION, "foo", "Foo"),
+					singleDiff("#1/b", MODIFICATION, "bar", "Bar"),
+				}
+
+				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
+				for i, result := range results.Diffs {
+					Expect(result).To(BeEquivalentTo(expected[i]))
+				}
+			})
+		})
 	})
 })

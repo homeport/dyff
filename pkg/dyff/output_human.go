@@ -50,7 +50,8 @@ const banner = `     _        __  __
         |___/
 `
 
-func pathToString(path Path, showDocumentIdx bool) string {
+// PathToString returns a nicely formatted version of the provided path based on the user-preference for the style
+func PathToString(path Path, showDocumentIdx bool) string {
 	if UseGoPatchPaths {
 		return ToGoPatchStyle(path, showDocumentIdx)
 	}
@@ -89,7 +90,7 @@ func CreateHumanStyleReport(report Report, showBanner bool) string {
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
 func generateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) error {
 	output.WriteString("\n")
-	output.WriteString(pathToString(diff.Path, showDocumentIdx))
+	output.WriteString(PathToString(diff.Path, showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))

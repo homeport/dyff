@@ -204,3 +204,35 @@ func compare(from interface{}, to interface{}) ([]Diff, error) {
 
 	return report.Diffs, nil
 }
+
+func loadTestDocuments(input string) []interface{} {
+	documents, err := LoadDocuments([]byte(input))
+	if err != nil {
+		Fail(err.Error())
+	}
+
+	return documents
+}
+
+func grab(obj interface{}, path string) interface{} {
+	value, err := Grab(obj, path)
+	if err != nil {
+		out, _ := ToYAMLString(obj)
+		Fail(fmt.Sprintf("Failed to grab by path %s from %s", path, out))
+	}
+
+	return value
+}
+
+func grabError(obj interface{}, path string) string {
+	value, err := Grab(obj, path)
+	Expect(value).To(BeNil())
+	return err.Error()
+}
+
+func pathFromString(path string, obj interface{}) Path {
+	result, err := StringToPath(path, obj)
+	Expect(err).To(BeNil())
+
+	return result
+}

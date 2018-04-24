@@ -31,6 +31,11 @@ import (
 var style string
 var swap bool
 
+var translateListToDocuments bool
+var chroot string
+var chrootFrom string
+var chrootTo string
+
 // betweenCmd represents the between command
 var betweenCmd = &cobra.Command{
 	Use:   "between",
@@ -55,6 +60,26 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		from, to, err := dyff.LoadFiles(fromLocation, toLocation)
 		if err != nil {
 			exitWithError("Failed to load input files", err)
+		}
+
+		// If the main change root flag is set, this (re-)sets the individual change roots of the two input files
+		if chroot != "" {
+			chrootFrom = chroot
+			chrootTo = chroot
+		}
+
+		// Change root of from input file if change root flag for form is set
+		if chrootFrom != "" {
+			if err = dyff.ChangeRoot(&from, chrootFrom, translateListToDocuments); err != nil {
+				exitWithError(fmt.Sprintf("Failed to change root of %s to path %s", from.Location, chrootFrom), err)
+			}
+		}
+
+		// Change root of to input file if change root flag for to is set
+		if chrootTo != "" {
+			if err = dyff.ChangeRoot(&to, chrootTo, translateListToDocuments); err != nil {
+				exitWithError(fmt.Sprintf("Failed to change root of %s to path %s", to.Location, chrootTo), err)
+			}
 		}
 
 		report, err := dyff.CompareInputFiles(from, to)
@@ -84,8 +109,14 @@ func init() {
 
 	// TODO Add flag for filter on path
 	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "Specify the output style, e.g. 'human' (more to come ...)")
-	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap `from` and `to` for compare")
+	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap 'from' and 'to' for comparison")
+
 	betweenCmd.PersistentFlags().BoolVarP(&dyff.NoTableStyle, "no-table-style", "t", false, "Disable the table output")
 	betweenCmd.PersistentFlags().BoolVarP(&dyff.DoNotInspectCerts, "no-cert-inspection", "c", false, "Disable certificate inspection (compare as raw text)")
 	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "Use Go-Patch style paths instead of Spruce Dot-Style")
+
+	betweenCmd.PersistentFlags().BoolVar(&translateListToDocuments, "chroot-list-to-documents", false, "usage chroot-list-to-documents")
+	betweenCmd.PersistentFlags().StringVar(&chroot, "chroot", "", "usage chroot")
+	betweenCmd.PersistentFlags().StringVar(&chrootFrom, "chroot-of-from", "", "usage chroot from")
+	betweenCmd.PersistentFlags().StringVar(&chrootTo, "chroot-of-to", "", "usage chroot ro")
 }
