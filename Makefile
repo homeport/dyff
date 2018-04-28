@@ -23,6 +23,7 @@
 all: test
 
 clean:
+	@go clean -i -r -cache
 	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
 
 sanity-check: unused misspell lint fmt vet gocyclo
@@ -44,6 +45,9 @@ unused:
 
 misspell:
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/misspell.sh
+
+install: clean sanity-check
+	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --only-local
 
 build: clean sanity-check
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh

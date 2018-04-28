@@ -25,6 +25,15 @@ set -euo pipefail
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="$(cd "$BASEDIR" && git describe --tags)"
 VERFILE="$BASEDIR/internal/cmd/version.go"
+SKIP_FULL_BUILD=0
+
+if [[ $# != 0 ]]; then
+  case "$1" in
+    --only-local)
+      SKIP_FULL_BUILD=1
+      ;;
+  esac
+fi
 
 on_exit() {
   if [[ -f "${VERFILE}.bak" ]]; then
@@ -39,6 +48,20 @@ trap on_exit EXIT
 cp -p "${VERFILE}" "${VERFILE}.bak"
 perl -pi -e "s/const version = \"\\(development\\)\"/const version = \"${VERSION}\"/g" "${VERFILE}"
 
+# Compile a local version into GOPATH bin if it exists
+if [[ ! -z ${GOPATH+x} ]]; then
+  if [[ -d "${GOPATH}/bin" ]]; then
+    echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for local machine to \\033[1m${GOPATH}/bin\\033[0m"
+    ( cd "${BASEDIR}/cmd/dyff/" && go install )
+  fi
+fi
+
+# Stop here if skip full build flag was used
+if [[ $SKIP_FULL_BUILD == 1 ]]; then
+  exit 0
+fi
+
+# Compile all possible operating systems and architectures into the binaries directory (to be used for distribution)
 TARGET_PATH="${BASEDIR}/binaries"
 mkdir -p "$TARGET_PATH"
 while read -r OS ARCH; do
