@@ -23,10 +23,10 @@ package dyff_test
 import (
 	"fmt"
 
-	color "github.com/HeavyWombat/color"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/HeavyWombat/dyff/pkg/bunt"
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
 )
 
@@ -133,9 +133,9 @@ Miss Foobar`
 			})
 
 			It("should show a nice table output with colored text", func() {
-				color.NoColor = false
+				bunt.NoColor = false
 				defer func() {
-					color.NoColor = true
+					bunt.NoColor = true
 				}()
 
 				stringA := fmt.Sprintf(`
@@ -143,7 +143,7 @@ Miss Foobar`
 %s
 %s
 %s
-`, Color("#1", color.FgGreen), Color("#2", color.FgBlue), Color("#3", color.FgRed, color.Underline), Color("#4", color.FgYellow, color.Bold, color.Italic))
+`, bunt.Colorize("#1", bunt.Lime), bunt.Colorize("#2", bunt.Blue), bunt.Colorize("#3", bunt.Aqua, bunt.Underline), bunt.Colorize("#4", bunt.LemonChiffon, bunt.Bold, bunt.Italic))
 
 				stringB := `
 Mr. Foobar
@@ -162,7 +162,7 @@ Miss Foobar`
 %s  Mrs. Foobar  200
 %s  Miss Foobar  3000
 %s               40000
-                 500000`, Color("#1", color.FgGreen), Color("#2", color.FgBlue), Color("#3", color.FgRed, color.Underline), Color("#4", color.FgYellow, color.Bold, color.Italic))))
+                 500000`, bunt.Colorize("#1", bunt.Lime), bunt.Colorize("#2", bunt.Blue), bunt.Colorize("#3", bunt.Aqua, bunt.Underline), bunt.Colorize("#4", bunt.LemonChiffon, bunt.Bold, bunt.Italic))))
 			})
 		})
 	})

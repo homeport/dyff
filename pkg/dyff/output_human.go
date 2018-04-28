@@ -29,7 +29,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/yaml"
 )
 
@@ -73,7 +73,7 @@ func CreateHumanStyleReport(report Report, showBanner bool) string {
 		stats.WriteString(fmt.Sprintf(" between %s\n", HumanReadableLocationInformation(report.From)))
 		stats.WriteString(fmt.Sprintf("     and %s\n", HumanReadableLocationInformation(report.To)))
 		stats.WriteString("\n")
-		stats.WriteString(fmt.Sprintf("returned %s\n", Color(Plural(len(report.Diffs), "difference"), color.Bold)))
+		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(Plural(len(report.Diffs), "difference"), bunt.Bold)))
 		output.WriteString(CreateTableStyleString(" ", 0, banner, stats.String()))
 	}
 
@@ -122,9 +122,9 @@ func generateHumanDetailOutput(detail Detail) (string, error) {
 	case ADDITION:
 		switch detail.To.(type) {
 		case []interface{}:
-			output.WriteString(Color(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.([]interface{})), "list entry", "list entries")), color.FgYellow))
+			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
 		case yaml.MapSlice:
-			output.WriteString(Color(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
+			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 		}
 		yamlOutput, err := yamlString(RestructureObject(detail.To))
 		if err != nil {
@@ -135,9 +135,9 @@ func generateHumanDetailOutput(detail Detail) (string, error) {
 	case REMOVAL:
 		switch detail.From.(type) {
 		case []interface{}:
-			output.WriteString(Color(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.([]interface{})), "list entry", "list entries")), color.FgYellow))
+			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
 		case yaml.MapSlice:
-			output.WriteString(Color(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), color.FgYellow))
+			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 
 		}
 		yamlOutput, err := yamlString(RestructureObject(detail.From))
@@ -212,31 +212,31 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
 		output.WriteString(yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
 		writeTextBlocks(output, 0,
-			createStringWithPrefix("  - ", fromCertText, color.FgRed),
-			createStringWithPrefix("  + ", toCertText, color.FgGreen))
+			createStringWithPrefix("  - ", fromCertText, bunt.RemovalRed),
+			createStringWithPrefix("  + ", toCertText, bunt.AdditionGreen))
 
 	} else if isWhitespaceOnlyChange(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
 		writeTextBlocks(output, 0,
-			createStringWithPrefix("  - ", showWhitespaceCharacters(from), color.FgRed),
-			createStringWithPrefix("  + ", showWhitespaceCharacters(to), color.FgGreen))
+			createStringWithPrefix("  - ", showWhitespaceCharacters(from), bunt.RemovalRed),
+			createStringWithPrefix("  + ", showWhitespaceCharacters(to), bunt.AdditionGreen))
 
 	} else if isMinorChange(from, to) {
 		// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
-		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
+		output.WriteString(createStringWithPrefix("  - ", from, bunt.RemovalRed))
+		output.WriteString(createStringWithPrefix("  + ", to, bunt.AdditionGreen))
 
 	} else if isMultiLine(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		writeTextBlocks(output, 0,
-			createStringWithPrefix("  - ", from, color.FgRed),
-			createStringWithPrefix("  + ", to, color.FgGreen))
+			createStringWithPrefix("  - ", from, bunt.RemovalRed),
+			createStringWithPrefix("  + ", to, bunt.AdditionGreen))
 
 	} else {
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-		output.WriteString(createStringWithPrefix("  - ", from, color.FgRed))
-		output.WriteString(createStringWithPrefix("  + ", to, color.FgGreen))
+		output.WriteString(createStringWithPrefix("  - ", from, bunt.RemovalRed))
+		output.WriteString(createStringWithPrefix("  + ", to, bunt.AdditionGreen))
 	}
 }
 
@@ -318,26 +318,26 @@ func showWhitespaceCharacters(text string) string {
 	return strings.Replace(strings.Replace(text, "\n", bold("↵\n"), -1), " ", bold("·"), -1)
 }
 
-func createStringWithPrefix(prefix string, obj interface{}, attributes ...color.Attribute) string {
+func createStringWithPrefix(prefix string, obj interface{}, color uint32) string {
 	var buf bytes.Buffer
 	var lines = strings.Split(fmt.Sprintf("%v", obj), "\n")
 	for i, line := range lines {
 		if i == 0 {
-			buf.WriteString(Color(prefix, color.Bold))
+			buf.WriteString(bunt.Colorize(prefix, bunt.Bold))
 
 		} else {
-			buf.WriteString(strings.Repeat(" ", len(prefix)))
+			buf.WriteString(strings.Repeat(" ", plainTextLength(prefix)))
 		}
 
 		buf.WriteString(line)
 		buf.WriteString("\n")
 	}
 
-	return Color(buf.String(), attributes...)
+	return bunt.Colorize(buf.String(), color)
 }
 
 func plainTextLength(text string) int {
-	return utf8.RuneCountInString(color.RemoveAllEscapeSequences(text))
+	return utf8.RuneCountInString(bunt.RemoveAllEscapeSequences(text))
 }
 
 func stringArrayLen(list []string) int {

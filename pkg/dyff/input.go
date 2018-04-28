@@ -31,7 +31,7 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/yaml"
 	"github.com/pkg/errors"
 )
@@ -52,29 +52,29 @@ func HumanReadableLocationInformation(inputFile InputFile) string {
 	var buf bytes.Buffer
 
 	if location == "-" {
-		buf.WriteString(Color("<STDIN>", color.Italic))
+		buf.WriteString(bunt.Style("<STDIN>", bunt.Italic))
 
 	} else if _, err := os.Stat(location); err == nil {
 		if abs, err := filepath.Abs(location); err == nil {
-			buf.WriteString(Color(abs, color.Bold))
+			buf.WriteString(bunt.Style(abs, bunt.Bold))
 		} else {
-			buf.WriteString(Color(location, color.Bold))
+			buf.WriteString(bunt.Style(location, bunt.Bold))
 		}
 
 	} else if _, err := url.ParseRequestURI(location); err == nil {
-		buf.WriteString(Color(location, color.FgHiBlue, color.Underline))
+		buf.WriteString(bunt.Colorize(location, bunt.CornflowerBlue, bunt.Underline))
 	}
 
 	// Add additional note if it is set
 	if note != "" {
 		buf.WriteString(", ")
-		buf.WriteString(Color(note, color.FgCyan))
+		buf.WriteString(bunt.Colorize(note, bunt.Orange))
 	}
 
 	// Add an information about how many documents are in the provided input file
 	if documents > 1 {
 		buf.WriteString(", ")
-		buf.WriteString(Color(Plural(documents, "document"), color.FgHiCyan, color.Bold))
+		buf.WriteString(bunt.Colorize(Plural(documents, "document"), bunt.Aquamarine, bunt.Bold))
 	}
 
 	return buf.String()

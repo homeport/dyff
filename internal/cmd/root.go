@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
@@ -61,7 +61,7 @@ func init() {
 
 func initSettings() {
 	if dyff.NoColor {
-		color.NoColor = true
+		bunt.NoColor = true
 		yaml.HighlightKeys = false
 	}
 }
@@ -69,7 +69,7 @@ func initSettings() {
 // exitWithError exits program with given text and error message
 func exitWithError(text string, err error) {
 	if err != nil {
-		fmt.Printf("%s: %s\n", text, dyff.Color(err.Error(), color.FgHiRed))
+		fmt.Printf("%s: %s\n", text, bunt.Colorize(err.Error(), bunt.Red))
 
 	} else {
 		fmt.Printf(text)

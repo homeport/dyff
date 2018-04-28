@@ -21,7 +21,6 @@
 package dyff
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -29,7 +28,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
@@ -115,29 +114,24 @@ func getTerminalWidth() int {
 
 // bold returns the provided string in 'bold' format
 func bold(text string) string {
-	return colorEachLine(color.New(color.Bold), text)
+	return bunt.Style(text, bunt.Bold)
 }
 
 // italic returns the provided string in 'italic' format
 func italic(text string) string {
-	return colorEachLine(color.New(color.Italic), text)
+	return bunt.Style(text, bunt.Italic)
 }
 
 func green(text string) string {
-	return colorEachLine(color.New(color.FgGreen), text)
+	return bunt.Colorize(text, bunt.AdditionGreen)
 }
 
 func red(text string) string {
-	return colorEachLine(color.New(color.FgRed), text)
+	return bunt.Colorize(text, bunt.RemovalRed)
 }
 
 func yellow(text string) string {
-	return colorEachLine(color.New(color.FgYellow), text)
-}
-
-// Color returns the provided text with the also provided varargs list of ANSI text decorations and colors.
-func Color(text string, attributes ...color.Attribute) string {
-	return colorEachLine(color.New(attributes...), text)
+	return bunt.Colorize(text, bunt.ModificationYellow)
 }
 
 // Plural returns a string with the number and noun in either singular or plural form.
@@ -171,22 +165,6 @@ func Plural(amount int, text ...string) string {
 	}
 }
 
-func colorEachLine(color *color.Color, text string) string {
-	var buf bytes.Buffer
-
-	splitted := strings.Split(text, "\n")
-	length := len(splitted)
-	for idx, line := range splitted {
-		buf.WriteString(color.Sprint(line))
-
-		if idx < length-1 {
-			buf.WriteString("\n")
-		}
-	}
-
-	return buf.String()
-}
-
 // ToDotStyle returns a path as a string in dot style separating each path element by a dot.
 // Please note that path elements that are named "." will look ugly.
 func ToDotStyle(path Path, showDocumentIdx bool) string {
@@ -195,20 +173,20 @@ func ToDotStyle(path Path, showDocumentIdx bool) string {
 	// The Dot style does not really support the root level. An empty path
 	// will just return a text indicating the root level is meant
 	if pathLength == 0 {
-		return Color("(root level)", color.Italic, color.Bold)
+		return bunt.Style("(root level)", bunt.Italic, bunt.Bold)
 	}
 
 	result := make([]string, 0, pathLength)
 	for _, element := range path.PathElements {
 		if element.Key != "" {
-			result = append(result, Color(element.Name, color.Italic, color.Bold))
+			result = append(result, bunt.Style(element.Name, bunt.Italic, bunt.Bold))
 		} else {
-			result = append(result, Color(element.Name, color.Bold))
+			result = append(result, bunt.Style(element.Name, bunt.Bold))
 		}
 	}
 
 	if showDocumentIdx {
-		return strings.Join(result, ".") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), color.FgHiCyan)
+		return strings.Join(result, ".") + bunt.Colorize(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), bunt.Aquamarine)
 	}
 
 	return strings.Join(result, ".")
@@ -219,14 +197,14 @@ func ToGoPatchStyle(path Path, showDocumentIdx bool) string {
 	result := make([]string, 0, len(path.PathElements))
 	for _, element := range path.PathElements {
 		if element.Key != "" {
-			result = append(result, fmt.Sprintf("%s=%s", Color(element.Key, color.Italic), Color(element.Name, color.Bold, color.Italic)))
+			result = append(result, fmt.Sprintf("%s=%s", bunt.Style(element.Key, bunt.Italic), bunt.Style(element.Name, bunt.Bold, bunt.Italic)))
 		} else {
-			result = append(result, Color(element.Name, color.Bold))
+			result = append(result, bunt.Style(element.Name, bunt.Bold))
 		}
 	}
 
 	if showDocumentIdx {
-		return "/" + strings.Join(result, "/") + Color(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), color.FgHiCyan)
+		return "/" + strings.Join(result, "/") + bunt.Colorize(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), bunt.Aquamarine)
 	}
 
 	return "/" + strings.Join(result, "/")

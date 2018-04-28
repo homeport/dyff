@@ -28,7 +28,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/HeavyWombat/color"
+	"github.com/HeavyWombat/dyff/pkg/bunt"
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/HeavyWombat/yaml"
 	. "github.com/onsi/ginkgo"
@@ -42,7 +42,7 @@ func TestCore(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	yaml.HighlightKeys = false
-	color.NoColor = true
+	bunt.NoColor = true
 
 	NoColor = false
 	DebugMode = false
