@@ -46,10 +46,10 @@ unused:
 misspell:
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/misspell.sh
 
-install: clean sanity-check
+install: sanity-check
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --only-local
 
-build: clean sanity-check
+build: sanity-check
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh
 
 test: unused vet fmt
