@@ -26,12 +26,12 @@
 
 
 [[constraint]]
-  name = "github.com/HeavyWombat/color"
-  version = "1.6.42"
-
-[[constraint]]
   name = "github.com/HeavyWombat/yaml"
   version = "2.2.42"
+
+[[constraint]]
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.3"
 
 [[constraint]]
   branch = "master"
