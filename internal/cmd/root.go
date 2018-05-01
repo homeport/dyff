@@ -72,7 +72,7 @@ func exitWithError(text string, err error) {
 		fmt.Printf("%s: %s\n", text, bunt.Colorize(err.Error(), bunt.Red))
 
 	} else {
-		fmt.Printf(text)
+		fmt.Print(text)
 	}
 
 	os.Exit(1)
