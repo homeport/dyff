@@ -271,6 +271,22 @@ func Colorize(text string, color Color, modifiers ...Attribute) string {
 	return wrapTextInSeq(text, append(modifiers, colorCoding...)...)
 }
 
+// ColorizeFgBg applies an ANSI truecolor sequence for the provided foreground and background colors to the given text.
+func ColorizeFgBg(text string, foreground Color, background Color, modifiers ...Attribute) string {
+	modifiers = keepAttributes(modifiers, []Attribute{Bold, Italic, Underline})
+	sort.Slice(modifiers, func(i, j int) bool {
+		return modifiers[i] < modifiers[j]
+	})
+
+	fgr, fgg, fgb := BreakUpColorIntoChannels(foreground)
+	fgColorCoding := []Attribute{38, 2, Attribute(fgr), Attribute(fgg), Attribute(fgb)}
+
+	bgr, bgg, bgb := BreakUpColorIntoChannels(background)
+	bgColorCoding := []Attribute{48, 2, Attribute(bgr), Attribute(bgg), Attribute(bgb)}
+
+	return wrapTextInSeq(text, append(append(modifiers, bgColorCoding...), fgColorCoding...)...)
+}
+
 // Style applies only text modifications like Bold, Italic, or Underline to the text
 func Style(text string, modifiers ...Attribute) string {
 	return wrapTextInSeq(text, keepAttributes(modifiers, []Attribute{Bold, Italic, Underline})...)
