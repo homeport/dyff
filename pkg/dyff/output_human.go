@@ -318,7 +318,7 @@ func showWhitespaceCharacters(text string) string {
 	return strings.Replace(strings.Replace(text, "\n", bold("↵\n"), -1), " ", bold("·"), -1)
 }
 
-func createStringWithPrefix(prefix string, obj interface{}, color uint32) string {
+func createStringWithPrefix(prefix string, obj interface{}, color bunt.Color) string {
 	var buf bytes.Buffer
 	var lines = strings.Split(fmt.Sprintf("%v", obj), "\n")
 	for i, line := range lines {

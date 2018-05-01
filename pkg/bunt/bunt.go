@@ -42,195 +42,198 @@ var NoColor = os.Getenv("TERM") == "dumb" ||
 // seq is the ANSI escape sequence used for the coloring
 const seq = "\x1b"
 
+// Color is just use to have a custom type to handle 32-bit RGB definitions
+type Color uint32
+
 // Pink colors
 const (
-	Pink            = 0x00FFC0CB
-	LightPink       = 0x00FFB6C1
-	HotPink         = 0x00FF69B4
-	DeepPink        = 0x00FF1493
-	PaleVioletRed   = 0x00DB7093
-	MediumVioletRed = 0x00C71585
+	Pink            = Color(0x00FFC0CB)
+	LightPink       = Color(0x00FFB6C1)
+	HotPink         = Color(0x00FF69B4)
+	DeepPink        = Color(0x00FF1493)
+	PaleVioletRed   = Color(0x00DB7093)
+	MediumVioletRed = Color(0x00C71585)
 )
 
 // Red colors
 const (
-	LightSalmon = 0x00FFA07A
-	Salmon      = 0x00FA8072
-	DarkSalmon  = 0x00E9967A
-	LightCoral  = 0x00F08080
-	IndianRed   = 0x00CD5C5C
-	Crimson     = 0x00DC143C
-	FireBrick   = 0x00B22222
-	DarkRed     = 0x008B0000
-	Red         = 0x00FF0000
+	LightSalmon = Color(0x00FFA07A)
+	Salmon      = Color(0x00FA8072)
+	DarkSalmon  = Color(0x00E9967A)
+	LightCoral  = Color(0x00F08080)
+	IndianRed   = Color(0x00CD5C5C)
+	Crimson     = Color(0x00DC143C)
+	FireBrick   = Color(0x00B22222)
+	DarkRed     = Color(0x008B0000)
+	Red         = Color(0x00FF0000)
 )
 
 // Orange colors
 const (
-	OrangeRed  = 0x00FF4500
-	Tomato     = 0x00FF6347
-	Coral      = 0x00FF7F50
-	DarkOrange = 0x00FF8C00
-	Orange     = 0x00FFA500
+	OrangeRed  = Color(0x00FF4500)
+	Tomato     = Color(0x00FF6347)
+	Coral      = Color(0x00FF7F50)
+	DarkOrange = Color(0x00FF8C00)
+	Orange     = Color(0x00FFA500)
 )
 
 // Yellow colors
 const (
-	Yellow               = 0x00FFFF00
-	LightYellow          = 0x00FFFFE0
-	LemonChiffon         = 0x00FFFACD
-	LightGoldenrodYellow = 0x00FAFAD2
-	PapayaWhip           = 0x00FFEFD5
-	Moccasin             = 0x00FFE4B5
-	PeachPuff            = 0x00FFDAB9
-	PaleGoldenrod        = 0x00EEE8AA
-	Khaki                = 0x00F0E68C
-	DarkKhaki            = 0x00BDB76B
-	Gold                 = 0x00FFD700
+	Yellow               = Color(0x00FFFF00)
+	LightYellow          = Color(0x00FFFFE0)
+	LemonChiffon         = Color(0x00FFFACD)
+	LightGoldenrodYellow = Color(0x00FAFAD2)
+	PapayaWhip           = Color(0x00FFEFD5)
+	Moccasin             = Color(0x00FFE4B5)
+	PeachPuff            = Color(0x00FFDAB9)
+	PaleGoldenrod        = Color(0x00EEE8AA)
+	Khaki                = Color(0x00F0E68C)
+	DarkKhaki            = Color(0x00BDB76B)
+	Gold                 = Color(0x00FFD700)
 )
 
 // Brown colors
 const (
-	Cornsilk       = 0x00FFF8DC
-	BlanchedAlmond = 0x00FFEBCD
-	Bisque         = 0x00FFE4C4
-	NavajoWhite    = 0x00FFDEAD
-	Wheat          = 0x00F5DEB3
-	BurlyWood      = 0x00DEB887
-	Tan            = 0x00D2B48C
-	RosyBrown      = 0x00BC8F8F
-	SandyBrown     = 0x00F4A460
-	Goldenrod      = 0x00DAA520
-	DarkGoldenrod  = 0x00B8860B
-	Peru           = 0x00CD853F
-	Chocolate      = 0x00D2691E
-	SaddleBrown    = 0x008B4513
-	Sienna         = 0x00A0522D
-	Brown          = 0x00A52A2A
-	Maroon         = 0x00800000
+	Cornsilk       = Color(0x00FFF8DC)
+	BlanchedAlmond = Color(0x00FFEBCD)
+	Bisque         = Color(0x00FFE4C4)
+	NavajoWhite    = Color(0x00FFDEAD)
+	Wheat          = Color(0x00F5DEB3)
+	BurlyWood      = Color(0x00DEB887)
+	Tan            = Color(0x00D2B48C)
+	RosyBrown      = Color(0x00BC8F8F)
+	SandyBrown     = Color(0x00F4A460)
+	Goldenrod      = Color(0x00DAA520)
+	DarkGoldenrod  = Color(0x00B8860B)
+	Peru           = Color(0x00CD853F)
+	Chocolate      = Color(0x00D2691E)
+	SaddleBrown    = Color(0x008B4513)
+	Sienna         = Color(0x00A0522D)
+	Brown          = Color(0x00A52A2A)
+	Maroon         = Color(0x00800000)
 )
 
 // Green colors
 const (
-	DarkOliveGreen    = 0x00556B2F
-	Olive             = 0x00808000
-	OliveDrab         = 0x006B8E23
-	YellowGreen       = 0x009ACD32
-	LimeGreen         = 0x0032CD32
-	Lime              = 0x0000FF00
-	LawnGreen         = 0x007CFC00
-	Chartreuse        = 0x007FFF00
-	GreenYellow       = 0x00ADFF2F
-	SpringGreen       = 0x0000FF7F
-	MediumSpringGreen = 0x0000FA9A
-	LightGreen        = 0x0090EE90
-	PaleGreen         = 0x0098FB98
-	DarkSeaGreen      = 0x008FBC8F
-	MediumAquamarine  = 0x0066CDAA
-	MediumSeaGreen    = 0x003CB371
-	SeaGreen          = 0x002E8B57
-	ForestGreen       = 0x00228B22
-	Green             = 0x00008000
-	DarkGreen         = 0x00006400
+	DarkOliveGreen    = Color(0x00556B2F)
+	Olive             = Color(0x00808000)
+	OliveDrab         = Color(0x006B8E23)
+	YellowGreen       = Color(0x009ACD32)
+	LimeGreen         = Color(0x0032CD32)
+	Lime              = Color(0x0000FF00)
+	LawnGreen         = Color(0x007CFC00)
+	Chartreuse        = Color(0x007FFF00)
+	GreenYellow       = Color(0x00ADFF2F)
+	SpringGreen       = Color(0x0000FF7F)
+	MediumSpringGreen = Color(0x0000FA9A)
+	LightGreen        = Color(0x0090EE90)
+	PaleGreen         = Color(0x0098FB98)
+	DarkSeaGreen      = Color(0x008FBC8F)
+	MediumAquamarine  = Color(0x0066CDAA)
+	MediumSeaGreen    = Color(0x003CB371)
+	SeaGreen          = Color(0x002E8B57)
+	ForestGreen       = Color(0x00228B22)
+	Green             = Color(0x00008000)
+	DarkGreen         = Color(0x00006400)
 )
 
 // Cyan colors
 const (
-	Aqua            = 0x0000FFFF
-	Cyan            = 0x0000FFFF
-	LightCyan       = 0x00E0FFFF
-	PaleTurquoise   = 0x00AFEEEE
-	Aquamarine      = 0x007FFFD4
-	Turquoise       = 0x0040E0D0
-	MediumTurquoise = 0x0048D1CC
-	DarkTurquoise   = 0x0000CED1
-	LightSeaGreen   = 0x0020B2AA
-	CadetBlue       = 0x005F9EA0
-	DarkCyan        = 0x00008B8B
-	Teal            = 0x00008080
+	Aqua            = Color(0x0000FFFF)
+	Cyan            = Color(0x0000FFFF)
+	LightCyan       = Color(0x00E0FFFF)
+	PaleTurquoise   = Color(0x00AFEEEE)
+	Aquamarine      = Color(0x007FFFD4)
+	Turquoise       = Color(0x0040E0D0)
+	MediumTurquoise = Color(0x0048D1CC)
+	DarkTurquoise   = Color(0x0000CED1)
+	LightSeaGreen   = Color(0x0020B2AA)
+	CadetBlue       = Color(0x005F9EA0)
+	DarkCyan        = Color(0x00008B8B)
+	Teal            = Color(0x00008080)
 )
 
 // Blue colors
 const (
-	LightSteelBlue = 0x00B0C4DE
-	PowderBlue     = 0x00B0E0E6
-	LightBlue      = 0x00ADD8E6
-	SkyBlue        = 0x0087CEEB
-	LightSkyBlue   = 0x0087CEFA
-	DeepSkyBlue    = 0x0000BFFF
-	DodgerBlue     = 0x001E90FF
-	CornflowerBlue = 0x006495ED
-	SteelBlue      = 0x004682B4
-	RoyalBlue      = 0x004169E1
-	Blue           = 0x000000FF
-	MediumBlue     = 0x000000CD
-	DarkBlue       = 0x0000008B
-	Navy           = 0x00000080
-	MidnightBlue   = 0x00191970
+	LightSteelBlue = Color(0x00B0C4DE)
+	PowderBlue     = Color(0x00B0E0E6)
+	LightBlue      = Color(0x00ADD8E6)
+	SkyBlue        = Color(0x0087CEEB)
+	LightSkyBlue   = Color(0x0087CEFA)
+	DeepSkyBlue    = Color(0x0000BFFF)
+	DodgerBlue     = Color(0x001E90FF)
+	CornflowerBlue = Color(0x006495ED)
+	SteelBlue      = Color(0x004682B4)
+	RoyalBlue      = Color(0x004169E1)
+	Blue           = Color(0x000000FF)
+	MediumBlue     = Color(0x000000CD)
+	DarkBlue       = Color(0x0000008B)
+	Navy           = Color(0x00000080)
+	MidnightBlue   = Color(0x00191970)
 )
 
 // Purple, violet, and magenta colors
 const (
-	Lavender        = 0x00E6E6FA
-	Thistle         = 0x00D8BFD8
-	Plum            = 0x00DDA0DD
-	Violet          = 0x00EE82EE
-	Orchid          = 0x00DA70D6
-	Fuchsia         = 0x00FF00FF
-	Magenta         = 0x00FF00FF
-	MediumOrchid    = 0x00BA55D3
-	MediumPurple    = 0x009370DB
-	BlueViolet      = 0x008A2BE2
-	DarkViolet      = 0x009400D3
-	DarkOrchid      = 0x009932CC
-	DarkMagenta     = 0x008B008B
-	Purple          = 0x00800080
-	Indigo          = 0x004B0082
-	DarkSlateBlue   = 0x00483D8B
-	SlateBlue       = 0x006A5ACD
-	MediumSlateBlue = 0x007B68EE
+	Lavender        = Color(0x00E6E6FA)
+	Thistle         = Color(0x00D8BFD8)
+	Plum            = Color(0x00DDA0DD)
+	Violet          = Color(0x00EE82EE)
+	Orchid          = Color(0x00DA70D6)
+	Fuchsia         = Color(0x00FF00FF)
+	Magenta         = Color(0x00FF00FF)
+	MediumOrchid    = Color(0x00BA55D3)
+	MediumPurple    = Color(0x009370DB)
+	BlueViolet      = Color(0x008A2BE2)
+	DarkViolet      = Color(0x009400D3)
+	DarkOrchid      = Color(0x009932CC)
+	DarkMagenta     = Color(0x008B008B)
+	Purple          = Color(0x00800080)
+	Indigo          = Color(0x004B0082)
+	DarkSlateBlue   = Color(0x00483D8B)
+	SlateBlue       = Color(0x006A5ACD)
+	MediumSlateBlue = Color(0x007B68EE)
 )
 
 // White colors
 const (
-	White         = 0x00FFFFFF
-	Snow          = 0x00FFFAFA
-	Honeydew      = 0x00F0FFF0
-	MintCream     = 0x00F5FFFA
-	Azure         = 0x00F0FFFF
-	AliceBlue     = 0x00F0F8FF
-	GhostWhite    = 0x00F8F8FF
-	WhiteSmoke    = 0x00F5F5F5
-	Seashell      = 0x00FFF5EE
-	Beige         = 0x00F5F5DC
-	OldLace       = 0x00FDF5E6
-	FloralWhite   = 0x00FFFAF0
-	Ivory         = 0x00FFFFF0
-	AntiqueWhite  = 0x00FAEBD7
-	Linen         = 0x00FAF0E6
-	LavenderBlush = 0x00FFF0F5
-	MistyRose     = 0x00FFE4E1
+	White         = Color(0x00FFFFFF)
+	Snow          = Color(0x00FFFAFA)
+	Honeydew      = Color(0x00F0FFF0)
+	MintCream     = Color(0x00F5FFFA)
+	Azure         = Color(0x00F0FFFF)
+	AliceBlue     = Color(0x00F0F8FF)
+	GhostWhite    = Color(0x00F8F8FF)
+	WhiteSmoke    = Color(0x00F5F5F5)
+	Seashell      = Color(0x00FFF5EE)
+	Beige         = Color(0x00F5F5DC)
+	OldLace       = Color(0x00FDF5E6)
+	FloralWhite   = Color(0x00FFFAF0)
+	Ivory         = Color(0x00FFFFF0)
+	AntiqueWhite  = Color(0x00FAEBD7)
+	Linen         = Color(0x00FAF0E6)
+	LavenderBlush = Color(0x00FFF0F5)
+	MistyRose     = Color(0x00FFE4E1)
 )
 
 // Gray and black colors
 const (
-	Gainsboro      = 0x00DCDCDC
-	LightGray      = 0x00D3D3D3
-	Silver         = 0x00C0C0C0
-	DarkGray       = 0x00A9A9A9
-	Gray           = 0x00808080
-	DimGray        = 0x00696969
-	LightSlateGray = 0x00778899
-	SlateGray      = 0x00708090
-	DarkSlateGray  = 0x002F4F4F
-	Black          = 0x00000000
+	Gainsboro      = Color(0x00DCDCDC)
+	LightGray      = Color(0x00D3D3D3)
+	Silver         = Color(0x00C0C0C0)
+	DarkGray       = Color(0x00A9A9A9)
+	Gray           = Color(0x00808080)
+	DimGray        = Color(0x00696969)
+	LightSlateGray = Color(0x00778899)
+	SlateGray      = Color(0x00708090)
+	DarkSlateGray  = Color(0x002F4F4F)
+	Black          = Color(0x00000000)
 )
 
 // Special additional colors
 const (
-	AdditionGreen      = 0x0058BF38
-	RemovalRed         = 0x00B9311B
-	ModificationYellow = 0x00C7C43F
+	AdditionGreen      = Color(0x0058BF38)
+	RemovalRed         = Color(0x00B9311B)
+	ModificationYellow = Color(0x00C7C43F)
 )
 
 // Modifiers
@@ -253,7 +256,7 @@ type Segment struct {
 var segmentRegexp = regexp.MustCompile(fmt.Sprintf(`(?m)(.*?)((%s\[(\d+(;\d+)*)m)(.+?)(%s\[0m))`, seq, seq))
 
 // Colorize applies an ANSI truecolor sequence for the provided color to the given text.
-func Colorize(text string, color uint32, modifiers ...uint32) string {
+func Colorize(text string, color Color, modifiers ...uint32) string {
 	modifiers = keepAttributes(modifiers, []uint32{Bold, Italic, Underline})
 	sort.Slice(modifiers, func(i, j int) bool {
 		return modifiers[i] < modifiers[j]
@@ -289,7 +292,7 @@ func RemoveAllEscapeSequences(input string) string {
 }
 
 // BreakUpColorIntoChannels takes the provided color and breaks into the its red, green, and blue color channels
-func BreakUpColorIntoChannels(color uint32) (uint8, uint8, uint8) {
+func BreakUpColorIntoChannels(color Color) (uint8, uint8, uint8) {
 	b := uint8(color & 0x000000FF)
 	color >>= 8
 	g := uint8(color & 0x000000FF)
@@ -351,22 +354,6 @@ func BreakUpStringIntoColorSegments(input string) (String, error) {
 
 	return result, nil
 }
-
-// func colorEachLine(color *color.Color, text string) string {
-// 	var buf bytes.Buffer
-//
-// 	splitted := strings.Split(text, "\n")
-// 	length := len(splitted)
-// 	for idx, line := range splitted {
-// 		buf.WriteString(color.Sprint(line))
-//
-// 		if idx < length-1 {
-// 			buf.WriteString("\n")
-// 		}
-// 	}
-//
-// 	return buf.String()
-// }
 
 func wrapTextInSeq(text string, attributes ...uint32) string {
 	if NoColor {
