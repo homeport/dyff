@@ -31,6 +31,7 @@ import (
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/yaml"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 // NoTableStyle disables output in table style
@@ -222,10 +223,33 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 			createStringWithPrefix("  + ", showWhitespaceCharacters(to), bunt.AdditionGreen))
 
 	} else if isMinorChange(from, to) {
-		// TODO Highlight the actual change more than the common part using https://github.com/sergi/go-diff DiffCommonPrefix and DiffCommonSuffix
-		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-		output.WriteString(createStringWithPrefix("  - ", from, bunt.RemovalRed))
-		output.WriteString(createStringWithPrefix("  + ", to, bunt.AdditionGreen))
+		output.WriteString(yellow(fmt.Sprintf("%c minor value change\n", MODIFICATION)))
+
+		diffs := diffmatchpatch.New().DiffMain(from, to, false)
+
+		output.WriteString(bunt.Colorize("  - ", bunt.RemovalRed))
+		for _, part := range diffs {
+			switch part.Type {
+			case diffmatchpatch.DiffEqual:
+				output.WriteString(bunt.Colorize(part.Text, bunt.LightSalmon))
+
+			case diffmatchpatch.DiffDelete:
+				output.WriteString(bunt.Colorize(part.Text, bunt.RemovalRed, bunt.Bold))
+			}
+		}
+		output.WriteString("\n")
+
+		output.WriteString(bunt.Colorize("  + ", bunt.AdditionGreen))
+		for _, part := range diffs {
+			switch part.Type {
+			case diffmatchpatch.DiffEqual:
+				output.WriteString(bunt.Colorize(part.Text, bunt.LightGreen))
+
+			case diffmatchpatch.DiffInsert:
+				output.WriteString(bunt.Colorize(part.Text, bunt.AdditionGreen, bunt.Bold))
+			}
+		}
+		output.WriteString("\n")
 
 	} else if isMultiLine(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
