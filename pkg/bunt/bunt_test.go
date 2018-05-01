@@ -42,16 +42,16 @@ var _ = Describe("Bunt tests", func() {
 			Expect(err).To(BeNil())
 
 			expected := String{Segment{Data: "["},
-				Segment{Data: "Info", Attributes: []uint32{38, 2, 0, 128, 0}},
+				Segment{Data: "Info", Attributes: []Attribute{38, 2, 0, 128, 0}},
 				Segment{Data: "] This is a "},
-				Segment{Data: "text", Attributes: []uint32{Italic}},
+				Segment{Data: "text", Attributes: []Attribute{Italic}},
 				Segment{Data: " with various "},
-				Segment{Data: "styles", Attributes: []uint32{Bold}},
+				Segment{Data: "styles", Attributes: []Attribute{Bold}},
 				Segment{Data: " combined in one "},
-				Segment{Data: `"string"`, Attributes: []uint32{1, 38, 2, 255, 0, 255}},
+				Segment{Data: `"string"`, Attributes: []Attribute{1, 38, 2, 255, 0, 255}},
 				Segment{Data: ":\n"},
 				Segment{Data: "("},
-				Segment{Data: "https://github.com/HeavyWombat/dyff/pkg/bunt", Attributes: []uint32{3, 4, 38, 2, 100, 149, 237}},
+				Segment{Data: "https://github.com/HeavyWombat/dyff/pkg/bunt", Attributes: []Attribute{3, 4, 38, 2, 100, 149, 237}},
 				Segment{Data: ")"},
 			}
 

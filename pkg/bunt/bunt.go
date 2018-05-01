@@ -45,6 +45,9 @@ const seq = "\x1b"
 // Color is just use to have a custom type to handle 32-bit RGB definitions
 type Color uint32
 
+// Attribute is used to specify the attributes (codes) used in ANSI sequences
+type Attribute uint8
+
 // Pink colors
 const (
 	Pink            = Color(0x00FFC0CB)
@@ -248,7 +251,7 @@ type String []Segment
 
 // Segment defines a piece of text and its designed style attributes (which can be empty)
 type Segment struct {
-	Attributes []uint32
+	Attributes []Attribute
 	Data       string
 }
 
@@ -256,21 +259,21 @@ type Segment struct {
 var segmentRegexp = regexp.MustCompile(fmt.Sprintf(`(?m)(.*?)((%s\[(\d+(;\d+)*)m)(.+?)(%s\[0m))`, seq, seq))
 
 // Colorize applies an ANSI truecolor sequence for the provided color to the given text.
-func Colorize(text string, color Color, modifiers ...uint32) string {
-	modifiers = keepAttributes(modifiers, []uint32{Bold, Italic, Underline})
+func Colorize(text string, color Color, modifiers ...Attribute) string {
+	modifiers = keepAttributes(modifiers, []Attribute{Bold, Italic, Underline})
 	sort.Slice(modifiers, func(i, j int) bool {
 		return modifiers[i] < modifiers[j]
 	})
 
 	r, g, b := BreakUpColorIntoChannels(color)
-	colorCoding := []uint32{38, 2, uint32(r), uint32(g), uint32(b)}
+	colorCoding := []Attribute{38, 2, Attribute(r), Attribute(g), Attribute(b)}
 
 	return wrapTextInSeq(text, append(modifiers, colorCoding...)...)
 }
 
 // Style applies only text modifications like Bold, Italic, or Underline to the text
-func Style(text string, modifiers ...uint32) string {
-	return wrapTextInSeq(text, keepAttributes(modifiers, []uint32{Bold, Italic, Underline})...)
+func Style(text string, modifiers ...Attribute) string {
+	return wrapTextInSeq(text, keepAttributes(modifiers, []Attribute{Bold, Italic, Underline})...)
 }
 
 // BoldText is a convenience function to make the string bold
@@ -322,7 +325,7 @@ func BreakUpStringIntoColorSegments(input string) (String, error) {
 
 		// Break up the style attributes to convert it from string into proper int attributes
 		splitted := strings.Split(attributesPart, ";")
-		attributes := make([]uint32, 0, len(splitted))
+		attributes := make([]Attribute, 0, len(splitted))
 		for _, attribute := range splitted {
 			var value int
 			var err error
@@ -330,7 +333,7 @@ func BreakUpStringIntoColorSegments(input string) (String, error) {
 				return nil, fmt.Errorf("Failed to split input string in its colored segments: %s", err.Error())
 			}
 
-			attributes = append(attributes, uint32(value))
+			attributes = append(attributes, Attribute(value))
 		}
 
 		// Append any piece of text that is between two identified segments (mostely line breaks and stuff)
@@ -355,7 +358,7 @@ func BreakUpStringIntoColorSegments(input string) (String, error) {
 	return result, nil
 }
 
-func wrapTextInSeq(text string, attributes ...uint32) string {
+func wrapTextInSeq(text string, attributes ...Attribute) string {
 	if NoColor {
 		return text
 	}
@@ -376,7 +379,7 @@ func wrapTextInSeq(text string, attributes ...uint32) string {
 	return buf.String()
 }
 
-func wrapLineInSeq(line string, attributes ...uint32) string {
+func wrapLineInSeq(line string, attributes ...Attribute) string {
 	cstring, err := BreakUpStringIntoColorSegments(line)
 	if err != nil { // TODO Debug, or trace the error
 		return line
@@ -384,7 +387,7 @@ func wrapLineInSeq(line string, attributes ...uint32) string {
 
 	var buf bytes.Buffer
 	for _, segment := range cstring {
-		segmentAttributes := keepAttributes(segment.Attributes, []uint32{Bold, Italic, Underline})
+		segmentAttributes := keepAttributes(segment.Attributes, []Attribute{Bold, Italic, Underline})
 
 		buf.WriteString(fmt.Sprintf("%s[%sm", seq, attributesAsList(append(segmentAttributes, attributes...))))
 		buf.WriteString(segment.Data)
@@ -394,7 +397,7 @@ func wrapLineInSeq(line string, attributes ...uint32) string {
 	return buf.String()
 }
 
-func attributesAsList(attributes []uint32) string {
+func attributesAsList(attributes []Attribute) string {
 	fields := make([]string, len(attributes))
 	for i, attribute := range attributes {
 		fields[i] = strconv.FormatUint(uint64(attribute), 10)
@@ -403,8 +406,8 @@ func attributesAsList(attributes []uint32) string {
 	return strings.Join(fields, ";")
 }
 
-func keepAttributes(attributes []uint32, keepers []uint32) []uint32 {
-	result := make([]uint32, 0)
+func keepAttributes(attributes []Attribute, keepers []Attribute) []Attribute {
+	result := make([]Attribute, 0)
 	for _, toBeKept := range keepers {
 		if i := getIndexOf(attributes, toBeKept); i >= 0 {
 			result = append(result, toBeKept)
@@ -414,7 +417,7 @@ func keepAttributes(attributes []uint32, keepers []uint32) []uint32 {
 	return result
 }
 
-func getIndexOf(list []uint32, entry uint32) int {
+func getIndexOf(list []Attribute, entry Attribute) int {
 	for i, element := range list {
 		if element == entry {
 			return i
