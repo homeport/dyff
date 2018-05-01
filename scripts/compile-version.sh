@@ -71,7 +71,7 @@ while read -r OS ARCH; do
     TARGET_FILE="${TARGET_FILE}.exe"
   fi
 
-  ( cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -o "$TARGET_FILE" cmd/dyff/main.go )
+  ( cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -ldflags="-s -w" -o "$TARGET_FILE" cmd/dyff/main.go )
 
 done << EOL
 darwin	386
