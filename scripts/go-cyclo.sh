@@ -29,4 +29,4 @@ fi
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs gocyclo -over 25 )
+( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs gocyclo -over 15 )

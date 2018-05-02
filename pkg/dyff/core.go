@@ -250,51 +250,31 @@ func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error)
 
 	var diffs []Diff
 	var err error
+
 	switch from.(type) {
 	case yaml.MapSlice:
-		switch to.(type) {
-		case yaml.MapSlice:
-			diffs, err = compareMapSlices(path, from.(yaml.MapSlice), to.(yaml.MapSlice))
-
-		}
+		diffs, err = compareMapSlices(path, from.(yaml.MapSlice), to.(yaml.MapSlice))
 
 	case []interface{}:
-		switch to.(type) {
-		case []interface{}:
-			diffs, err = compareLists(path, from.([]interface{}), to.([]interface{}))
-		}
+		diffs, err = compareLists(path, from.([]interface{}), to.([]interface{}))
 
 	case []yaml.MapSlice:
-		switch to.(type) {
-		case []yaml.MapSlice:
-			diffs, err = compareListOfMapSlices(path, from.([]yaml.MapSlice), to.([]yaml.MapSlice))
-		}
+		diffs, err = compareListOfMapSlices(path, from.([]yaml.MapSlice), to.([]yaml.MapSlice))
 
 	case string:
-		switch to.(type) {
-		case string:
-			diffs, err = compareStrings(path, from.(string), to.(string))
-
-		}
+		diffs, err = compareStrings(path, from.(string), to.(string))
 
 	case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
-		switch to.(type) {
-		case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
-			if from != to {
-				diffs = []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}
-				err = nil
-			}
+		if from != to {
+			diffs = []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}
+			err = nil
 		}
 
 	default:
-		return nil, fmt.Errorf("Failed to compare objects due to unsupported type %s", reflect.TypeOf(from))
+		err = fmt.Errorf("Failed to compare objects due to unsupported type %s", reflect.TypeOf(from))
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
-	return diffs, nil
+	return diffs, err
 }
 
 func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, error) {
@@ -422,47 +402,9 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) ([]Diff
 		}
 	}
 
-	// prepare a diff for this path to added to the result set (if there are changes)
-	diff := Diff{Path: path, Details: []Detail{}}
+	orderchanges := findOrderChangesInSimpleList(from, to, fromNames, toNames, fromLookup, toLookup)
 
-	// Try to find order changes ...
-	if len(fromNames) == len(toNames) {
-		for idx, hash := range fromNames {
-			if toNames[idx] != hash {
-				cnv := func(list []uint64, lookup map[uint64]int, content []interface{}) []interface{} {
-					result := make([]interface{}, 0, len(list))
-					for _, hash := range list {
-						result = append(result, content[lookup[hash]])
-					}
-
-					return result
-				}
-
-				diff.Details = append(diff.Details, Detail{
-					Kind: ORDERCHANGE,
-					From: cnv(fromNames, fromLookup, from),
-					To:   cnv(toNames, toLookup, to)})
-				break
-			}
-		}
-	}
-
-	// If there are removals, add them to the diff details list
-	if len(removals) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
-	}
-
-	// If there are additions, add them to the diff details list
-	if len(additions) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
-	}
-
-	// If there were changes added to the details list, we can safely add it to the result set, otherwise it the result set will be returned as-is
-	if len(diff.Details) > 0 {
-		result = append([]Diff{diff}, result...)
-	}
-
-	return result, nil
+	return packChangesAndAddToResult(result, true, path, orderchanges, additions, removals)
 }
 
 func compareNamedEntryLists(path Path, identifier string, from []interface{}, to []interface{}) ([]Diff, error) {
@@ -522,38 +464,9 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 		}
 	}
 
-	// prepare a diff for this path to added to the result set (if there are changes)
-	diff := Diff{Path: path, Details: []Detail{}}
+	orderchanges := findOrderChangesInNamedEntryLists(fromNames, toNames)
 
-	// Try to find order changes ...
-	idxLookupMap := make(map[string]int, len(toNames))
-	for idx, name := range toNames {
-		idxLookupMap[name] = idx
-	}
-
-	for idx, name := range fromNames {
-		if idxLookupMap[name] != idx {
-			diff.Details = append(diff.Details, Detail{Kind: ORDERCHANGE, From: fromNames, To: toNames})
-			break
-		}
-	}
-
-	// If there are removals, add them to the diff details list
-	if len(removals) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
-	}
-
-	// If there are additions, add them to the diff details list
-	if len(additions) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
-	}
-
-	// If there were changes added to the details list, we can safely add it to the result set, otherwise it the result set will be returned as-is
-	if len(diff.Details) > 0 {
-		result = append([]Diff{diff}, result...)
-	}
-
-	return result, nil
+	return packChangesAndAddToResult(result, true, path, orderchanges, additions, removals)
 }
 
 func compareStrings(path Path, from string, to string) ([]Diff, error) {
@@ -563,6 +476,87 @@ func compareStrings(path Path, from string, to string) ([]Diff, error) {
 	}
 
 	return result, nil
+}
+
+func findOrderChangesInSimpleList(from, to []interface{}, fromNames, toNames []uint64, fromLookup, toLookup map[uint64]int) []Detail {
+	orderchanges := make([]Detail, 0)
+
+	// Try to find order changes ...
+	if len(fromNames) == len(toNames) {
+		for idx, hash := range fromNames {
+			if toNames[idx] != hash {
+				cnv := func(list []uint64, lookup map[uint64]int, content []interface{}) []interface{} {
+					result := make([]interface{}, 0, len(list))
+					for _, hash := range list {
+						result = append(result, content[lookup[hash]])
+					}
+
+					return result
+				}
+
+				orderchanges = append(orderchanges,
+					Detail{
+						Kind: ORDERCHANGE,
+						From: cnv(fromNames, fromLookup, from),
+						To:   cnv(toNames, toLookup, to),
+					})
+				break
+			}
+		}
+	}
+
+	return orderchanges
+}
+
+func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
+	orderchanges := make([]Detail, 0)
+
+	// Try to find order changes ...
+	idxLookupMap := make(map[string]int, len(toNames))
+	for idx, name := range toNames {
+		idxLookupMap[name] = idx
+	}
+
+	for idx, name := range fromNames {
+		if idxLookupMap[name] != idx {
+			orderchanges = append(orderchanges, Detail{Kind: ORDERCHANGE, From: fromNames, To: toNames})
+			break
+		}
+	}
+
+	return orderchanges
+}
+
+func packChangesAndAddToResult(list []Diff, prepend bool, path Path, orderchanges []Detail, additions, removals []interface{}) ([]Diff, error) {
+	// Prepare a diff for this path to added to the result set (if there are changes)
+	diff := Diff{Path: path, Details: []Detail{}}
+
+	if len(orderchanges) > 0 {
+		diff.Details = append(diff.Details, orderchanges...)
+	}
+
+	if len(removals) > 0 {
+		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
+	}
+
+	if len(additions) > 0 {
+		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+	}
+
+	// If there were changes added to the details list,
+	// we can safely add it to the result set.
+	// Otherwise it the result set will be returned as-is.
+	if len(diff.Details) > 0 {
+		switch prepend {
+		case true:
+			list = append([]Diff{diff}, list...)
+
+		case false:
+			list = append(list, diff)
+		}
+	}
+
+	return list, nil
 }
 
 func newPath(path Path, key interface{}, name interface{}) Path {
@@ -743,72 +737,84 @@ func SimplifyList(input []yaml.MapSlice) []interface{} {
 	return result
 }
 
-// StringToPath creates a new Path using the provided serialized path string. In case of Spruce paths, we need the actual tree as a reference to create the correct path.
-func StringToPath(path string, obj interface{}) (Path, error) {
+func goPatchStringToPath(path string, obj interface{}) (Path, error) {
 	elements := make([]PathElement, 0)
 
-	if strings.HasPrefix(path, "/") { // Go-path path in case it starts with a slash
-		for i, section := range strings.Split(path, "/") {
-			if i == 0 {
-				continue
-			}
-
-			keyNameSplit := strings.Split(section, "=")
-			switch len(keyNameSplit) {
-			case 1:
-				elements = append(elements, PathElement{Name: keyNameSplit[0]})
-
-			case 2:
-				elements = append(elements, PathElement{Key: keyNameSplit[0], Name: keyNameSplit[1]})
-
-			default:
-				return Path{}, fmt.Errorf("invalid Go-patch style path, element '%s' cannot contain more than one equal sign", section)
-			}
+	for i, section := range strings.Split(path, "/") {
+		if i == 0 {
+			continue
 		}
 
-	} else { // Spruce path
-		pointer := obj
-		for _, section := range strings.Split(path, ".") {
-			if isMapSlice(pointer) {
-				mapslice := pointer.(yaml.MapSlice)
-				value, err := getValueByKey(mapslice, section)
-				if err != nil {
-					return Path{}, errors.Wrap(err, "foobar #1")
+		keyNameSplit := strings.Split(section, "=")
+		switch len(keyNameSplit) {
+		case 1:
+			elements = append(elements, PathElement{Name: keyNameSplit[0]})
+
+		case 2:
+			elements = append(elements, PathElement{Key: keyNameSplit[0], Name: keyNameSplit[1]})
+
+		default:
+			return Path{}, fmt.Errorf("invalid Go-patch style path, element '%s' cannot contain more than one equal sign", section)
+		}
+	}
+
+	return Path{DocumentIdx: 0, PathElements: elements}, nil
+}
+
+func spruceStringToPath(path string, obj interface{}) (Path, error) {
+	elements := make([]PathElement, 0)
+
+	pointer := obj
+	for _, section := range strings.Split(path, ".") {
+		if isMapSlice(pointer) {
+			mapslice := pointer.(yaml.MapSlice)
+			value, err := getValueByKey(mapslice, section)
+			if err != nil {
+				return Path{}, errors.Wrap(err, fmt.Sprintf("failed to parse path %s", path))
+			}
+
+			pointer = value
+			elements = append(elements, PathElement{Name: section})
+
+		} else if isList(pointer) {
+			list := pointer.([]interface{})
+			if id, err := strconv.Atoi(section); err == nil {
+				if id < 0 || id >= len(list) {
+					return Path{}, fmt.Errorf("failed to parse path %s, provided list index %d is not in range: 0..%d", path, id, len(list)-1)
+				}
+
+				pointer = list[id]
+				elements = append(elements, PathElement{Name: section})
+
+			} else {
+				identifier := GetIdentifierFromNamedList(list)
+				value, ok := getEntryFromNamedList(list, identifier, section)
+				if !ok {
+					names, err := listNamesOfNamedList(list, identifier)
+					if err != nil {
+						return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list", path, section)
+					}
+
+					return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list, available names are: %s", path, section, strings.Join(names, ", "))
 				}
 
 				pointer = value
-				elements = append(elements, PathElement{Name: section})
-
-			} else if isList(pointer) {
-				list := pointer.([]interface{})
-				if id, err := strconv.Atoi(section); err == nil {
-					if id < 0 || id >= len(list) {
-						return Path{}, fmt.Errorf("failed to parse path %s, provided list index %d is not in range: 0..%d", path, id, len(list)-1)
-					}
-
-					pointer = list[id]
-					elements = append(elements, PathElement{Name: section})
-
-				} else {
-					identifier := GetIdentifierFromNamedList(list)
-					value, ok := getEntryFromNamedList(list, identifier, section)
-					if !ok {
-						names, err := listNamesOfNamedList(list, identifier)
-						if err != nil {
-							return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list", path, section)
-						}
-
-						return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list, available names are: %s", path, section, strings.Join(names, ", "))
-					}
-
-					pointer = value
-					elements = append(elements, PathElement{Key: identifier, Name: section})
-				}
+				elements = append(elements, PathElement{Key: identifier, Name: section})
 			}
 		}
 	}
 
 	return Path{DocumentIdx: 0, PathElements: elements}, nil
+}
+
+// StringToPath creates a new Path using the provided serialized path string. In case of Spruce paths, we need the actual tree as a reference to create the correct path.
+func StringToPath(path string, obj interface{}) (Path, error) {
+	if strings.HasPrefix(path, "/") { // Go-path path in case it starts with a slash
+		return goPatchStringToPath(path, obj)
+	}
+
+	// In any other case, try to parse as Spruce path
+	return spruceStringToPath(path, obj)
 }
 
 func isList(obj interface{}) bool {

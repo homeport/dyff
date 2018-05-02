@@ -115,93 +115,127 @@ func generateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bo
 	return nil
 }
 
+// generateHumanDetailOutput only serves as a dispatcher to call the correct sub function for the respective type of change
 func generateHumanDetailOutput(detail Detail) (string, error) {
-	var output bytes.Buffer
-
-	// TODO Externalise part of code into separate functions for readability
 	switch detail.Kind {
 	case ADDITION:
-		switch detail.To.(type) {
-		case []interface{}:
-			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
-		case yaml.MapSlice:
-			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
-		}
-		yamlOutput, err := yamlString(RestructureObject(detail.To))
-		if err != nil {
-			return "", err
-		}
-		writeTextBlocks(&output, 2, green(yamlOutput))
+		return generateHumanDetailOutputAddition(detail)
 
 	case REMOVAL:
-		switch detail.From.(type) {
-		case []interface{}:
-			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
-		case yaml.MapSlice:
-			output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
+		return generateHumanDetailOutputRemoval(detail)
 
+	case MODIFICATION:
+		return generateHumanDetailOutputModification(detail)
+
+	case ORDERCHANGE:
+		return generateHumanDetailOutputOrderchange(detail)
+	}
+
+	return "", fmt.Errorf("Unsupported detail type %c", detail.Kind)
+}
+
+func generateHumanDetailOutputAddition(detail Detail) (string, error) {
+	var output bytes.Buffer
+
+	switch detail.To.(type) {
+	case []interface{}:
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
+
+	case yaml.MapSlice:
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
+	}
+
+	yamlOutput, err := yamlString(RestructureObject(detail.To))
+	if err != nil {
+		return "", err
+	}
+
+	writeTextBlocks(&output, 2, green(yamlOutput))
+
+	return output.String(), nil
+}
+
+func generateHumanDetailOutputRemoval(detail Detail) (string, error) {
+	var output bytes.Buffer
+
+	switch detail.From.(type) {
+	case []interface{}:
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
+
+	case yaml.MapSlice:
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
+	}
+
+	yamlOutput, err := yamlString(RestructureObject(detail.From))
+	if err != nil {
+		return "", err
+	}
+
+	writeTextBlocks(&output, 2, red(yamlOutput))
+
+	return output.String(), nil
+}
+
+func generateHumanDetailOutputModification(detail Detail) (string, error) {
+	var output bytes.Buffer
+
+	fromType := reflect.TypeOf(detail.From).Kind()
+	toType := reflect.TypeOf(detail.To).Kind()
+	if fromType == reflect.String && toType == reflect.String {
+		// delegate to special string output
+		writeStringDiff(&output, detail.From.(string), detail.To.(string))
+
+	} else {
+		// default output
+		if fromType != toType {
+			output.WriteString(yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, italic(fromType.String()), italic(toType.String()))))
+
+		} else {
+			output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		}
-		yamlOutput, err := yamlString(RestructureObject(detail.From))
+
+		output.WriteString(red(fmt.Sprintf("  - %v\n", detail.From)))
+		output.WriteString(green(fmt.Sprintf("  + %v\n", detail.To)))
+	}
+
+	return output.String(), nil
+}
+
+func generateHumanDetailOutputOrderchange(detail Detail) (string, error) {
+	var output bytes.Buffer
+
+	output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
+	switch detail.From.(type) {
+	case []string:
+		from := detail.From.([]string)
+		to := detail.To.([]string)
+		const singleLineSeparator = ", "
+
+		threshold := getTerminalWidth() / 2
+		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
+		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
+		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
+			output.WriteString(red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
+			output.WriteString(green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
+
+		} else {
+			output.WriteString(CreateTableStyleString(" ", 2,
+				red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
+				green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
+		}
+
+	case []interface{}:
+		fromOutput, err := yamlString(detail.From.([]interface{}))
 		if err != nil {
 			return "", err
 		}
-		writeTextBlocks(&output, 2, red(yamlOutput))
 
-	case MODIFICATION:
-		fromType := reflect.TypeOf(detail.From).Kind()
-		toType := reflect.TypeOf(detail.To).Kind()
-		if fromType == reflect.String && toType == reflect.String {
-			// delegate to special string output
-			writeStringDiff(&output, detail.From.(string), detail.To.(string))
-
-		} else {
-			// default output
-			if fromType != toType {
-				output.WriteString(yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, italic(fromType.String()), italic(toType.String()))))
-
-			} else {
-				output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-			}
-
-			output.WriteString(red(fmt.Sprintf("  - %v\n", detail.From)))
-			output.WriteString(green(fmt.Sprintf("  + %v\n", detail.To)))
-
+		toOutput, err := yamlString(detail.To.([]interface{}))
+		if err != nil {
+			return "", err
 		}
 
-	case ORDERCHANGE:
-		output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
-		switch detail.From.(type) {
-		case []string:
-			from := detail.From.([]string)
-			to := detail.To.([]string)
-			const singleLineSeparator = ", "
-
-			threshold := getTerminalWidth() / 2
-			fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
-			toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
-			if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
-				output.WriteString(red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
-				output.WriteString(green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
-
-			} else {
-				output.WriteString(CreateTableStyleString(" ", 2,
-					red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
-					green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
-			}
-
-		case []interface{}:
-			fromOutput, err := yamlString(detail.From.([]interface{}))
-			if err != nil {
-				return "", err
-			}
-
-			toOutput, err := yamlString(detail.To.([]interface{}))
-			if err != nil {
-				return "", err
-			}
-
-			output.WriteString(CreateTableStyleString(" ", 2, red(fromOutput), green(toOutput)))
-		}
+		output.WriteString(CreateTableStyleString(" ", 2, red(fromOutput), green(toOutput)))
 	}
 
 	return output.String(), nil
