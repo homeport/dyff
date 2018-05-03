@@ -2,15 +2,9 @@
 
 
 [[projects]]
-  name = "github.com/HeavyWombat/color"
-  packages = ["."]
-  revision = "ed62ee1df7abec0181a0eec81656aeb01b72225a"
-  version = "v1.6.42"
-
-[[projects]]
   name = "github.com/HeavyWombat/yaml"
   packages = ["."]
-  revision = "147a4f49de08a0bcf4aa07ce5e76bdcdbd3b1976"
+  revision = "15465fb9881a83d937dae7e7046d60fe6bc5a970"
   version = "v2.2.42"
 
 [[projects]]
@@ -18,12 +12,6 @@
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
   version = "v1.0"
-
-[[projects]]
-  name = "github.com/mattn/go-colorable"
-  packages = ["."]
-  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
-  version = "v0.0.9"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -115,7 +103,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "613d6eafa307c6881a737a3c35c0e312e8d3a8c5"
+  revision = "8b1d31080a7692e075c4681cb2458454a1fe0706"
 
 [[projects]]
   branch = "master"
@@ -125,7 +113,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
+  revision = "640f4622ab692b87c2f3a94265e6f579fe38263d"
 
 [[projects]]
   branch = "master"

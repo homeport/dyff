@@ -10,13 +10,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
+
+	isatty "github.com/mattn/go-isatty"
 )
 
 // HighlightKeys enabled will highlight the key in the marshalled output
 var HighlightKeys = true
+
+// NoColor initializes depending on whether this is called by a terminal or not
+var NoColor = os.Getenv("TERM") == "dumb" ||
+	(!isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()))
 
 // MapSlice encodes and decodes as a YAML map.
 // The order of keys is preserved when encoding and decoding.
