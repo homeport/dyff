@@ -133,9 +133,9 @@ Miss Foobar`
 			})
 
 			It("should show a nice table output with colored text", func() {
-				bunt.NoColor = false
+				bunt.ColorStrategy = bunt.ColoringEnabled
 				defer func() {
-					bunt.NoColor = true
+					bunt.ColorStrategy = bunt.ColoringDisabled
 				}()
 
 				stringA := fmt.Sprintf(`

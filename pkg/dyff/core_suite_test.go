@@ -42,7 +42,7 @@ func TestCore(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	yaml.HighlightKeys = false
-	bunt.NoColor = true
+	bunt.ColorStrategy = bunt.ColoringDisabled
 
 	NoColor = false
 	DebugMode = false

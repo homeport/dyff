@@ -34,10 +34,14 @@ import (
 
 // The named colors are based upon https://en.wikipedia.org/wiki/Web_colors
 
-// NoColor specifies whether color sequences are used or not. It is automatically initialized based on the detected terminal is use
-var NoColor = os.Getenv("TERM") == "dumb" ||
-	!isatty.IsTerminal(os.Stdout.Fd()) &&
-		!isatty.IsCygwinTerminal(os.Stdout.Fd())
+// isDumbTerminal is initialised with true if the current terminal has limited support for escape sequences, or false otherwise
+var isDumbTerminal = os.Getenv("TERM") == "dumb"
+
+// isTerminal is initialised with true if the current STDOUT stream writes to a terminal (not a redirect), or false otherwise
+var isTerminal = isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
+
+// ColorStrategy defines the coloring strategy to be used by this package
+var ColorStrategy = ColoringAuto
 
 // seq is the ANSI escape sequence used for the coloring
 const seq = "\x1b"
@@ -47,6 +51,16 @@ type Color uint32
 
 // Attribute is used to specify the attributes (codes) used in ANSI sequences
 type Attribute uint8
+
+// ColorMode is the type of possible coloring strategies
+type ColorMode int
+
+// Supported coloring strategies
+const (
+	ColoringDisabled = ColorMode(-1)
+	ColoringAuto     = ColorMode(0)
+	ColoringEnabled  = ColorMode(+1)
+)
 
 // Pink colors
 const (
@@ -258,6 +272,11 @@ type Segment struct {
 // https://regex101.com/segmentRegexp/ulipXZ/3
 var segmentRegexp = regexp.MustCompile(fmt.Sprintf(`(?m)(.*?)((%s\[(\d+(;\d+)*)m)(.+?)(%s\[0m))`, seq, seq))
 
+// UseColors return whether colors are used or not based on the configured color strategy
+func UseColors() bool {
+	return (ColorStrategy == ColoringEnabled) || (ColorStrategy == ColoringAuto && !isDumbTerminal && isTerminal)
+}
+
 // Colorize applies an ANSI truecolor sequence for the provided color to the given text.
 func Colorize(text string, color Color, modifiers ...Attribute) string {
 	modifiers = keepAttributes(modifiers, []Attribute{Bold, Italic, Underline})
@@ -375,7 +394,7 @@ func BreakUpStringIntoColorSegments(input string) (String, error) {
 }
 
 func wrapTextInSeq(text string, attributes ...Attribute) string {
-	if NoColor {
+	if !UseColors() {
 		return text
 	}
 

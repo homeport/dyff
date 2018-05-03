@@ -23,12 +23,16 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
+
+// colormode is used by CLI parser to store user input for further internal processing into the proper value
+var colormode string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -54,15 +58,26 @@ func init() {
 	// Here you will define your flags and configuration settings. Cobra supports
 	// persistent flags, which, if defined here, will be global for your
 	// application.
-	rootCmd.PersistentFlags().BoolVar(&dyff.NoColor, "no-color", false, "Disable colors in output")
+	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "Specify color usage strategy: on, off, or auto")
 	rootCmd.PersistentFlags().BoolVar(&dyff.DebugMode, "debug", false, "Disable colors in output")
 	rootCmd.PersistentFlags().IntVar(&dyff.FixedTerminalWidth, "fixed-terminal-width", -1, "Disables terminal width detection by using fixed provided value")
 }
 
 func initSettings() {
-	if dyff.NoColor {
-		bunt.NoColor = true
+	switch strings.ToLower(colormode) {
+	case "auto":
+		bunt.ColorStrategy = bunt.ColoringAuto
+
+	case "off", "no", "false":
+		bunt.ColorStrategy = bunt.ColoringDisabled
 		yaml.HighlightKeys = false
+
+	case "on", "yes", "true":
+		bunt.ColorStrategy = bunt.ColoringEnabled
+		yaml.HighlightKeys = true
+
+	default:
+		exitWithError("Invalid color mode", fmt.Errorf("invalid colormode %s used, supported modes are: auto, on, or off", colormode))
 	}
 }
 
