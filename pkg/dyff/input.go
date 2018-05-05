@@ -230,9 +230,12 @@ func getBytesFromLocation(location string) ([]byte, error) {
 
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(response.Body)
-		data = buf.Bytes()
 
-		return data, nil
+		if response.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("failed to load from location: %s", buf.Bytes())
+		}
+
+		return buf.Bytes(), nil
 	}
 
 	// In any other case, bail out ...
