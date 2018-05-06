@@ -362,11 +362,6 @@ func Style(text string, modifiers ...Attribute) string {
 	return wrapTextInSeq(text, keepAttributes(modifiers, []Attribute{Bold, Italic, Underline})...)
 }
 
-// ColorizeWithAttributes applies the provided attributes with any filtering or checks
-func ColorizeWithAttributes(text string, attributes ...Attribute) string {
-	return wrapTextInSeq(text, attributes...)
-}
-
 // BoldText is a convenience function to make the string bold
 func BoldText(text string) string {
 	return Style(text, Bold)
@@ -374,9 +369,9 @@ func BoldText(text string) string {
 
 // RemoveAllEscapeSequences return the input string with all escape sequences removed
 func RemoveAllEscapeSequences(input string) string {
-	regexp := regexp.MustCompile(seq + `\[\d+(;\d+)*m`)
+	escapeSeqFinderRegExp := regexp.MustCompile(seq + `\[\d+(;\d+)*m`)
 
-	for loc := regexp.FindStringIndex(input); loc != nil; loc = regexp.FindStringIndex(input) {
+	for loc := escapeSeqFinderRegExp.FindStringIndex(input); loc != nil; loc = escapeSeqFinderRegExp.FindStringIndex(input) {
 		start := loc[0]
 		end := loc[1]
 		input = strings.Replace(input, input[start:end], "", -1)
