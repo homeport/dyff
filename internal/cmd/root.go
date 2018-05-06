@@ -23,7 +23,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
@@ -33,6 +32,9 @@ import (
 
 // colormode is used by CLI parser to store user input for further internal processing into the proper value
 var colormode string
+
+// truecolormode is used by the CLI flag processing routines to store the user preference for true color usage
+var truecolormode string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -58,26 +60,31 @@ func init() {
 	// Here you will define your flags and configuration settings. Cobra supports
 	// persistent flags, which, if defined here, will be global for your
 	// application.
-	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "Specify color usage strategy: on, off, or auto")
+	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "Specify color usage: on, off, or auto")
+	rootCmd.PersistentFlags().StringVar(&truecolormode, "truecolor", "auto", "Specify true color usage: on, off, or auto")
 	rootCmd.PersistentFlags().BoolVar(&dyff.DebugMode, "debug", false, "Disable colors in output")
 	rootCmd.PersistentFlags().IntVar(&dyff.FixedTerminalWidth, "fixed-terminal-width", -1, "Disables terminal width detection by using fixed provided value")
 }
 
 func initSettings() {
-	switch strings.ToLower(colormode) {
-	case "auto":
-		bunt.ColorStrategy = bunt.ColoringAuto
+	var err error
 
-	case "off", "no", "false":
-		bunt.ColorStrategy = bunt.ColoringDisabled
+	bunt.ColorSetting, err = bunt.ParseSetting(colormode)
+	if err != nil {
+		exitWithError("Invalid color setting", err)
+	}
+
+	bunt.TrueColorSetting, err = bunt.ParseSetting(truecolormode)
+	if err != nil {
+		exitWithError("Invalid true color setting", err)
+	}
+
+	switch bunt.ColorSetting {
+	case bunt.OFF:
 		yaml.HighlightKeys = false
 
-	case "on", "yes", "true":
-		bunt.ColorStrategy = bunt.ColoringEnabled
+	case bunt.ON:
 		yaml.HighlightKeys = true
-
-	default:
-		exitWithError("Invalid color mode", fmt.Errorf("invalid colormode %s used, supported modes are: auto, on, or off", colormode))
 	}
 }
 

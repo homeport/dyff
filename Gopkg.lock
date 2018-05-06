@@ -26,6 +26,12 @@
   version = "v1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/mattn/go-ciede2000"
+  packages = ["."]
+  revision = "782e8c62fec396b2d7e6f4367dd5f3934de99b47"
+
+[[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
@@ -169,6 +175,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f5562e010c1a716ca0185ada579e45c6a23913496709cfcc46e0407d4cd1e18e"
+  inputs-digest = "5e392b3fa8b3c2476f774d7190d00626273b0f1ea6ecf291080831f1d168c0f7"
   solver-name = "gps-cdcl"
   solver-version = 1

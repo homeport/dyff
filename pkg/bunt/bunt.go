@@ -23,16 +23,20 @@ package bunt
 import (
 	"bytes"
 	"fmt"
+	"image/color"
+	"math"
 	"os"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
+	ciede2000 "github.com/mattn/go-ciede2000"
 	isatty "github.com/mattn/go-isatty"
 )
 
 // The named colors are based upon https://en.wikipedia.org/wiki/Web_colors
+// Nice page for color code conversions: https://convertingcolors.com/
 
 // isDumbTerminal is initialised with true if the current terminal has limited support for escape sequences, or false otherwise
 var isDumbTerminal = os.Getenv("TERM") == "dumb"
@@ -40,8 +44,21 @@ var isDumbTerminal = os.Getenv("TERM") == "dumb"
 // isTerminal is initialised with true if the current STDOUT stream writes to a terminal (not a redirect), or false otherwise
 var isTerminal = isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 
-// ColorStrategy defines the coloring strategy to be used by this package
-var ColorStrategy = ColoringAuto
+// isTrueColor is initialised with true if the current terminal reports to support 24-bit colors, or false otherwise
+var isTrueColor = func() bool {
+	switch os.Getenv("COLORTERM") {
+	case "truecolor", "24bit":
+		return true
+	}
+
+	return false
+}()
+
+// ColorSetting defines the coloring setting to be used
+var ColorSetting = AUTO
+
+// TrueColorSetting defines the true color usage setting to be used
+var TrueColorSetting = AUTO
 
 // seq is the ANSI escape sequence used for the coloring
 const seq = "\x1b"
@@ -52,14 +69,15 @@ type Color uint32
 // Attribute is used to specify the attributes (codes) used in ANSI sequences
 type Attribute uint8
 
-// ColorMode is the type of possible coloring strategies
-type ColorMode int
+// SwitchState is the type to cover different preferences/settings like:
+// on, off, or auto
+type SwitchState int
 
-// Supported coloring strategies
+// Supported setting states
 const (
-	ColoringDisabled = ColorMode(-1)
-	ColoringAuto     = ColorMode(0)
-	ColoringEnabled  = ColorMode(+1)
+	OFF  = SwitchState(-1)
+	AUTO = SwitchState(0)
+	ON   = SwitchState(+1)
 )
 
 // Pink colors
@@ -260,6 +278,27 @@ const (
 	Underline = 4
 )
 
+// translateMap4bitColor is an internal helper map to translate specific well
+// defined colors to matching 4-bit color attributes
+var translateMap4bitColor = map[Color]Attribute{
+	Color(0x00000000): Attribute(30),
+	Color(0x00AA0000): Attribute(31),
+	Color(0x0000AA00): Attribute(32),
+	Color(0x00FFFF00): Attribute(33),
+	Color(0x000000AA): Attribute(34),
+	Color(0x00AA00AA): Attribute(35),
+	Color(0x0000AAAA): Attribute(36),
+	Color(0x00AAAAAA): Attribute(37),
+	Color(0x00555555): Attribute(90),
+	Color(0x00FF5555): Attribute(91),
+	Color(0x0055FF55): Attribute(92),
+	Color(0x00FFFF55): Attribute(93),
+	Color(0x005555FF): Attribute(94),
+	Color(0x00FF55FF): Attribute(95),
+	Color(0x0055FFFF): Attribute(96),
+	Color(0x00FFFFFF): Attribute(97),
+}
+
 // String defines a string that consists of differently colored text segments
 type String []Segment
 
@@ -272,9 +311,17 @@ type Segment struct {
 // https://regex101.com/segmentRegexp/ulipXZ/3
 var segmentRegexp = regexp.MustCompile(fmt.Sprintf(`(?m)(.*?)((%s\[(\d+(;\d+)*)m)(.+?)(%s\[0m))`, seq, seq))
 
-// UseColors return whether colors are used or not based on the configured color strategy
+// UseColors return whether colors are used or not based on the configured color setting
 func UseColors() bool {
-	return (ColorStrategy == ColoringEnabled) || (ColorStrategy == ColoringAuto && !isDumbTerminal && isTerminal)
+	return (ColorSetting == ON) ||
+		(ColorSetting == AUTO && !isDumbTerminal && isTerminal)
+}
+
+// UseTrueColor returns whether true color colors should be used or not base on
+// the configured true color usage setting
+func UseTrueColor() bool {
+	return (TrueColorSetting == ON) ||
+		(TrueColorSetting == AUTO && isTrueColor)
 }
 
 // Colorize applies an ANSI truecolor sequence for the provided color to the given text.
@@ -284,10 +331,14 @@ func Colorize(text string, color Color, modifiers ...Attribute) string {
 		return modifiers[i] < modifiers[j]
 	})
 
-	r, g, b := BreakUpColorIntoChannels(color)
-	colorCoding := []Attribute{38, 2, Attribute(r), Attribute(g), Attribute(b)}
+	if UseTrueColor() {
+		r, g, b := BreakUpColorIntoChannels(color)
+		colorCoding := []Attribute{38, 2, Attribute(r), Attribute(g), Attribute(b)}
+		return wrapTextInSeq(text, append(modifiers, colorCoding...)...)
+	}
 
-	return wrapTextInSeq(text, append(modifiers, colorCoding...)...)
+	colorAttribute := Get4bitEquivalentColorAttribute(color)
+	return wrapTextInSeq(text, append(modifiers, colorAttribute)...)
 }
 
 // ColorizeFgBg applies an ANSI truecolor sequence for the provided foreground and background colors to the given text.
@@ -309,6 +360,11 @@ func ColorizeFgBg(text string, foreground Color, background Color, modifiers ...
 // Style applies only text modifications like Bold, Italic, or Underline to the text
 func Style(text string, modifiers ...Attribute) string {
 	return wrapTextInSeq(text, keepAttributes(modifiers, []Attribute{Bold, Italic, Underline})...)
+}
+
+// ColorizeWithAttributes applies the provided attributes with any filtering or checks
+func ColorizeWithAttributes(text string, attributes ...Attribute) string {
+	return wrapTextInSeq(text, attributes...)
 }
 
 // BoldText is a convenience function to make the string bold
@@ -391,6 +447,47 @@ func BreakUpStringIntoColorSegments(input string) (String, error) {
 	}
 
 	return result, nil
+}
+
+// Get4bitEquivalentColorAttribute returns the color attribute which matches the
+// best with the provided color.
+func Get4bitEquivalentColorAttribute(targetColor Color) Attribute {
+	red, green, blue := BreakUpColorIntoChannels(targetColor)
+	target := &color.RGBA{red, green, blue, 0xFF}
+
+	min := math.MaxFloat64
+	result := Attribute(0)
+
+	// Calculate the distance between the target color and the available 4-bit
+	// colors using the `deltaE` algorithm to find the best match.
+	for candidate, attribute := range translateMap4bitColor {
+		r, g, b := BreakUpColorIntoChannels(candidate)
+		test := &color.RGBA{r, g, b, 0xFF}
+
+		if distance := ciede2000.Diff(target, test); distance < min {
+			min = distance
+			result = attribute
+		}
+	}
+
+	return result
+}
+
+// ParseSetting converts a string with a setting into its respective state
+func ParseSetting(setting string) (SwitchState, error) {
+	switch strings.ToLower(setting) {
+	case "auto":
+		return AUTO, nil
+
+	case "off", "no", "false":
+		return OFF, nil
+
+	case "on", "yes", "true":
+		return ON, nil
+
+	default:
+		return OFF, fmt.Errorf("invalid state '%s' used, supported modes are: auto, on, or off", setting)
+	}
 }
 
 func wrapTextInSeq(text string, attributes ...Attribute) string {
