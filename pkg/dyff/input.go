@@ -45,10 +45,28 @@ type InputFile struct {
 
 // HumanReadableLocationInformation create a nicely decorated information about the provided input location. It will output the absolut path of the file (rather than the possibly relative location), or it will show the URL in the usual look-and-feel of URIs.
 func HumanReadableLocationInformation(inputFile InputFile) string {
-	location := inputFile.Location
-	note := inputFile.Note
-	documents := len(inputFile.Documents)
+	var buf bytes.Buffer
 
+	// Start with a nice location output
+	buf.WriteString(HumanReadableLocation(inputFile.Location))
+
+	// Add additional note if it is set
+	if inputFile.Note != "" {
+		buf.WriteString(", ")
+		buf.WriteString(bunt.Colorize(inputFile.Note, bunt.Orange))
+	}
+
+	// Add an information about how many documents are in the provided input file
+	if documents := len(inputFile.Documents); documents > 1 {
+		buf.WriteString(", ")
+		buf.WriteString(bunt.Colorize(Plural(documents, "document"), bunt.Aquamarine, bunt.Bold))
+	}
+
+	return buf.String()
+}
+
+// HumanReadableLocation returns a human readable location with proper coloring
+func HumanReadableLocation(location string) string {
 	var buf bytes.Buffer
 
 	if location == "-" {
@@ -63,18 +81,6 @@ func HumanReadableLocationInformation(inputFile InputFile) string {
 
 	} else if _, err := url.ParseRequestURI(location); err == nil {
 		buf.WriteString(bunt.Colorize(location, bunt.CornflowerBlue, bunt.Underline))
-	}
-
-	// Add additional note if it is set
-	if note != "" {
-		buf.WriteString(", ")
-		buf.WriteString(bunt.Colorize(note, bunt.Orange))
-	}
-
-	// Add an information about how many documents are in the provided input file
-	if documents > 1 {
-		buf.WriteString(", ")
-		buf.WriteString(bunt.Colorize(Plural(documents, "document"), bunt.Aquamarine, bunt.Bold))
 	}
 
 	return buf.String()

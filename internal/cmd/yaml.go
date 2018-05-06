@@ -24,14 +24,16 @@ import (
 	"fmt"
 
 	"github.com/HeavyWombat/dyff/pkg/dyff"
+	"github.com/HeavyWombat/dyff/pkg/neat"
 	"github.com/spf13/cobra"
 )
 
 var restructure bool
+var plainYAML bool
 
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{
-	Use:     "yaml",
+	Use:     "yaml [flags] <file-location> ...",
 	Aliases: []string{"yml"},
 	Short:   "Converts input document into YAML format",
 	Long: `
@@ -40,20 +42,27 @@ Converts input document into YAML format while preserving the order of all keys.
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, x := range args {
-			obj, err := dyff.LoadFile(x)
+		for _, argument := range args {
+			inputFile, err := dyff.LoadFile(argument)
 			if err != nil {
 				exitWithError("Failed to load input file", err)
 			}
 
-			for _, document := range obj.Documents {
+			for i, document := range inputFile.Documents {
 				if restructure {
 					document = dyff.RestructureObject(document)
 				}
 
-				output, yamlerr := dyff.ToYAMLString(document)
-				if yamlerr != nil {
-					exitWithError("Failed to marshal object into YAML", err)
+				var note string
+				if len(inputFile.Documents) == 1 {
+					note = dyff.HumanReadableLocation(inputFile.Location)
+				} else {
+					note = fmt.Sprintf("%s (document %d/%d)", dyff.HumanReadableLocation(inputFile.Location), i+1, len(inputFile.Documents))
+				}
+
+				output, err := neat.ToYAMLString(document, plainYAML, note)
+				if err != nil {
+					exitWithError("Failed to neatly marshal object into YAML", err)
 				}
 
 				fmt.Print(output)
@@ -66,4 +75,5 @@ func init() {
 	rootCmd.AddCommand(yamlCmd)
 
 	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "Try to restructure YAML map keys in reasonable order")
+	yamlCmd.PersistentFlags().BoolVarP(&plainYAML, "plain", "p", false, "Output YAML in plain style without highlighting")
 }

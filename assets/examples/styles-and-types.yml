@@ -1,0 +1,39 @@
+---
+yaml:
+  tree:
+    structure:
+      map:
+        keyA: value
+        int: 42
+        float: 3.14
+        bool: true
+        string: Foobar
+        singlequotes: 'This is text'
+        doublequotes: "More text please"
+        multiline: |
+          This text
+          has multiple
+          lines to offer
+
+        inlinejson: { key: [A, B, C] }
+
+      list:
+      - one
+      - two
+      - three
+
+      named-lists:
+      - name: one
+        another:
+          structure:
+            foo: bar
+      - name: two
+        another:
+          structure:
+            you: bet
+
+another-root-level-key: why not?
+...
+---
+- name: one
+- name: two
