@@ -29,11 +29,11 @@ import (
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/HeavyWombat/yaml"
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 	"golang.org/x/crypto/ssh/terminal"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // DebugMode is the global switch to enable debug output

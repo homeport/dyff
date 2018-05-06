@@ -26,7 +26,6 @@ import (
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
-	"github.com/HeavyWombat/yaml"
 	"github.com/spf13/cobra"
 )
 
@@ -77,14 +76,6 @@ func initSettings() {
 	bunt.TrueColorSetting, err = bunt.ParseSetting(truecolormode)
 	if err != nil {
 		exitWithError("Invalid true color setting", err)
-	}
-
-	switch bunt.ColorSetting {
-	case bunt.OFF:
-		yaml.HighlightKeys = false
-
-	case bunt.ON:
-		yaml.HighlightKeys = true
 	}
 }
 

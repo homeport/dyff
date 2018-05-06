@@ -23,7 +23,7 @@ package dyff
 import (
 	"fmt"
 
-	"github.com/HeavyWombat/yaml"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var knownKeyOrders = [][]string{

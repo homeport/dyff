@@ -26,10 +26,6 @@
 
 
 [[constraint]]
-  name = "github.com/HeavyWombat/yaml"
-  version = "2.2.42"
-
-[[constraint]]
   name = "github.com/gorilla/mux"
   version = "1.6.1"
 
@@ -72,6 +68,10 @@
 [[constraint]]
   branch = "master"
   name = "golang.org/x/crypto"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.2.1"
 
 [prune]
   go-tests = true

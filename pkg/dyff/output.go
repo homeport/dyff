@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/HeavyWombat/yaml"
 	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // ToJSONString converts the provided object into a human readable JSON string.

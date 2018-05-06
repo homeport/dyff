@@ -27,9 +27,8 @@ import (
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/HeavyWombat/dyff/pkg/dyff"
-	"github.com/HeavyWombat/yaml"
 	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var (
@@ -56,8 +55,6 @@ func ToYAMLString(obj interface{}, plainYAML bool, note string) (string, error) 
 	}
 
 	// Use internal custom YAML marshaling with colors
-	yaml.HighlightKeys = false
-
 	buf := &bytes.Buffer{}
 	writer := bufio.NewWriter(buf)
 
@@ -91,7 +88,7 @@ func neat(out *bufio.Writer, prefix string, skipIndentOnFirstLine bool, obj inte
 		}
 
 	case []yaml.MapSlice:
-		if err := neatSlice(out, prefix, skipIndentOnFirstLine, dyff.SimplifyList(obj.([]yaml.MapSlice))); err != nil {
+		if err := neatMapSliceSlice(out, prefix, skipIndentOnFirstLine, obj.([]yaml.MapSlice)); err != nil {
 			return err
 		}
 
@@ -137,6 +134,18 @@ func neatMapSlice(out *bufio.Writer, prefix string, skipIndentOnFirstLine bool, 
 }
 
 func neatSlice(out *bufio.Writer, prefix string, skipIndentOnFirstLine bool, list []interface{}) error {
+	for _, entry := range list {
+		out.WriteString(prefix)
+		out.WriteString(bunt.Style("- ", bunt.Bold))
+		if err := neat(out, prefix+prefixAdd(), true, entry); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func neatMapSliceSlice(out *bufio.Writer, prefix string, skipIndentOnFirstLine bool, list []yaml.MapSlice) error {
 	for _, entry := range list {
 		out.WriteString(prefix)
 		out.WriteString(bunt.Style("- ", bunt.Bold))

@@ -32,8 +32,8 @@ import (
 	"reflect"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/HeavyWombat/yaml"
 	"github.com/pkg/errors"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // InputFile represents the actual input file (either local, or fetched remotely) that needs to be processed. It can contain multiple documents, where a document is a map or a list of things.

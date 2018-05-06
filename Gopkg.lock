@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/HeavyWombat/yaml"
-  packages = ["."]
-  revision = "15465fb9881a83d937dae7e7046d60fe6bc5a970"
-  version = "v2.2.42"
-
-[[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
@@ -140,7 +134,7 @@
     "unix",
     "windows"
   ]
-  revision = "6f686a352de66814cdd080d970febae7767857a3"
+  revision = "7db1c3b1a98089d0071c84f646ff5c96aad43682"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -175,6 +169,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5e392b3fa8b3c2476f774d7190d00626273b0f1ea6ecf291080831f1d168c0f7"
+  inputs-digest = "5f892d5f70fe0cb354cbbaacf621fad0633d972df518f8ad01f8c6290d22931d"
   solver-name = "gps-cdcl"
   solver-version = 1

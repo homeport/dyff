@@ -26,7 +26,7 @@ import (
 
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
 
-	"github.com/HeavyWombat/yaml"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Restructure", func() {

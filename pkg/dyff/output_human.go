@@ -30,8 +30,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/HeavyWombat/yaml"
 	"github.com/sergi/go-diff/diffmatchpatch"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // NoTableStyle disables output in table style
