@@ -26,6 +26,7 @@ import (
 	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/HeavyWombat/dyff/pkg/neat"
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 )
 
 var restructure bool
@@ -48,24 +49,27 @@ Converts input document into YAML format while preserving the order of all keys.
 				exitWithError("Failed to load input file", err)
 			}
 
-			for i, document := range inputFile.Documents {
+			for _, document := range inputFile.Documents {
 				if restructure {
 					document = dyff.RestructureObject(document)
 				}
 
-				var note string
-				if len(inputFile.Documents) == 1 {
-					note = dyff.HumanReadableLocation(inputFile.Location)
-				} else {
-					note = fmt.Sprintf("%s (document %d/%d)", dyff.HumanReadableLocation(inputFile.Location), i+1, len(inputFile.Documents))
-				}
+				if plainYAML { // Run Go YAML library marshalling if plain mode is enabled
+					output, err := yaml.Marshal(document)
+					if err != nil {
+						exitWithError("Failed to marshal object into YAML", err)
+					}
 
-				output, err := neat.ToYAMLString(document, plainYAML, note)
-				if err != nil {
-					exitWithError("Failed to neatly marshal object into YAML", err)
-				}
+					fmt.Printf("---\n%s\n", string(output))
 
-				fmt.Print(output)
+				} else { // Run neat mode to create colorful YAML string
+					output, err := neat.ToYAMLString(document)
+					if err != nil {
+						exitWithError("Failed to neatly marshal object into YAML", err)
+					}
+
+					fmt.Printf("---\n%s\n", output)
+				}
 			}
 		}
 	},

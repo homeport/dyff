@@ -27,7 +27,6 @@ import (
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -39,31 +38,12 @@ var (
 	floatColor         = bunt.Orange
 	intColor           = bunt.MediumPurple
 	multiLineTextColor = bunt.Aquamarine
-	documentStartColor = bunt.Goldenrod
 )
 
 // ToYAMLString marshals the provided object into YAML with text decorations
-func ToYAMLString(obj interface{}, plainYAML bool, note string) (string, error) {
-	if plainYAML {
-		// Use default YAML marshaling
-		output, err := yaml.Marshal(obj)
-		if err != nil {
-			return "", errors.Wrap(err, fmt.Sprintf("Failed to marshal input object %#v", obj))
-		}
-
-		return fmt.Sprintf("---\n%s\n", string(output)), nil
-	}
-
-	// Use internal custom YAML marshaling with colors
+func ToYAMLString(obj interface{}) (string, error) {
 	buf := &bytes.Buffer{}
 	writer := bufio.NewWriter(buf)
-
-	writer.WriteString(bunt.Colorize("---", documentStartColor, bunt.Bold))
-	if len(note) > 0 {
-		writer.WriteString(" # ")
-		writer.WriteString(note)
-	}
-	writer.WriteString("\n")
 
 	if err := neat(writer, "", false, obj); err != nil {
 		return "", err
