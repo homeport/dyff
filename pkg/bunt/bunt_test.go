@@ -30,6 +30,11 @@ import (
 
 var _ = Describe("Bunt tests", func() {
 	Context("Helper functions", func() {
+		BeforeEach(func() {
+			ColorSetting = ON
+			TrueColorSetting = ON
+		})
+
 		It("should be able to break up an existing string with colors in its respective parts", func() {
 			sample := fmt.Sprintf("[%s] This is a %s with various %s combined in one %s:\n(%s)",
 				Colorize("Info", Green),
