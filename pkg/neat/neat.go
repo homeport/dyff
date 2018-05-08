@@ -31,13 +31,15 @@ import (
 )
 
 var (
-	keyColor           = bunt.Coral
+	keyColor           = bunt.IndianRed
 	indentLineColor    = bunt.Color(0x00242424)
 	scalarDefaultColor = bunt.PaleGreen
 	boolColor          = bunt.Moccasin
 	floatColor         = bunt.Orange
 	intColor           = bunt.MediumPurple
 	multiLineTextColor = bunt.Aquamarine
+	nullColor          = bunt.DarkOrange
+	emptyStructures    = bunt.PaleGoldenrod
 )
 
 // ToYAMLString marshals the provided object into YAML with text decorations
@@ -49,9 +51,7 @@ func ToYAMLString(obj interface{}) (string, error) {
 		return "", err
 	}
 
-	writer.WriteString("\n")
 	writer.Flush()
-
 	return buf.String(), nil
 }
 
@@ -91,15 +91,28 @@ func neatMapSlice(out *bufio.Writer, prefix string, skipIndentOnFirstLine bool, 
 
 		switch mapitem.Value.(type) {
 		case yaml.MapSlice:
-			out.WriteString("\n")
-			if err := neatMapSlice(out, prefix+prefixAdd(), false, mapitem.Value.(yaml.MapSlice)); err != nil {
-				return err
+			if len(mapitem.Value.(yaml.MapSlice)) == 0 {
+				out.WriteString(" ")
+				out.WriteString(bunt.Colorize("{}", emptyStructures))
+				out.WriteString("\n")
+
+			} else {
+				out.WriteString("\n")
+				if err := neatMapSlice(out, prefix+prefixAdd(), false, mapitem.Value.(yaml.MapSlice)); err != nil {
+					return err
+				}
 			}
 
 		case []interface{}:
-			out.WriteString("\n")
-			if err := neatSlice(out, prefix, false, mapitem.Value.([]interface{})); err != nil {
-				return err
+			if len(mapitem.Value.([]interface{})) == 0 {
+				out.WriteString(" ")
+				out.WriteString(bunt.Colorize("[]", emptyStructures))
+				out.WriteString("\n")
+			} else {
+				out.WriteString("\n")
+				if err := neatSlice(out, prefix, false, mapitem.Value.([]interface{})); err != nil {
+					return err
+				}
 			}
 
 		default:
@@ -138,6 +151,14 @@ func neatMapSliceSlice(out *bufio.Writer, prefix string, skipIndentOnFirstLine b
 }
 
 func neatScalar(out *bufio.Writer, prefix string, skipIndentOnFirstLine bool, obj interface{}) error {
+	// Process nil values immediately and return afterwards
+	if obj == nil {
+		out.WriteString(bunt.Colorize("null", nullColor))
+		out.WriteString("\n")
+		return nil
+	}
+
+	// Any other value: Run through Go YAML marshaller and colorize afterwards
 	data, err := yaml.Marshal(obj)
 	if err != nil {
 		return err

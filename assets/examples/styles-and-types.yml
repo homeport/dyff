@@ -16,6 +16,10 @@ yaml:
           lines to offer
 
         inlinejson: { key: [A, B, C] }
+        emptyMap: {}
+        emptyList: []
+        emptyWhatever-1: ~
+        emptyWhatever-2: NULL
 
       list:
       - one
