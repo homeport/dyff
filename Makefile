@@ -20,7 +20,7 @@
 
 .PHONY: clean
 
-all: test
+all: test build
 
 clean:
 	@go clean -i -r -cache
@@ -52,5 +52,5 @@ install: sanity-check
 build: sanity-check
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh
 
-test: unused vet fmt
+test: sanity-check
 	@ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace

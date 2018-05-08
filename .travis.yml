@@ -11,3 +11,14 @@ install:
 - go get -u github.com/onsi/ginkgo/ginkgo
 - go get -u github.com/onsi/gomega/...
 - export PATH=$PATH:$HOME/gopath/bin
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: Xs/bU5mzcXQbJRrpMfbpB9aFHEWJSSzxhVI3VDTYbzaI0HZ0Aq7Y8dNuvXcUElIFT2daJ1dltifK0HP3Uh8chebMwpIQXsL9jEU3kF3V6v3dRs7jeI9/PqPD3swIJ4RGEbZptSTR8kpS2Ar9K6geB6/fOm8McvD9fjO4zHBQMuXmgWITYAozj+YcH3kKRZJex1qPFDFrWrGVp+1KXQ4hz+H7POog6ToxYVhI3s7uGCvsY7Zr8oD1cV/IO5d3xLcaYQu+x3d73b+QGshUaCcDwssk+njCS+B7b9P/TxyKhCMTEs3MwpXetahw9gpK26tlJwNSEroLuKA+hI7uBg63+t0kqMmFkgbSEJU0X/T3uCGS6M2H3jcE9Xjt6nRodOU9cuRF3slmAPY3EhSxpO2iBjJXcbPmsRCHwelM+PDelGU8xRk/XHN0N3iR2Mk+v92lmGbc7Lsw0LJdOBcY5k0BVfNvkkMzpctGHc6oHLRBq0wwyvu+X50Q6mJB1/h1le/X8cT/gGK/Mfc9fl6Ev4F+yE+pdBYxRwnlUCIQN1u1NSgM3Y3reX/A7XP7QqiIHA4syaO8oGaWuditGfdrikzqW92C1AOkYU+pXCXVRO8biY8P/pS1SIdoTM75MKA8fg+aN3gUgNwHYZDf2bA3DIhAjopLi4w+dyxmLLqsXnVbnrg=
+  file_glob: true
+  file: binaries/*
+  on:
+    go: 1.10.1
+    tags: true
