@@ -7,10 +7,16 @@ go:
 install:
 - go get -v -t ./...
 - go get honnef.co/go/tools/cmd/unused
+- go get github.com/client9/misspell/cmd/misspell
+- go get github.com/fzipp/gocyclo
+- go get golang.org/x/lint/golint
 - go get golang.org/x/tools/cmd/cover
-- go get -u github.com/onsi/ginkgo/ginkgo
-- go get -u github.com/onsi/gomega/...
+- go get github.com/onsi/ginkgo/ginkgo
+- go get github.com/onsi/gomega/...
 - export PATH=$PATH:$HOME/gopath/bin
+
+before_deploy:
+- make build
 
 deploy:
   provider: releases

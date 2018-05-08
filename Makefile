@@ -20,7 +20,7 @@
 
 .PHONY: clean
 
-all: test build
+all: test
 
 clean:
 	@go clean -i -r -cache
