@@ -57,6 +57,12 @@ var Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile
 // Error log output
 var Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
+// NonStandardIdentifierGuessCountThreshold specifies how many list entries are
+// needed for the guess-the-identifier function to actually consider the key
+// name. Or in short, if the lists only contain two entries each, there are more
+// possibilities to find unique enough keys, which might no qualify as such.
+var NonStandardIdentifierGuessCountThreshold = 3
+
 // Constants to distinguish between the different kinds of differences
 const (
 	ADDITION     = '+'
@@ -325,10 +331,12 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, 
 }
 
 func compareLists(path Path, from []interface{}, to []interface{}) ([]Diff, error) {
-	if fromIdentifier := GetIdentifierFromNamedList(from); fromIdentifier != "" {
-		if toIdentifier := GetIdentifierFromNamedList(to); fromIdentifier == toIdentifier {
-			return compareNamedEntryLists(path, fromIdentifier, from, to)
-		}
+	if identifier := getIdentifierFromNamedLists(from, to); identifier != "" {
+		return compareNamedEntryLists(path, identifier, from, to)
+	}
+
+	if identifier := getNonStandardIdentifierFromNamedLists(from, to); identifier != "" {
+		return compareNamedEntryLists(path, identifier, from, to)
 	}
 
 	return compareSimpleLists(path, from, to)
@@ -615,9 +623,6 @@ func getEntryFromNamedList(list []interface{}, identifier string, name interface
 
 // GetIdentifierFromNamedList returns the identifier key used in the provided list, or an empty string if there is none. The identifier key is either 'name', 'key', or 'id'.
 func GetIdentifierFromNamedList(list []interface{}) string {
-	// TODO Write additional logic to detect an identifier that is not a known one but something completely different
-	// TODO Check whether there is a way to support Concourse YAMLs which do not come with one unique identifier per list
-
 	counters := map[interface{}]int{}
 
 	for _, sliceEntry := range list {
@@ -637,6 +642,89 @@ func GetIdentifierFromNamedList(list []interface{}) string {
 	for _, identifier := range []string{"name", "key", "id"} {
 		if count, ok := counters[identifier]; ok && count == sliceLength {
 			return identifier
+		}
+	}
+
+	return ""
+}
+
+func getIdentifierFromNamedLists(listA, listB []interface{}) string {
+	createKeyCountMap := func(list []interface{}) map[interface{}]int {
+		result := map[interface{}]int{}
+		for _, entry := range list {
+			switch entry.(type) {
+			case yaml.MapSlice:
+				for _, mapitem := range entry.(yaml.MapSlice) {
+					if _, ok := result[mapitem.Key]; !ok {
+						result[mapitem.Key] = 0
+					}
+
+					result[mapitem.Key]++
+				}
+			}
+		}
+
+		return result
+	}
+
+	listALength := len(listA)
+	listBLength := len(listB)
+	counterA := createKeyCountMap(listA)
+	counterB := createKeyCountMap(listB)
+
+	// Check for the usual suspects: name, key, and id
+	for _, identifier := range []string{"name", "key", "id"} {
+		if countA, okA := counterA[identifier]; okA && countA == listALength {
+			if countB, okB := counterB[identifier]; okB && countB == listBLength {
+				return identifier
+			}
+		}
+	}
+
+	return ""
+}
+
+func getNonStandardIdentifierFromNamedLists(listA, listB []interface{}) string {
+	createKeyCountMap := func(list []interface{}) map[string]int {
+		tmp := map[string]map[string]struct{}{}
+		for _, entry := range list {
+			switch entry.(type) {
+			case yaml.MapSlice:
+				for _, mapitem := range entry.(yaml.MapSlice) {
+					switch mapitem.Key.(type) {
+					case string:
+						key := mapitem.Key.(string)
+						switch mapitem.Value.(type) {
+						case string:
+							if _, ok := tmp[key]; !ok {
+								tmp[key] = map[string]struct{}{}
+							}
+
+							tmp[key][mapitem.Value.(string)] = struct{}{}
+						}
+					}
+				}
+			}
+		}
+
+		result := map[string]int{}
+		for key, value := range tmp {
+			result[key] = len(value)
+		}
+
+		return result
+	}
+
+	listALength := len(listA)
+	listBLength := len(listB)
+	counterA := createKeyCountMap(listA)
+	counterB := createKeyCountMap(listB)
+
+	for keyA, countA := range counterA {
+		if countB, ok := counterB[keyA]; ok {
+			if countA == listALength && countB == listBLength && countA > NonStandardIdentifierGuessCountThreshold {
+				return keyA
+			}
 		}
 	}
 

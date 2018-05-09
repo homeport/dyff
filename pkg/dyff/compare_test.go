@@ -636,6 +636,42 @@ listY: [ Yo, Yo, Yo ]
 					Expect(result).To(BeEquivalentTo(expected[i]))
 				}
 			})
+
+			It("should return differences in named lists even if no standard identifier is used", func() {
+				results, err := CompareInputFiles(file("../../assets/prometheus/from.yml"), file("../../assets/prometheus/to.yml"))
+				expected := []Diff{
+					singleDiff("/scrape_configs", ORDERCHANGE, []string{
+						"kubernetes-nodes",
+						"kubernetes-apiservers",
+						"kubernetes-cadvisor",
+						"kubernetes-service-endpoints",
+						"kubernetes-services",
+						"kubernetes-ingresses",
+						"kubernetes-pods",
+					}, []string{
+						"kubernetes-apiservers",
+						"kubernetes-nodes",
+						"kubernetes-cadvisor",
+						"kubernetes-service-endpoints",
+						"kubernetes-services",
+						"kubernetes-ingresses",
+						"kubernetes-pods",
+					}),
+
+					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/scheme", MODIFICATION, "http", "https"),
+
+					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/relabel_configs/0/regex", MODIFICATION, "default;kubernetes;http", "default;kubernetes;https"),
+				}
+
+				Expect(err).To(BeNil())
+				Expect(results).NotTo(BeNil())
+				Expect(results.Diffs).NotTo(BeNil())
+				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
+
+				for i, result := range results.Diffs {
+					Expect(result).To(BeEquivalentTo(expected[i]))
+				}
+			})
 		})
 
 		Context("change root for comparison", func() {
