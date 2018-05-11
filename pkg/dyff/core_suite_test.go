@@ -230,7 +230,7 @@ func grabError(obj interface{}, path string) string {
 }
 
 func pathFromString(path string, obj interface{}) Path {
-	result, err := StringToPath(path, obj)
+	result, err := NewPath(path, obj)
 	Expect(err).To(BeNil())
 
 	return result

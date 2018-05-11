@@ -40,9 +40,6 @@ var NoTableStyle = false
 // DoNotInspectCerts disables certificates inspection (compare text only)
 var DoNotInspectCerts = false
 
-// UseGoPatchPaths style paths instead of Spruce Dot-Style
-var UseGoPatchPaths = false
-
 const banner = `     _        __  __
    _| |_   _ / _|/ _|
  / _' | | | | |_| |_
@@ -50,15 +47,6 @@ const banner = `     _        __  __
  \__,_|\__, |_| |_|
         |___/
 `
-
-// PathToString returns a nicely formatted version of the provided path based on the user-preference for the style
-func PathToString(path Path, showDocumentIdx bool) string {
-	if UseGoPatchPaths {
-		return ToGoPatchStyle(path, showDocumentIdx)
-	}
-
-	return ToDotStyle(path, showDocumentIdx)
-}
 
 // CreateHumanStyleReport creates a string with human readable report of the differences. For this to work, dyff relies on modified versions of the YAML lib and the coloring lib we use here. The YAML lib adds ANSI styles to make keys bold. But this means the coloring lib needs to be able to apply styles on already styled text without making it look ugly.
 func CreateHumanStyleReport(report Report, showBanner bool) string {
@@ -91,7 +79,7 @@ func CreateHumanStyleReport(report Report, showBanner bool) string {
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
 func generateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) error {
 	output.WriteString("\n")
-	output.WriteString(PathToString(diff.Path, showDocumentIdx))
+	output.WriteString(diff.Path.ToString(showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))

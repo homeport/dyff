@@ -73,18 +73,6 @@ const (
 	ATTENTION    = '⚠'
 )
 
-// PathElement describes a part of a path, meaning its name. In this case the "Key" string is empty. Named list entries such as "name: one" use both "Key" and "Name" to properly specify the path element.
-type PathElement struct {
-	Key  string
-	Name string
-}
-
-// Path describes a position inside a YAML (or JSON) structure by providing a name to each hierarchy level (tree structure).
-type Path struct {
-	DocumentIdx  int
-	PathElements []PathElement
-}
-
 // Detail encapsulate the actual details of a change, mainly the kind of difference and the values.
 type Detail struct {
 	Kind rune
@@ -169,55 +157,6 @@ func Plural(amount int, text ...string) string {
 
 		return fmt.Sprintf("%s %s", number, text[1])
 	}
-}
-
-// ToDotStyle returns a path as a string in dot style separating each path element by a dot.
-// Please note that path elements that are named "." will look ugly.
-func ToDotStyle(path Path, showDocumentIdx bool) string {
-	pathLength := len(path.PathElements)
-
-	// The Dot style does not really support the root level. An empty path
-	// will just return a text indicating the root level is meant
-	if pathLength == 0 {
-		return bunt.Style("(root level)", bunt.Italic, bunt.Bold)
-	}
-
-	result := make([]string, 0, pathLength)
-	for _, element := range path.PathElements {
-		if element.Key != "" {
-			result = append(result, bunt.Style(element.Name, bunt.Italic, bunt.Bold))
-		} else {
-			result = append(result, bunt.Style(element.Name, bunt.Bold))
-		}
-	}
-
-	if showDocumentIdx {
-		return strings.Join(result, ".") + bunt.Colorize(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), bunt.Aquamarine)
-	}
-
-	return strings.Join(result, ".")
-}
-
-// ToGoPatchStyle returns a path as a string in Go-Patch (https://github.com/cppforlife/go-patch) style separating each path element by a slash. Named list entries will be shown with their respecitive identifier name such as "name", "key", or "id".
-func ToGoPatchStyle(path Path, showDocumentIdx bool) string {
-	result := make([]string, 0, len(path.PathElements))
-	for _, element := range path.PathElements {
-		if element.Key != "" {
-			result = append(result, fmt.Sprintf("%s=%s", bunt.Style(element.Key, bunt.Italic), bunt.Style(element.Name, bunt.Bold, bunt.Italic)))
-		} else {
-			result = append(result, bunt.Style(element.Name, bunt.Bold))
-		}
-	}
-
-	if showDocumentIdx {
-		return "/" + strings.Join(result, "/") + bunt.Colorize(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), bunt.Aquamarine)
-	}
-
-	return "/" + strings.Join(result, "/")
-}
-
-func (path Path) String() string {
-	return ToGoPatchStyle(path, true)
 }
 
 // CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a report with the list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
@@ -825,86 +764,6 @@ func SimplifyList(input []yaml.MapSlice) []interface{} {
 	return result
 }
 
-func goPatchStringToPath(path string, obj interface{}) (Path, error) {
-	elements := make([]PathElement, 0)
-
-	for i, section := range strings.Split(path, "/") {
-		if i == 0 {
-			continue
-		}
-
-		keyNameSplit := strings.Split(section, "=")
-		switch len(keyNameSplit) {
-		case 1:
-			elements = append(elements, PathElement{Name: keyNameSplit[0]})
-
-		case 2:
-			elements = append(elements, PathElement{Key: keyNameSplit[0], Name: keyNameSplit[1]})
-
-		default:
-			return Path{}, fmt.Errorf("invalid Go-patch style path, element '%s' cannot contain more than one equal sign", section)
-		}
-	}
-
-	return Path{DocumentIdx: 0, PathElements: elements}, nil
-}
-
-func spruceStringToPath(path string, obj interface{}) (Path, error) {
-	elements := make([]PathElement, 0)
-
-	pointer := obj
-	for _, section := range strings.Split(path, ".") {
-		if isMapSlice(pointer) {
-			mapslice := pointer.(yaml.MapSlice)
-			value, err := getValueByKey(mapslice, section)
-			if err != nil {
-				return Path{}, errors.Wrap(err, fmt.Sprintf("failed to parse path %s", path))
-			}
-
-			pointer = value
-			elements = append(elements, PathElement{Name: section})
-
-		} else if isList(pointer) {
-			list := pointer.([]interface{})
-			if id, err := strconv.Atoi(section); err == nil {
-				if id < 0 || id >= len(list) {
-					return Path{}, fmt.Errorf("failed to parse path %s, provided list index %d is not in range: 0..%d", path, id, len(list)-1)
-				}
-
-				pointer = list[id]
-				elements = append(elements, PathElement{Name: section})
-
-			} else {
-				identifier := GetIdentifierFromNamedList(list)
-				value, ok := getEntryFromNamedList(list, identifier, section)
-				if !ok {
-					names, err := listNamesOfNamedList(list, identifier)
-					if err != nil {
-						return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list", path, section)
-					}
-
-					return Path{}, fmt.Errorf("failed to parse path %s, provided named list entry '%s' cannot be found in list, available names are: %s", path, section, strings.Join(names, ", "))
-				}
-
-				pointer = value
-				elements = append(elements, PathElement{Key: identifier, Name: section})
-			}
-		}
-	}
-
-	return Path{DocumentIdx: 0, PathElements: elements}, nil
-}
-
-// StringToPath creates a new Path using the provided serialized path string. In case of Spruce paths, we need the actual tree as a reference to create the correct path.
-func StringToPath(path string, obj interface{}) (Path, error) {
-	if strings.HasPrefix(path, "/") { // Go-path path in case it starts with a slash
-		return goPatchStringToPath(path, obj)
-	}
-
-	// In any other case, try to parse as Spruce path
-	return spruceStringToPath(path, obj)
-}
-
 func isList(obj interface{}) bool {
 	switch obj.(type) {
 	case []interface{}:
@@ -927,7 +786,7 @@ func isMapSlice(obj interface{}) bool {
 
 // Grab get the value from the provided YAML tree using a path to traverse through the tree structure
 func Grab(obj interface{}, pathString string) (interface{}, error) {
-	path, err := StringToPath(pathString, obj)
+	path, err := NewPath(pathString, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -938,7 +797,7 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 	for _, element := range path.PathElements {
 		if element.Key != "" { // List
 			if !isList(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), ToGoPatchStyle(pointerPath, false))
+				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), pointerPath.ToGoPatchStyle(false))
 			}
 
 			entry, ok := getEntryFromNamedList(pointer.([]interface{}), element.Key, element.Name)
@@ -950,7 +809,7 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 
 		} else if id, err := strconv.Atoi(element.Name); err == nil { // List (entry referenced by its index)
 			if !isList(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), ToGoPatchStyle(pointerPath, false))
+				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), pointerPath.ToGoPatchStyle(false))
 			}
 
 			list := pointer.([]interface{})
@@ -962,7 +821,7 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 
 		} else { // Map
 			if !isMapSlice(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a YAML map but found type %s at %s", typeToName(pointer), ToGoPatchStyle(pointerPath, false))
+				return nil, fmt.Errorf("failed to traverse tree, expected a YAML map but found type %s at %s", typeToName(pointer), pointerPath.ToGoPatchStyle(false))
 			}
 
 			entry, err := getValueByKey(pointer.(yaml.MapSlice), element.Name)
@@ -1004,8 +863,8 @@ func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool
 	}
 
 	// Parse path string and create nicely formatted output path
-	if resolvedPath, err := StringToPath(path, obj); err == nil {
-		path = PathToString(resolvedPath, false)
+	if resolvedPath, err := NewPath(path, obj); err == nil {
+		path = resolvedPath.String()
 	}
 
 	inputFile.Note = fmt.Sprintf("YAML root was changed to %s", path)
