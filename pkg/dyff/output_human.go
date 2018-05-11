@@ -234,9 +234,7 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 
 	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
 		output.WriteString(yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
-		writeTextBlocks(output, 0,
-			createStringWithPrefix("  - ", fromCertText, bunt.RemovalRed),
-			createStringWithPrefix("  + ", toCertText, bunt.AdditionGreen))
+		output.WriteString(highlightByLine(fromCertText, toCertText))
 
 	} else if isWhitespaceOnlyChange(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
@@ -246,32 +244,9 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 
 	} else if isMinorChange(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c minor value change\n", MODIFICATION)))
-
 		diffs := diffmatchpatch.New().DiffMain(from, to, false)
-
-		output.WriteString(bunt.Colorize("  - ", bunt.RemovalRed))
-		for _, part := range diffs {
-			switch part.Type {
-			case diffmatchpatch.DiffEqual:
-				output.WriteString(bunt.Colorize(part.Text, bunt.LightSalmon))
-
-			case diffmatchpatch.DiffDelete:
-				output.WriteString(bunt.Colorize(part.Text, bunt.RemovalRed, bunt.Bold))
-			}
-		}
-		output.WriteString("\n")
-
-		output.WriteString(bunt.Colorize("  + ", bunt.AdditionGreen))
-		for _, part := range diffs {
-			switch part.Type {
-			case diffmatchpatch.DiffEqual:
-				output.WriteString(bunt.Colorize(part.Text, bunt.LightGreen))
-
-			case diffmatchpatch.DiffInsert:
-				output.WriteString(bunt.Colorize(part.Text, bunt.AdditionGreen, bunt.Bold))
-			}
-		}
-		output.WriteString("\n")
+		output.WriteString(highlightRemovals(diffs))
+		output.WriteString(highlightAdditions(diffs))
 
 	} else if isMultiLine(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
@@ -284,6 +259,73 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 		output.WriteString(createStringWithPrefix("  - ", from, bunt.RemovalRed))
 		output.WriteString(createStringWithPrefix("  + ", to, bunt.AdditionGreen))
 	}
+}
+
+func highlightByLine(from, to string) string {
+	fromLines := strings.Split(from, "\n")
+	toLines := strings.Split(to, "\n")
+
+	var buf bytes.Buffer
+
+	if len(fromLines) == len(toLines) {
+		for i := range fromLines {
+			if fromLines[i] != toLines[i] {
+				fromLines[i] = bunt.Colorize(fromLines[i], bunt.RemovalRed, bunt.Bold)
+				toLines[i] = bunt.Colorize(toLines[i], bunt.AdditionGreen, bunt.Bold)
+
+			} else {
+				fromLines[i] = bunt.Colorize(fromLines[i], bunt.LightSalmon)
+				toLines[i] = bunt.Colorize(toLines[i], bunt.LightGreen)
+			}
+		}
+
+		writeTextBlocks(&buf, 0,
+			createStringWithPrefix(bunt.Colorize("  - ", bunt.RemovalRed), strings.Join(fromLines, "\n")),
+			createStringWithPrefix(bunt.Colorize("  + ", bunt.AdditionGreen), strings.Join(toLines, "\n")))
+
+	} else {
+		writeTextBlocks(&buf, 0,
+			createStringWithPrefix("  - ", from, bunt.RemovalRed),
+			createStringWithPrefix("  + ", to, bunt.AdditionGreen))
+	}
+
+	return buf.String()
+}
+
+func highlightRemovals(diffs []diffmatchpatch.Diff) string {
+	var buf bytes.Buffer
+
+	buf.WriteString(bunt.Colorize("  - ", bunt.RemovalRed))
+	for _, part := range diffs {
+		switch part.Type {
+		case diffmatchpatch.DiffEqual:
+			buf.WriteString(bunt.Colorize(part.Text, bunt.LightSalmon))
+
+		case diffmatchpatch.DiffDelete:
+			buf.WriteString(bunt.Colorize(part.Text, bunt.RemovalRed, bunt.Bold))
+		}
+	}
+
+	buf.WriteString("\n")
+	return buf.String()
+}
+
+func highlightAdditions(diffs []diffmatchpatch.Diff) string {
+	var buf bytes.Buffer
+
+	buf.WriteString(bunt.Colorize("  + ", bunt.AdditionGreen))
+	for _, part := range diffs {
+		switch part.Type {
+		case diffmatchpatch.DiffEqual:
+			buf.WriteString(bunt.Colorize(part.Text, bunt.LightGreen))
+
+		case diffmatchpatch.DiffInsert:
+			buf.WriteString(bunt.Colorize(part.Text, bunt.AdditionGreen, bunt.Bold))
+		}
+	}
+
+	buf.WriteString("\n")
+	return buf.String()
 }
 
 // LoadX509Certs tries to load the provided strings as a cert each and returns a textual representation of the certs, or an error if the strings are not X509 certs
@@ -342,14 +384,21 @@ func LoadX509Certs(from, to string) (string, string, error) {
 //   Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
 func certificateSummaryAsYAML(cert *x509.Certificate) yaml.MapSlice {
 	result := yaml.MapSlice{}
-	result = append(result, yaml.MapItem{Key: "Common Name", Value: cert.Subject.CommonName})
-	result = append(result, yaml.MapItem{Key: "Organization", Value: strings.Join(cert.Subject.Organization, " ")})
-	result = append(result, yaml.MapItem{Key: "Organization Unit", Value: strings.Join(cert.Subject.OrganizationalUnit, " ")})
-	result = append(result, yaml.MapItem{Key: "Locality", Value: strings.Join(cert.Subject.Locality, " ")})
-	result = append(result, yaml.MapItem{Key: "State", Value: strings.Join(cert.Subject.Province, " ")})
-	result = append(result, yaml.MapItem{Key: "Country", Value: strings.Join(cert.Subject.Country, " ")})
-	result = append(result, yaml.MapItem{Key: "Valid From", Value: cert.NotBefore.Format("Jan 2 15:04:05 2006 MST")})
-	result = append(result, yaml.MapItem{Key: "Valid To", Value: cert.NotAfter.Format("Jan 2 15:04:05 2006 MST")})
+
+	result = append(result, yaml.MapItem{Key: "Subject", Value: yaml.MapSlice{
+		yaml.MapItem{Key: "Common Name", Value: cert.Subject.CommonName},
+		yaml.MapItem{Key: "Organization", Value: strings.Join(cert.Subject.Organization, " ")},
+		yaml.MapItem{Key: "Organization Unit", Value: strings.Join(cert.Subject.OrganizationalUnit, " ")},
+		yaml.MapItem{Key: "Locality", Value: strings.Join(cert.Subject.Locality, " ")},
+		yaml.MapItem{Key: "State", Value: strings.Join(cert.Subject.Province, " ")},
+		yaml.MapItem{Key: "Country", Value: strings.Join(cert.Subject.Country, " ")},
+	}})
+
+	result = append(result, yaml.MapItem{Key: "Validity Period", Value: yaml.MapSlice{
+		yaml.MapItem{Key: "NotBefore", Value: cert.NotBefore.Format("Jan 2 15:04:05 2006 MST")},
+		yaml.MapItem{Key: "NotAfter", Value: cert.NotAfter.Format("Jan 2 15:04:05 2006 MST")},
+	}})
+
 	result = append(result, yaml.MapItem{Key: "Issuer", Value: fmt.Sprintf("%s, %s", cert.Issuer.CommonName, strings.Join(cert.Issuer.Organization, " "))})
 	result = append(result, yaml.MapItem{Key: "Serial Number", Value: fmt.Sprintf("%d (%#x)", cert.SerialNumber, cert.SerialNumber)})
 
@@ -369,7 +418,7 @@ func createStringWithPrefix(prefix string, obj interface{}, color ...bunt.Color)
 	var lines = strings.Split(fmt.Sprintf("%v", obj), "\n")
 	for i, line := range lines {
 		if i == 0 {
-			buf.WriteString(bunt.Colorize(prefix, bunt.Bold))
+			buf.WriteString(prefix)
 
 		} else {
 			buf.WriteString(strings.Repeat(" ", plainTextLength(prefix)))
