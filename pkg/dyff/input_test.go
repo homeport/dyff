@@ -27,8 +27,9 @@ import (
 	"net/http/httptest"
 	"os"
 
-	"github.com/HeavyWombat/dyff/pkg/dyff"
-	"github.com/gorilla/mux"
+	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	. "github.com/gorilla/mux"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -37,9 +38,9 @@ var _ = Describe("Input test cases", func() {
 	var server *httptest.Server
 
 	BeforeEach(func() {
-		r := mux.NewRouter()
+		r := NewRouter()
 		r.HandleFunc("/v1/assets/{directory}/{filename}", func(w http.ResponseWriter, r *http.Request) {
-			vars := mux.Vars(r)
+			vars := Vars(r)
 			directory := vars["directory"]
 			filename := vars["filename"]
 
@@ -70,13 +71,13 @@ var _ = Describe("Input test cases", func() {
 
 	Context("Input data from remote locations", func() {
 		It("should load a YAML via a HTTP request", func() {
-			inputfile, err := dyff.LoadFile(server.URL + "/v1/assets/examples/from.yml")
+			inputfile, err := LoadFile(server.URL + "/v1/assets/examples/from.yml")
 			Expect(err).To(BeNil())
 			Expect(inputfile).ToNot(BeNil())
 		})
 
 		It("should fail if the HTTP request fails", func() {
-			_, err := dyff.LoadFile(server.URL + "/v1/assets/examples/does-not-exist.yml")
+			_, err := LoadFile(server.URL + "/v1/assets/examples/does-not-exist.yml")
 			Expect(err.Error()).To(BeEquivalentTo("Unable to load data from " + server.URL + "/v1/assets/examples/does-not-exist.yml: failed to load from location: File not found: examples/does-not-exist.yml"))
 		})
 	})

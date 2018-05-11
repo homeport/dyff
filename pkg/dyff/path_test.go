@@ -22,12 +22,12 @@ package dyff_test
 
 import (
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Path test cases", func() {
-
 	Context("path to string in dot-style", func() {
 		It("should print out simple hash paths nicely", func() {
 			path := Path{DocumentIdx: 0, PathElements: []PathElement{

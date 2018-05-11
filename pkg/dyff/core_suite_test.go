@@ -28,11 +28,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/HeavyWombat/dyff/pkg/bunt"
+	. "github.com/HeavyWombat/dyff/pkg/bunt"
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	yaml "gopkg.in/yaml.v2"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func TestCore(t *testing.T) {
@@ -41,7 +42,7 @@ func TestCore(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	bunt.ColorSetting = bunt.OFF
+	ColorSetting = OFF
 
 	NoColor = false
 	DebugMode = false

@@ -22,20 +22,20 @@ package dyff_test
 
 import (
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Core/YAML", func() {
-	Describe("Getting JSON input", func() {
-		Context("Processing valid JSON input", func() {
-			It("should convert JSON to YAML", func() {
-				content := yml(`{ "name": "foobar", "list": [A, B, C] }`)
+var _ = Describe("JSON to YAML tests", func() {
+	Context("Processing valid JSON input", func() {
+		It("should convert JSON to YAML", func() {
+			content := yml(`{ "name": "foobar", "list": [A, B, C] }`)
 
-				result, err := ToYAMLString(content)
-				Expect(err).To(BeNil())
+			result, err := ToYAMLString(content)
+			Expect(err).To(BeNil())
 
-				Expect(result).To(Equal(`---
+			Expect(result).To(Equal(`---
 name: foobar
 list:
 - A
@@ -43,15 +43,15 @@ list:
 - C
 
 `))
-			})
+		})
 
-			It("should preserve the order inside the structure", func() {
-				content := yml(`{ "list": [C, B, A], "name": "foobar" }`)
+		It("should preserve the order inside the structure", func() {
+			content := yml(`{ "list": [C, B, A], "name": "foobar" }`)
 
-				result, err := ToYAMLString(content)
-				Expect(err).To(BeNil())
+			result, err := ToYAMLString(content)
+			Expect(err).To(BeNil())
 
-				Expect(result).To(Equal(`---
+			Expect(result).To(Equal(`---
 list:
 - C
 - B
@@ -59,7 +59,6 @@ list:
 name: foobar
 
 `))
-			})
 		})
 	})
 })

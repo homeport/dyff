@@ -22,15 +22,15 @@ package dyff_test
 
 import (
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Core/JSON", func() {
-	Describe("Getting YAML input", func() {
-		Context("Processing valid YAML input", func() {
-			It("should convert YAML to JSON", func() {
-				content := yml(`---
+var _ = Describe("YAML to JSON tests", func() {
+	Context("Processing valid YAML input", func() {
+		It("should convert YAML to JSON", func() {
+			content := yml(`---
 name: foobar
 list:
 - A
@@ -38,11 +38,10 @@ list:
 - C
 `)
 
-				result, err := ToJSONString(content)
-				Expect(err).To(BeNil())
+			result, err := ToJSONString(content)
+			Expect(err).To(BeNil())
 
-				Expect(result).To(Equal(`{"name": "foobar", "list": ["A", "B", "C"]}`))
-			})
+			Expect(result).To(Equal(`{"name": "foobar", "list": ["A", "B", "C"]}`))
 		})
 	})
 })

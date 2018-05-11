@@ -21,12 +21,11 @@
 package dyff_test
 
 import (
+	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	yaml "gopkg.in/yaml.v2"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
-
-	yaml "gopkg.in/yaml.v2"
 )
 
 var _ = Describe("Restructure", func() {
