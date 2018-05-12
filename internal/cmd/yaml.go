@@ -31,6 +31,7 @@ import (
 
 var restructure bool
 var plainYAML bool
+var omitIndentHelper bool
 
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{
@@ -63,7 +64,7 @@ Converts input document into YAML format while preserving the order of all keys.
 					fmt.Printf("---\n%s\n", string(output))
 
 				} else { // Run neat mode to create colorful YAML string
-					output, err := neat.ToYAMLString(document)
+					output, err := neat.NewOutputProcessor(!omitIndentHelper, true, &neat.DefaultColorSchema).ToString(document)
 					if err != nil {
 						exitWithError("Failed to neatly marshal object into YAML", err)
 					}
@@ -80,4 +81,5 @@ func init() {
 
 	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "Try to restructure YAML map keys in reasonable order")
 	yamlCmd.PersistentFlags().BoolVarP(&plainYAML, "plain", "p", false, "Output YAML in plain style without highlighting")
+	yamlCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "i", false, "Omit indent helper lines in highlighted output")
 }

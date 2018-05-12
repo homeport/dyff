@@ -63,7 +63,7 @@ func CreateHumanStyleReport(report Report, showBanner bool) string {
 		stats.WriteString(fmt.Sprintf("     and %s\n", HumanReadableLocationInformation(report.To)))
 		stats.WriteString("\n")
 		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(Plural(len(report.Diffs), "difference"), bunt.Bold)))
-		output.WriteString(CreateTableStyleString(" ", 0, banner, stats.String()))
+		output.WriteString(CreateTableStyleString(" ", 0, bunt.Style(banner, bunt.Bold), stats.String()))
 	}
 
 	// Loop over the diff and generate each report into the buffer

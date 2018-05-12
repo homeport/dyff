@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/HeavyWombat/dyff/pkg/neat"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -91,10 +91,5 @@ func ToYAMLString(content interface{}) (string, error) {
 }
 
 func yamlString(input interface{}) (string, error) {
-	output, err := yaml.Marshal(input)
-	if err != nil {
-		return "", errors.Wrap(err, fmt.Sprintf("Failed to marshal input object %#v", input))
-	}
-
-	return string(output), nil
+	return neat.NewOutputProcessor(false, true, nil).ToString(input)
 }
