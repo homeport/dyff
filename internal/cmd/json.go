@@ -29,11 +29,11 @@ import (
 
 // jsonCmd represents the json command
 var jsonCmd = &cobra.Command{
-	Use:   "json",
-	Short: "Converts input document into JSON format",
+	Use:   "json [flags] <file-location> ...",
+	Args:  cobra.MinimumNArgs(1),
+	Short: "Converts input documents into JSON format",
 	Long: `
 Converts input document into JSON format while preserving the order of all keys.
-
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {

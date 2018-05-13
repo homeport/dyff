@@ -38,12 +38,11 @@ var chrootTo string
 
 // betweenCmd represents the between command
 var betweenCmd = &cobra.Command{
-	Use:   "between",
-	Short: "Compares differences between documents",
+	Use:   "between [flags] <from> <to>",
+	Short: "Compare differences between input files from and to",
 	Long: `
-Compares differences between documents and displays the delta. Supported
-document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
-
+Compares differences between files and displays the delta. Supported input file
+types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 `,
 	Args:    cobra.ExactArgs(2),
 	Aliases: []string{"bw"},
@@ -107,16 +106,19 @@ document types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 func init() {
 	rootCmd.AddCommand(betweenCmd)
 
-	// TODO Add flag for filter on path
-	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "Specify the output style, e.g. 'human' (more to come ...)")
+	betweenCmd.Flags().SortFlags = false
+	betweenCmd.PersistentFlags().SortFlags = false
+
+	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "specify the output style, supported style: human")
 	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap 'from' and 'to' for comparison")
 
-	betweenCmd.PersistentFlags().BoolVarP(&dyff.NoTableStyle, "no-table-style", "t", false, "Disable the table output")
-	betweenCmd.PersistentFlags().BoolVarP(&dyff.DoNotInspectCerts, "no-cert-inspection", "c", false, "Disable certificate inspection (compare as raw text)")
-	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "Use Go-Patch style paths instead of Spruce Dot-Style")
+	betweenCmd.PersistentFlags().BoolVarP(&dyff.NoTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
+	betweenCmd.PersistentFlags().BoolVarP(&dyff.DoNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
+	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
 
-	betweenCmd.PersistentFlags().BoolVar(&translateListToDocuments, "chroot-list-to-documents", false, "usage chroot-list-to-documents")
-	betweenCmd.PersistentFlags().StringVar(&chroot, "chroot", "", "usage chroot")
-	betweenCmd.PersistentFlags().StringVar(&chrootFrom, "chroot-of-from", "", "usage chroot from")
-	betweenCmd.PersistentFlags().StringVar(&chrootTo, "chroot-of-to", "", "usage chroot ro")
+	betweenCmd.PersistentFlags().StringVar(&chroot, "chroot", "", "change the root level of the input file to another point in the document")
+	betweenCmd.PersistentFlags().StringVar(&chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
+	betweenCmd.PersistentFlags().StringVar(&chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
+	betweenCmd.PersistentFlags().BoolVar(&translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
+
 }
