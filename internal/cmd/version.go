@@ -26,11 +26,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// version string will be injected by automation
 const version = "(development)"
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:   "version",
+	Args:  cobra.MaximumNArgs(0),
 	Short: "Shows the version of this tool",
 	Long:  `Shows the version of this tool`,
 	Run: func(cmd *cobra.Command, args []string) {

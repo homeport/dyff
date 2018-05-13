@@ -37,11 +37,11 @@ var truecolormode string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "dyff",
-	Short: "A diff tool for YAMLs",
+	Use: "dyff",
 	Long: `
-A diff tool for YAMLs, and sometimes JSONs. It also comes with conversion
-capabilities to transform YAML to JSON, or JSON to YAML.
+δyƒƒ /ˈdʏf/ - a diff tool for YAML files, and sometimes JSON. Also, It
+can transform YAML to JSON, and vice versa. The order of keys in hashes
+is preserved during the conversion.
 `,
 }
 
@@ -56,13 +56,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initSettings)
 
-	// Here you will define your flags and configuration settings. Cobra supports
-	// persistent flags, which, if defined here, will be global for your
-	// application.
-	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "Specify color usage: on, off, or auto")
-	rootCmd.PersistentFlags().StringVar(&truecolormode, "truecolor", "auto", "Specify true color usage: on, off, or auto")
-	rootCmd.PersistentFlags().BoolVar(&dyff.DebugMode, "debug", false, "Disable colors in output")
-	rootCmd.PersistentFlags().IntVar(&dyff.FixedTerminalWidth, "fixed-terminal-width", -1, "Disables terminal width detection by using fixed provided value")
+	rootCmd.Flags().SortFlags = false
+	rootCmd.PersistentFlags().SortFlags = false
+
+	rootCmd.PersistentFlags().StringVarP(&colormode, "color", "c", "auto", "specify color usage: on, off, or auto")
+	rootCmd.PersistentFlags().StringVarP(&truecolormode, "truecolor", "t", "auto", "specify true color usage: on, off, or auto")
+	rootCmd.PersistentFlags().IntVarP(&dyff.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
 }
 
 func initSettings() {

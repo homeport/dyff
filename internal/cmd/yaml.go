@@ -37,10 +37,10 @@ var omitIndentHelper bool
 var yamlCmd = &cobra.Command{
 	Use:     "yaml [flags] <file-location> ...",
 	Aliases: []string{"yml"},
-	Short:   "Converts input document into YAML format",
+	Args:    cobra.MinimumNArgs(1),
+	Short:   "Converts input documents into YAML format",
 	Long: `
 Converts input document into YAML format while preserving the order of all keys.
-
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {
@@ -79,7 +79,10 @@ Converts input document into YAML format while preserving the order of all keys.
 func init() {
 	rootCmd.AddCommand(yamlCmd)
 
-	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "Try to restructure YAML map keys in reasonable order")
-	yamlCmd.PersistentFlags().BoolVarP(&plainYAML, "plain", "p", false, "Output YAML in plain style without highlighting")
-	yamlCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "i", false, "Omit indent helper lines in highlighted output")
+	yamlCmd.Flags().SortFlags = false
+	yamlCmd.PersistentFlags().SortFlags = false
+
+	yamlCmd.PersistentFlags().BoolVarP(&plainYAML, "plain", "p", false, "output YAML in plain style without any highlighting")
+	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "restructure YAML map keys in reasonable order")
+	yamlCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "i", false, "omit indent helper lines in highlighted output")
 }
