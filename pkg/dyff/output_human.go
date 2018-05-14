@@ -30,6 +30,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
+	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -133,12 +134,12 @@ func generateHumanDetailOutputAddition(detail Detail) (string, error) {
 		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 	}
 
-	yamlOutput, err := yamlString(RestructureObject(detail.To))
+	yamlOutput, err := yamlStringInGreenishColors(RestructureObject(detail.To))
 	if err != nil {
 		return "", err
 	}
 
-	writeTextBlocks(&output, 2, green(yamlOutput))
+	writeTextBlocks(&output, 2, yamlOutput)
 
 	return output.String(), nil
 }
@@ -154,12 +155,12 @@ func generateHumanDetailOutputRemoval(detail Detail) (string, error) {
 		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 	}
 
-	yamlOutput, err := yamlString(RestructureObject(detail.From))
+	yamlOutput, err := yamlStringInRedishColors(RestructureObject(detail.From))
 	if err != nil {
 		return "", err
 	}
 
-	writeTextBlocks(&output, 2, red(yamlOutput))
+	writeTextBlocks(&output, 2, yamlOutput)
 
 	return output.String(), nil
 }
@@ -413,7 +414,7 @@ func showWhitespaceCharacters(text string) string {
 	return strings.Replace(strings.Replace(text, "\n", bold("↵\n"), -1), " ", bold("·"), -1)
 }
 
-func createStringWithPrefix(prefix string, obj interface{}, color ...bunt.Color) string {
+func createStringWithPrefix(prefix string, obj interface{}, color ...colorful.Color) string {
 	var buf bytes.Buffer
 	var lines = strings.Split(fmt.Sprintf("%v", obj), "\n")
 	for i, line := range lines {

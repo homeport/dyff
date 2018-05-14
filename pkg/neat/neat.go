@@ -18,6 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/*
+Package neat provides a YAML Marshaller that supports colors.
+
+The `ToString` function returns neat looking YAML string output using text
+highlighting with emphasis, colors, and indent helper guide lines to create
+pleasing and easy to read YAML.
+*/
 package neat
 
 import (
@@ -27,14 +34,15 @@ import (
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
+	colorful "github.com/lucasb-eyer/go-colorful"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // DefaultColorSchema is a prepared usable color schema for the neat output
 // processor which is loosly based upon the colors used by Atom
-var DefaultColorSchema = map[string]bunt.Color{
+var DefaultColorSchema = map[string]colorful.Color{
 	"keyColor":           bunt.IndianRed,
-	"indentLineColor":    bunt.Color(0x00242424),
+	"indentLineColor":    {R: 0.14, G: 0.14, B: 0.14},
 	"scalarDefaultColor": bunt.PaleGreen,
 	"boolColor":          bunt.Moccasin,
 	"floatColor":         bunt.Orange,
@@ -49,7 +57,7 @@ var DefaultColorSchema = map[string]bunt.Color{
 type OutputProcessor struct {
 	data           *bytes.Buffer
 	out            *bufio.Writer
-	colorSchema    *map[string]bunt.Color
+	colorSchema    *map[string]colorful.Color
 	useIndentLines bool
 	boldKeys       bool
 }
@@ -63,7 +71,7 @@ func ToYAMLString(obj interface{}) (string, error) {
 
 // NewOutputProcessor creates a new output processor including the required
 // internals using the provided preferences
-func NewOutputProcessor(useIndentLines bool, boldKeys bool, colorSchema *map[string]bunt.Color) *OutputProcessor {
+func NewOutputProcessor(useIndentLines bool, boldKeys bool, colorSchema *map[string]colorful.Color) *OutputProcessor {
 	bytesBuffer := &bytes.Buffer{}
 	writer := bufio.NewWriter(bytesBuffer)
 
@@ -176,7 +184,8 @@ func (p *OutputProcessor) neatMapSlice(prefix string, skipIndentOnFirstLine bool
 func (p *OutputProcessor) neatSlice(prefix string, skipIndentOnFirstLine bool, list []interface{}) error {
 	for _, entry := range list {
 		p.out.WriteString(prefix)
-		p.out.WriteString(bunt.Style("- ", bunt.Bold))
+		p.out.WriteString(p.colorize("-", "dashColor"))
+		p.out.WriteString(" ")
 		if err := p.neat(prefix+p.prefixAdd(), true, entry); err != nil {
 			return err
 		}
@@ -188,7 +197,8 @@ func (p *OutputProcessor) neatSlice(prefix string, skipIndentOnFirstLine bool, l
 func (p *OutputProcessor) neatMapSliceSlice(prefix string, skipIndentOnFirstLine bool, list []yaml.MapSlice) error {
 	for _, entry := range list {
 		p.out.WriteString(prefix)
-		p.out.WriteString(bunt.Style("- ", bunt.Bold))
+		p.out.WriteString(p.colorize("-", "dashColor"))
+		p.out.WriteString(" ")
 		if err := p.neat(prefix+p.prefixAdd(), true, entry); err != nil {
 			return err
 		}

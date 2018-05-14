@@ -25,7 +25,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/neat"
+	colorful "github.com/lucasb-eyer/go-colorful"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -92,4 +94,34 @@ func ToYAMLString(content interface{}) (string, error) {
 
 func yamlString(input interface{}) (string, error) {
 	return neat.NewOutputProcessor(false, true, nil).ToString(input)
+}
+
+func yamlStringInRedishColors(input interface{}) (string, error) {
+	return neat.NewOutputProcessor(true, true, &map[string]colorful.Color{
+		"keyColor":           bunt.FireBrick,
+		"indentLineColor":    {R: 0.2, G: 0, B: 0},
+		"scalarDefaultColor": bunt.LightCoral,
+		"boolColor":          bunt.LightCoral,
+		"floatColor":         bunt.LightCoral,
+		"intColor":           bunt.LightCoral,
+		"multiLineTextColor": bunt.DarkSalmon,
+		"nullColor":          bunt.Salmon,
+		"emptyStructures":    bunt.LightSalmon,
+		"dashColor":          bunt.FireBrick,
+	}).ToString(input)
+}
+
+func yamlStringInGreenishColors(input interface{}) (string, error) {
+	return neat.NewOutputProcessor(true, true, &map[string]colorful.Color{
+		"keyColor":           bunt.Green,
+		"indentLineColor":    {R: 0, G: 0.2, B: 0},
+		"scalarDefaultColor": bunt.LimeGreen,
+		"boolColor":          bunt.LimeGreen,
+		"floatColor":         bunt.LimeGreen,
+		"intColor":           bunt.LimeGreen,
+		"multiLineTextColor": bunt.OliveDrab,
+		"nullColor":          bunt.Olive,
+		"emptyStructures":    bunt.DarkOliveGreen,
+		"dashColor":          bunt.Green,
+	}).ToString(input)
 }
