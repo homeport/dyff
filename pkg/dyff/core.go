@@ -63,6 +63,10 @@ var Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 // possibilities to find unique enough keys, which might no qualify as such.
 var NonStandardIdentifierGuessCountThreshold = 3
 
+// MinorChangeThreshold specifies how many percent of the text needs to be
+// changed so that it still qualifies as being a minor string change.
+var MinorChangeThreshold = 0.1
+
 // Constants to distinguish between the different kinds of differences
 const (
 	ADDITION     = '+'
@@ -742,12 +746,16 @@ func max(a, b int) int {
 
 func isMinorChange(from string, to string) bool {
 	levenshteinDistance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
+
+	// Special case: Consider it a minor change if only two runes/characters were
+	// changed, which results in a default distance of four, two removals and two
+	// additions each.
+	if levenshteinDistance <= 4 {
+		return true
+	}
+
 	referenceLength := min(len(from), len(to))
-
-	distanceVsLengthFactor := float64(levenshteinDistance) / float64(referenceLength)
-	threshold := 0.1
-
-	return distanceVsLengthFactor < threshold
+	return float64(levenshteinDistance)/float64(referenceLength) < MinorChangeThreshold
 }
 
 func isMultiLine(from string, to string) bool {

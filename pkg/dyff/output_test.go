@@ -33,12 +33,12 @@ import (
 var _ = Describe("Human readable report", func() {
 	Context("reporting differences", func() {
 		It("should show a nice string difference", func() {
-			content := singleDiff("/some/yaml/structure/string", MODIFICATION, "foobar", "Foobar")
+			content := singleDiff("/some/yaml/structure/string", MODIFICATION, "fOObar?", "Foobar!")
 			Expect(humanDiff(content)).To(BeEquivalentTo(`
 some.yaml.structure.string
   ± value change
-    - foobar
-    + Foobar
+    - fOObar?
+    + Foobar!
 
 `))
 		})
