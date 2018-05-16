@@ -81,21 +81,8 @@ type Report struct {
 	Diffs []Diff
 }
 
-// terminalWidth contains the terminal width as it was looked up at program start
-var terminalWidth = func() int {
-	if FixedTerminalWidth > 0 {
-		return FixedTerminalWidth
-	}
-
-	width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		logs.Warn("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
-		return defaultFallbackTerminalWidth
-	}
-
-	logs.Debug("Terminal width seems to be %d characters", width)
-	return width
-}()
+// terminalWidth contains the terminal width as it was looked up
+var terminalWidth = -1
 
 // bold returns the provided string in 'bold' format
 func bold(text string) string {
@@ -117,6 +104,31 @@ func red(text string) string {
 
 func yellow(text string) string {
 	return bunt.Colorize(text, bunt.ModificationYellow)
+}
+
+func getTerminalWidth() int {
+	// Immediately return known value if it was initialized already
+	if terminalWidth > 0 {
+		return terminalWidth
+	}
+
+	// Initialize internal terminal width setting with user preference
+	if FixedTerminalWidth > 0 {
+		terminalWidth = FixedTerminalWidth
+		return terminalWidth
+	}
+
+	// Initialize with values read from terminal
+	width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		logs.Warn("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
+		terminalWidth = defaultFallbackTerminalWidth
+		return terminalWidth
+	}
+
+	logs.Debug("Terminal width seems to be %d characters", width)
+	terminalWidth = width
+	return terminalWidth
 }
 
 // Plural returns a string with the number and noun in either singular or plural form.
