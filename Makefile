@@ -50,7 +50,7 @@ install: sanity-check
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --only-local
 
 build: sanity-check
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh
+	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --no-local
 
 test: sanity-check
 	@ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace

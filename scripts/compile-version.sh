@@ -25,15 +25,27 @@ set -euo pipefail
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="$(cd "$BASEDIR" && git describe --tags)"
 VERFILE="$BASEDIR/internal/cmd/version.go"
-SKIP_FULL_BUILD=0
 
-if [[ $# != 0 ]]; then
+SKIP_FULL_BUILD=0
+SKIP_LOCAL_BUILD=0
+
+while [[ $# -gt 0 ]]; do
   case "$1" in
     --only-local)
       SKIP_FULL_BUILD=1
       ;;
+
+    --no-local)
+      SKIP_LOCAL_BUILD=1
+      ;;
+
+    *)
+      echo "unknown argument $1"
+      exit 1
+      ;;
   esac
-fi
+  shift
+done
 
 on_exit() {
   if [[ -f "${VERFILE}.bak" ]]; then
@@ -49,10 +61,12 @@ cp -p "${VERFILE}" "${VERFILE}.bak"
 perl -pi -e "s/const version = \"\\(development\\)\"/const version = \"${VERSION}\"/g" "${VERFILE}"
 
 # Compile a local version into GOPATH bin if it exists
-if [[ ! -z ${GOPATH+x} ]]; then
-  if [[ -d "${GOPATH}/bin" ]]; then
-    echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for local machine to \\033[1m${GOPATH}/bin\\033[0m"
-    ( cd "${BASEDIR}/cmd/dyff/" && go install )
+if [[ ${SKIP_LOCAL_BUILD} == 0 ]]; then
+  if [[ ! -z ${GOPATH+x} ]]; then
+    if [[ -d "${GOPATH}/bin" ]]; then
+      echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for local machine to \\033[1m${GOPATH}/bin\\033[0m"
+      ( cd "${BASEDIR}/cmd/dyff/" && go install )
+    fi
   fi
 fi
 
