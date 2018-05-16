@@ -78,7 +78,7 @@ func ToJSONString(obj interface{}) (string, error) {
 			return "", err
 		}
 
-		return fmt.Sprintf("%s", string(bytes)), nil
+		return string(bytes), nil
 	}
 }
 

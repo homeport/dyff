@@ -209,8 +209,8 @@ func generateHumanDetailOutputOrderchange(detail Detail) (string, error) {
 
 		} else {
 			output.WriteString(CreateTableStyleString(" ", 2,
-				red(fmt.Sprintf("%s", strings.Join(from, "\n"))),
-				green(fmt.Sprintf("%s", strings.Join(to, "\n")))))
+				red(strings.Join(from, "\n")),
+				green(strings.Join(to, "\n"))))
 		}
 
 	case []interface{}:

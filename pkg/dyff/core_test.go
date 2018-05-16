@@ -176,9 +176,7 @@ list:
 		})
 
 		It("should return the value referenced by the path", func() {
-			var example yaml.MapSlice
-
-			example = yml("../../assets/examples/from.yml")
+			example := yml("../../assets/examples/from.yml")
 			Expect(example).ToNot(BeNil())
 
 			Expect(grab(example, "/yaml/map/before")).To(BeEquivalentTo("after"))
