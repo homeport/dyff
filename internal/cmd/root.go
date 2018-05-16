@@ -26,6 +26,7 @@ import (
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
+	"github.com/HeavyWombat/dyff/pkg/logs"
 	"github.com/spf13/cobra"
 )
 
@@ -34,6 +35,9 @@ var colormode string
 
 // truecolormode is used by the CLI flag processing routines to store the user preference for true color usage
 var truecolormode string
+
+// debugMode set to true will set-up the logging package to use the debug logger
+var debugMode bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -62,10 +66,19 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&colormode, "color", "c", "auto", "specify color usage: on, off, or auto")
 	rootCmd.PersistentFlags().StringVarP(&truecolormode, "truecolor", "t", "auto", "specify true color usage: on, off, or auto")
 	rootCmd.PersistentFlags().IntVarP(&dyff.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
+	rootCmd.PersistentFlags().BoolVarP(&debugMode, "debug", "d", false, "enable debug mode")
 }
 
 func initSettings() {
 	var err error
+
+	if debugMode {
+		logs.LoggingLevel = logs.DEBUG
+
+		logs.Debug("Program runs in a user terminal: %t", bunt.IsTerminal())
+		logs.Debug("Terminal has limited feature set: %t", bunt.IsDumbTerminal())
+		logs.Debug("Terminal supports 24 bit colors: %t", bunt.IsTrueColor())
+	}
 
 	bunt.ColorSetting, err = bunt.ParseSetting(colormode)
 	if err != nil {

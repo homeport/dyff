@@ -30,8 +30,10 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"time"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
+	"github.com/HeavyWombat/dyff/pkg/logs"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -121,6 +123,8 @@ func LoadFiles(locationA string, locationB string) (InputFile, InputFile, error)
 
 // LoadFile processes the provided input location to load a YAML (or JSON, or raw text)
 func LoadFile(location string) (InputFile, error) {
+	start := time.Now()
+
 	var (
 		documents []interface{}
 		data      []byte
@@ -135,6 +139,7 @@ func LoadFile(location string) (InputFile, error) {
 		return InputFile{}, errors.Wrap(err, fmt.Sprintf("Unable to parse data from %s", location))
 	}
 
+	logs.Debug("Loaded %s (%d byte) with %s in %.2f sec", location, len(data), Plural(len(documents), "document"), time.Since(start).Seconds())
 	return InputFile{Location: location, Documents: documents}, nil
 }
 

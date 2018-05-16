@@ -22,13 +22,13 @@ package dyff
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
+	"github.com/HeavyWombat/dyff/pkg/logs"
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
@@ -36,26 +36,10 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// DebugMode is the global switch to enable debug output
-var DebugMode = false
-
-// NoColor is the gobal switch to decide whether strings should be colored in the output
-var NoColor = false
+const defaultFallbackTerminalWidth = 80
 
 // FixedTerminalWidth disables terminal width detection and reset it with a fixed given value
 var FixedTerminalWidth = -1
-
-// Debug log output
-var Debug = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
-
-// Info log output
-var Info = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-
-// Warning log output
-var Warning = log.New(os.Stdout, "WARNING: ", log.Ldate|log.Ltime|log.Lshortfile)
-
-// Error log output
-var Error = log.New(os.Stderr, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 // NonStandardIdentifierGuessCountThreshold specifies how many list entries are
 // needed for the guess-the-identifier function to actually consider the key
@@ -97,18 +81,21 @@ type Report struct {
 	Diffs []Diff
 }
 
-func getTerminalWidth() int {
+// terminalWidth contains the terminal width as it was looked up at program start
+var terminalWidth = func() int {
 	if FixedTerminalWidth > 0 {
 		return FixedTerminalWidth
 	}
 
-	termWidth, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+	width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
-		return 80
+		logs.Warn("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
+		return defaultFallbackTerminalWidth
 	}
 
-	return termWidth
-}
+	logs.Debug("Terminal width seems to be %d characters", width)
+	return width
+}()
 
 // bold returns the provided string in 'bold' format
 func bold(text string) string {

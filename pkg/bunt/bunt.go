@@ -46,6 +46,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/HeavyWombat/dyff/pkg/logs"
+
 	colorful "github.com/lucasb-eyer/go-colorful"
 	ciede2000 "github.com/mattn/go-ciede2000"
 	isatty "github.com/mattn/go-isatty"
@@ -111,6 +113,21 @@ type Segment struct {
 
 // https://regex101.com/segmentRegexp/ulipXZ/3
 var segmentRegexp = regexp.MustCompile(fmt.Sprintf(`(?m)(.*?)((%s\[(\d+(;\d+)*)m)(.+?)(%s\[0m))`, seq, seq))
+
+// IsDumbTerminal returns whether the current terminal has a limited feature set
+func IsDumbTerminal() bool {
+	return isDumbTerminal
+}
+
+// IsTerminal returns whether this program runs in a terminal (and not in a pipe)
+func IsTerminal() bool {
+	return isTerminal
+}
+
+// IsTrueColor returns whether the current terminal supports 24 bit colors
+func IsTrueColor() bool {
+	return isTrueColor
+}
 
 // UseColors return whether colors are used or not based on the configured color setting
 func UseColors() bool {
@@ -302,7 +319,8 @@ func wrapTextInSeq(text string, attributes ...Attribute) string {
 
 func wrapLineInSeq(line string, attributes ...Attribute) string {
 	cstring, err := BreakUpStringIntoColorSegments(line)
-	if err != nil { // TODO Debug, or trace the error
+	if err != nil {
+		logs.Warn("Text does have incorrect escape sequence", err)
 		return line
 	}
 

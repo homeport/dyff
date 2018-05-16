@@ -29,6 +29,8 @@ import (
 	"testing"
 
 	. "github.com/HeavyWombat/dyff/pkg/bunt"
+	. "github.com/HeavyWombat/dyff/pkg/logs"
+
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
 	yaml "gopkg.in/yaml.v2"
 
@@ -43,9 +45,7 @@ func TestCore(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	ColorSetting = OFF
-
-	NoColor = false
-	DebugMode = false
+	LoggingLevel = NONE
 	FixedTerminalWidth = 80
 })
 
