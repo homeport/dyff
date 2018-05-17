@@ -22,6 +22,7 @@ package cmd
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -33,6 +34,7 @@ var style string
 var swap bool
 var noTableStyle bool
 var doNotInspectCerts bool
+var exitWithCount bool
 var translateListToDocuments bool
 var chroot string
 var chrootFrom string
@@ -88,11 +90,17 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			exitWithError("Failed to compare input files", err)
 		}
 
+		// If configured, make sure `dyff` exists with an exit status
+		if exitWithCount {
+			defer os.Exit(int(math.Min(
+				float64(len(report.Diffs)),
+				255.0)))
+		}
+
 		// TODO Add style Go-Patch
 		// TODO Add style Spruce
 		// TODO Add style JSON report
 		// TODO Add style YAML report
-		// TODO Add style one-line report
 
 		var reportWriter dyff.ReportWriter
 		switch strings.ToLower(style) {
@@ -102,6 +110,11 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 				DoNotInspectCerts: doNotInspectCerts,
 				NoTableStyle:      noTableStyle,
 				ShowBanner:        true,
+			}
+
+		case "brief", "short", "summary":
+			reportWriter = &dyff.BriefReport{
+				Report: report,
 			}
 
 		default:
@@ -119,17 +132,21 @@ func init() {
 	betweenCmd.Flags().SortFlags = false
 	betweenCmd.PersistentFlags().SortFlags = false
 
+	// Main output preferences
 	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "specify the output style, supported style: human")
-	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap 'from' and 'to' for comparison")
+	betweenCmd.PersistentFlags().BoolVarP(&exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
 
+	// Human/BOSH output related flags
 	betweenCmd.PersistentFlags().BoolVarP(&noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
 	betweenCmd.PersistentFlags().BoolVarP(&doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
 
+	// General `dyff` package related preferences
 	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
 
+	// Input documents modification flags
+	betweenCmd.PersistentFlags().BoolVar(&swap, "swap", false, "Swap 'from' and 'to' for comparison")
 	betweenCmd.PersistentFlags().StringVar(&chroot, "chroot", "", "change the root level of the input file to another point in the document")
 	betweenCmd.PersistentFlags().StringVar(&chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
 	betweenCmd.PersistentFlags().StringVar(&chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
 	betweenCmd.PersistentFlags().BoolVar(&translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
-
 }

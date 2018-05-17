@@ -82,7 +82,7 @@ foo: bar
 
 	Context("creating proper texts", func() {
 		It("should return human readable plurals", func() {
-			Expect(Plural(0, "foobar")).To(BeEquivalentTo("zero foobars"))
+			Expect(Plural(0, "foobar")).To(BeEquivalentTo("no foobars"))
 			Expect(Plural(1, "foobar")).To(BeEquivalentTo("one foobar"))
 			Expect(Plural(2, "foobar")).To(BeEquivalentTo("two foobars"))
 			Expect(Plural(3, "foobar")).To(BeEquivalentTo("three foobars"))

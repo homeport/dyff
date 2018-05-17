@@ -106,7 +106,7 @@ func getTerminalWidth() int {
 // arguments are provided, the second text is the irregular plural. If more than two
 // are provided, then the additional ones are simply ignored.
 func Plural(amount int, text ...string) string {
-	words := [...]string{"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"}
+	words := [...]string{"no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"}
 
 	var number string
 	if amount < len(words) {
