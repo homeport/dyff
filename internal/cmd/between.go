@@ -22,6 +22,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/dyff"
@@ -30,7 +31,8 @@ import (
 
 var style string
 var swap bool
-
+var noTableStyle bool
+var doNotInspectCerts bool
 var translateListToDocuments bool
 var chroot string
 var chrootFrom string
@@ -92,14 +94,22 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		// TODO Add style YAML report
 		// TODO Add style one-line report
 
+		var reportWriter dyff.ReportWriter
 		switch strings.ToLower(style) {
 		case "human", "bosh":
-			fmt.Print(dyff.CreateHumanStyleReport(report, true))
+			reportWriter = &dyff.HumanReport{
+				Report:            report,
+				DoNotInspectCerts: doNotInspectCerts,
+				NoTableStyle:      noTableStyle,
+				ShowBanner:        true,
+			}
 
 		default:
 			fmt.Printf("Unknown output style %s\n", style)
 			cmd.Usage()
 		}
+
+		reportWriter.WriteReport(os.Stdout)
 	},
 }
 
@@ -112,8 +122,9 @@ func init() {
 	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "specify the output style, supported style: human")
 	betweenCmd.PersistentFlags().BoolVarP(&swap, "swap", "s", false, "Swap 'from' and 'to' for comparison")
 
-	betweenCmd.PersistentFlags().BoolVarP(&dyff.NoTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
-	betweenCmd.PersistentFlags().BoolVarP(&dyff.DoNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
+	betweenCmd.PersistentFlags().BoolVarP(&noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
+	betweenCmd.PersistentFlags().BoolVarP(&doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
+
 	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
 
 	betweenCmd.PersistentFlags().StringVar(&chroot, "chroot", "", "change the root level of the input file to another point in the document")

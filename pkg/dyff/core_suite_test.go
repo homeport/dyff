@@ -21,6 +21,7 @@
 package dyff_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"reflect"
@@ -163,7 +164,19 @@ func path(path string) Path {
 }
 
 func humanDiff(diff Diff) string {
-	return CreateHumanStyleReport(Report{Diffs: []Diff{diff}}, false)
+	reporter := HumanReport{
+		Report:            Report{Diffs: []Diff{diff}},
+		DoNotInspectCerts: false,
+		NoTableStyle:      false,
+		ShowBanner:        false,
+	}
+
+	var buf bytes.Buffer
+	if err := reporter.WriteReport(&buf); err != nil {
+		Fail(err.Error())
+	}
+
+	return buf.String()
 }
 
 func singleDiff(p string, change rune, from, to interface{}) Diff {

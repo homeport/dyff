@@ -51,36 +51,6 @@ var NonStandardIdentifierGuessCountThreshold = 3
 // changed so that it still qualifies as being a minor string change.
 var MinorChangeThreshold = 0.1
 
-// Constants to distinguish between the different kinds of differences
-const (
-	ADDITION     = '+'
-	REMOVAL      = '-'
-	MODIFICATION = '±'
-	ORDERCHANGE  = '⇆'
-	ILLEGAL      = '✕'
-	ATTENTION    = '⚠'
-)
-
-// Detail encapsulate the actual details of a change, mainly the kind of difference and the values.
-type Detail struct {
-	Kind rune
-	From interface{}
-	To   interface{}
-}
-
-// Diff encapsulates everything noteworthy about a difference
-type Diff struct {
-	Path    Path
-	Details []Detail
-}
-
-// Report encapsulates the actual end-result of the comparison: The input data and the list of differences.
-type Report struct {
-	From  InputFile
-	To    InputFile
-	Diffs []Diff
-}
-
 // terminalWidth contains the terminal width as it was looked up
 var terminalWidth = -1
 

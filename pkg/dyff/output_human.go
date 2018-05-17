@@ -21,10 +21,12 @@
 package dyff
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 	"unicode/utf8"
@@ -35,12 +37,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// NoTableStyle disables output in table style
-var NoTableStyle = false
-
-// DoNotInspectCerts disables certificates inspection (compare text only)
-var DoNotInspectCerts = false
-
 const banner = `     _        __  __
    _| |_   _ / _|/ _|
  / _' | | | | |_| |_
@@ -49,43 +45,61 @@ const banner = `     _        __  __
         |___/
 `
 
-// CreateHumanStyleReport creates a string with human readable report of the differences. For this to work, dyff relies on modified versions of the YAML lib and the coloring lib we use here. The YAML lib adds ANSI styles to make keys bold. But this means the coloring lib needs to be able to apply styles on already styled text without making it look ugly.
-func CreateHumanStyleReport(report Report, showBanner bool) string {
-	var output bytes.Buffer
+// stringWriter is the interface that wraps the WriteString method.
+type stringWriter interface {
+	WriteString(s string) (int, error)
+}
+
+// HumanReport is a reporter with human readable output in mind
+type HumanReport struct {
+	NoTableStyle      bool
+	DoNotInspectCerts bool
+	ShowBanner        bool
+
+	Report
+}
+
+// WriteReport writes a human readable report to the provided writer
+func (report *HumanReport) WriteReport(out io.Writer) error {
+	writer := bufio.NewWriter(out)
+	defer writer.Flush()
 
 	// Only show the document index if there is more than one document to show
 	showDocumentIdx := len(report.From.Documents) > 1
 
 	// Show banner if enabled
-	if showBanner {
+	if report.ShowBanner {
 		var stats bytes.Buffer
 		stats.WriteString("\n")
 		stats.WriteString(fmt.Sprintf(" between %s\n", HumanReadableLocationInformation(report.From)))
 		stats.WriteString(fmt.Sprintf("     and %s\n", HumanReadableLocationInformation(report.To)))
 		stats.WriteString("\n")
 		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(Plural(len(report.Diffs), "difference"), bunt.Bold)))
-		output.WriteString(CreateTableStyleString(" ", 0, bunt.Style(banner, bunt.Bold), stats.String()))
+
+		writer.WriteString(CreateTableStyleString(" ", 0, bunt.Style(banner, bunt.Bold), stats.String()))
 	}
 
 	// Loop over the diff and generate each report into the buffer
 	for _, diff := range report.Diffs {
-		generateHumanDiffOutput(&output, diff, showDocumentIdx)
+		if err := report.generateHumanDiffOutput(writer, diff, showDocumentIdx); err != nil {
+			return err
+		}
 	}
 
 	// Finish with one last newline so that we do not end next to the prompt
-	output.WriteString("\n")
-	return output.String()
+	writer.WriteString("\n")
+	return nil
 }
 
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
-func generateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bool) error {
+func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, showDocumentIdx bool) error {
 	output.WriteString("\n")
 	output.WriteString(diff.Path.ToString(showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
 	for i, detail := range diff.Details {
-		generatedOutput, err := generateHumanDetailOutput(detail)
+		generatedOutput, err := report.generateHumanDetailOutput(detail)
 		if err != nil {
 			return err
 		}
@@ -100,30 +114,30 @@ func generateHumanDiffOutput(output *bytes.Buffer, diff Diff, showDocumentIdx bo
 		indent = 0
 	}
 
-	writeTextBlocks(output, indent, blocks...)
+	report.writeTextBlocks(output, indent, blocks...)
 	return nil
 }
 
 // generateHumanDetailOutput only serves as a dispatcher to call the correct sub function for the respective type of change
-func generateHumanDetailOutput(detail Detail) (string, error) {
+func (report *HumanReport) generateHumanDetailOutput(detail Detail) (string, error) {
 	switch detail.Kind {
 	case ADDITION:
-		return generateHumanDetailOutputAddition(detail)
+		return report.generateHumanDetailOutputAddition(detail)
 
 	case REMOVAL:
-		return generateHumanDetailOutputRemoval(detail)
+		return report.generateHumanDetailOutputRemoval(detail)
 
 	case MODIFICATION:
-		return generateHumanDetailOutputModification(detail)
+		return report.generateHumanDetailOutputModification(detail)
 
 	case ORDERCHANGE:
-		return generateHumanDetailOutputOrderchange(detail)
+		return report.generateHumanDetailOutputOrderchange(detail)
 	}
 
 	return "", fmt.Errorf("Unsupported detail type %c", detail.Kind)
 }
 
-func generateHumanDetailOutputAddition(detail Detail) (string, error) {
+func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (string, error) {
 	var output bytes.Buffer
 
 	switch detail.To.(type) {
@@ -139,12 +153,12 @@ func generateHumanDetailOutputAddition(detail Detail) (string, error) {
 		return "", err
 	}
 
-	writeTextBlocks(&output, 2, yamlOutput)
+	report.writeTextBlocks(&output, 2, yamlOutput)
 
 	return output.String(), nil
 }
 
-func generateHumanDetailOutputRemoval(detail Detail) (string, error) {
+func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (string, error) {
 	var output bytes.Buffer
 
 	switch detail.From.(type) {
@@ -160,19 +174,19 @@ func generateHumanDetailOutputRemoval(detail Detail) (string, error) {
 		return "", err
 	}
 
-	writeTextBlocks(&output, 2, yamlOutput)
+	report.writeTextBlocks(&output, 2, yamlOutput)
 
 	return output.String(), nil
 }
 
-func generateHumanDetailOutputModification(detail Detail) (string, error) {
+func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) (string, error) {
 	var output bytes.Buffer
 
 	fromType := reflect.TypeOf(detail.From).Kind()
 	toType := reflect.TypeOf(detail.To).Kind()
 	if fromType == reflect.String && toType == reflect.String {
 		// delegate to special string output
-		writeStringDiff(&output, detail.From.(string), detail.To.(string))
+		report.writeStringDiff(&output, detail.From.(string), detail.To.(string))
 
 	} else {
 		// default output
@@ -190,7 +204,7 @@ func generateHumanDetailOutputModification(detail Detail) (string, error) {
 	return output.String(), nil
 }
 
-func generateHumanDetailOutputOrderchange(detail Detail) (string, error) {
+func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (string, error) {
 	var output bytes.Buffer
 
 	output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
@@ -230,16 +244,16 @@ func generateHumanDetailOutputOrderchange(detail Detail) (string, error) {
 	return output.String(), nil
 }
 
-func writeStringDiff(output *bytes.Buffer, from string, to string) {
+func (report *HumanReport) writeStringDiff(output stringWriter, from string, to string) {
 	// TODO Simplify code by only writing the output code once and set-up the respective strings in each if block.
 
-	if fromCertText, toCertText, err := LoadX509Certs(from, to); err == nil {
+	if fromCertText, toCertText, err := report.LoadX509Certs(from, to); err == nil {
 		output.WriteString(yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
-		output.WriteString(highlightByLine(fromCertText, toCertText))
+		output.WriteString(report.highlightByLine(fromCertText, toCertText))
 
 	} else if isWhitespaceOnlyChange(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
-		writeTextBlocks(output, 0,
+		report.writeTextBlocks(output, 0,
 			createStringWithPrefix("  - ", showWhitespaceCharacters(from), bunt.RemovalRed),
 			createStringWithPrefix("  + ", showWhitespaceCharacters(to), bunt.AdditionGreen))
 
@@ -251,7 +265,7 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 
 	} else if isMultiLine(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-		writeTextBlocks(output, 0,
+		report.writeTextBlocks(output, 0,
 			createStringWithPrefix("  - ", from, bunt.RemovalRed),
 			createStringWithPrefix("  + ", to, bunt.AdditionGreen))
 
@@ -262,7 +276,7 @@ func writeStringDiff(output *bytes.Buffer, from string, to string) {
 	}
 }
 
-func highlightByLine(from, to string) string {
+func (report *HumanReport) highlightByLine(from, to string) string {
 	fromLines := strings.Split(from, "\n")
 	toLines := strings.Split(to, "\n")
 
@@ -280,12 +294,12 @@ func highlightByLine(from, to string) string {
 			}
 		}
 
-		writeTextBlocks(&buf, 0,
+		report.writeTextBlocks(&buf, 0,
 			createStringWithPrefix(bunt.Colorize("  - ", bunt.RemovalRed), strings.Join(fromLines, "\n")),
 			createStringWithPrefix(bunt.Colorize("  + ", bunt.AdditionGreen), strings.Join(toLines, "\n")))
 
 	} else {
-		writeTextBlocks(&buf, 0,
+		report.writeTextBlocks(&buf, 0,
 			createStringWithPrefix("  - ", from, bunt.RemovalRed),
 			createStringWithPrefix("  + ", to, bunt.AdditionGreen))
 	}
@@ -330,9 +344,9 @@ func highlightAdditions(diffs []diffmatchpatch.Diff) string {
 }
 
 // LoadX509Certs tries to load the provided strings as a cert each and returns a textual representation of the certs, or an error if the strings are not X509 certs
-func LoadX509Certs(from, to string) (string, string, error) {
+func (report *HumanReport) LoadX509Certs(from, to string) (string, string, error) {
 	// Back out quickly if cert inspection is disabled
-	if DoNotInspectCerts {
+	if report.DoNotInspectCerts {
 		return "", "", fmt.Errorf("Certificate inspection is disabled")
 	}
 
@@ -455,7 +469,7 @@ func stringArrayLen(list []string) int {
 }
 
 // writeTextBlocks writes strings into the provided buffer in either a table style (each string a column) or list style (each string a row)
-func writeTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
+func (report *HumanReport) writeTextBlocks(buf stringWriter, indent int, blocks ...string) {
 	const separator = "   "
 
 	// Calcuclate the theoretical maximum line length if blocks would be rendered next to each other
@@ -472,7 +486,7 @@ func writeTextBlocks(buf *bytes.Buffer, indent int, blocks ...string) {
 	}
 
 	// In case the line with blocks next to each other would surpass the terminal width, fall back to the no-table-style
-	if NoTableStyle || theoreticalMaxLineLength > getTerminalWidth() {
+	if report.NoTableStyle || theoreticalMaxLineLength > getTerminalWidth() {
 		for _, block := range blocks {
 			lines := strings.Split(block, "\n")
 			for _, line := range lines {

@@ -33,18 +33,6 @@ import (
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
 
-// PathElement describes a part of a path, meaning its name. In this case the "Key" string is empty. Named list entries such as "name: one" use both "Key" and "Name" to properly specify the path element.
-type PathElement struct {
-	Key  string
-	Name string
-}
-
-// Path describes a position inside a YAML (or JSON) structure by providing a name to each hierarchy level (tree structure).
-type Path struct {
-	DocumentIdx  int
-	PathElements []PathElement
-}
-
 // NewPath creates a new Path using the provided serialized path string. In case of Spruce paths, we need the actual tree as a reference to create the correct path.
 func NewPath(path string, obj interface{}) (Path, error) {
 	// Go-path path in case it starts with a slash
