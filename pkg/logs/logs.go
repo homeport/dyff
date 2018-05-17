@@ -42,13 +42,13 @@ const (
 var LoggingLevel = WARN
 
 // ErrorLogger is the error logger definition
-var ErrorLogger = log.New(os.Stderr, "Error: ", log.Ldate|log.Ltime|log.Lshortfile)
+var ErrorLogger = log.New(os.Stderr, "Error: ", 0)
 
 // WarningLogger is the warning logger definition
-var WarningLogger = log.New(os.Stdout, "Warning: ", log.Ldate|log.Ltime|log.Lshortfile)
+var WarningLogger = log.New(os.Stdout, "Warning: ", 0)
 
 // DebugLogger is the debugging logger definition
-var DebugLogger = log.New(os.Stdout, "Debug: ", log.Ldate|log.Ltime|log.Lshortfile)
+var DebugLogger = log.New(os.Stdout, "Debug: ", 0)
 
 // Debug prints a debug statement if logging level matches
 func Debug(format string, a ...interface{}) {

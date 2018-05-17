@@ -74,10 +74,6 @@ func initSettings() {
 
 	if debugMode {
 		logs.LoggingLevel = logs.DEBUG
-
-		logs.Debug("Program runs in a user terminal: %t", bunt.IsTerminal())
-		logs.Debug("Terminal has limited feature set: %t", bunt.IsDumbTerminal())
-		logs.Debug("Terminal supports 24 bit colors: %t", bunt.IsTrueColor())
 	}
 
 	bunt.ColorSetting, err = bunt.ParseSetting(colormode)
