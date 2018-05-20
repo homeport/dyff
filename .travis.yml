@@ -5,7 +5,6 @@ go:
 - 1.10.x
 
 install:
-- go get -v -t ./...
 - go get honnef.co/go/tools/cmd/unused
 - go get github.com/client9/misspell/cmd/misspell
 - go get github.com/fzipp/gocyclo
