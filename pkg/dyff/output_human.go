@@ -258,7 +258,7 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 			createStringWithPrefix("  + ", showWhitespaceCharacters(to), bunt.AdditionGreen))
 
 	} else if isMinorChange(from, to) {
-		output.WriteString(yellow(fmt.Sprintf("%c minor value change\n", MODIFICATION)))
+		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		diffs := diffmatchpatch.New().DiffMain(from, to, false)
 		output.WriteString(highlightRemovals(diffs))
 		output.WriteString(highlightAdditions(diffs))
