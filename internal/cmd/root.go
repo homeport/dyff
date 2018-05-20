@@ -26,7 +26,6 @@ import (
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
-	"github.com/HeavyWombat/dyff/pkg/logs"
 	"github.com/spf13/cobra"
 )
 
@@ -73,7 +72,7 @@ func initSettings() {
 	var err error
 
 	if debugMode {
-		logs.LoggingLevel = logs.DEBUG
+		dyff.SetLoggingLevel(dyff.DEBUG)
 	}
 
 	bunt.ColorSetting, err = bunt.ParseSetting(colormode)

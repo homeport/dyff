@@ -18,10 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/*
-Package logs is a convenience package to cover simply logging functionality
-*/
-package logs
+package dyff
 
 import (
 	"log"
@@ -34,39 +31,53 @@ type LogLevel int
 // List of possile logging levels
 const (
 	NONE LogLevel = iota
+	ERROR
 	WARN
 	DEBUG
 )
 
 // LoggingLevel stores the currently configured logging level
-var LoggingLevel = WARN
+var LoggingLevel = ERROR
 
 // ErrorLogger is the error logger definition
-var ErrorLogger = log.New(os.Stderr, "Error: ", 0)
+var ErrorLogger = log.New(os.Stderr, "Error: ", log.Lshortfile)
 
 // WarningLogger is the warning logger definition
-var WarningLogger = log.New(os.Stdout, "Warning: ", 0)
+var WarningLogger = log.New(nilWriterInstance, "Warning: ", log.Lshortfile)
 
 // DebugLogger is the debugging logger definition
-var DebugLogger = log.New(os.Stdout, "Debug: ", 0)
+var DebugLogger = log.New(nilWriterInstance, "Debug: ", log.Lshortfile)
 
-// Debug prints a debug statement if logging level matches
-func Debug(format string, a ...interface{}) {
-	switch LoggingLevel {
+// SetLoggingLevel will initialise the logging set-up according to the provided input
+func SetLoggingLevel(loggingLevel LogLevel) {
+	switch loggingLevel {
+	case NONE:
+		ErrorLogger.SetOutput(nilWriterInstance)
+		WarningLogger.SetOutput(nilWriterInstance)
+		DebugLogger.SetOutput(nilWriterInstance)
+
+	case ERROR:
+		ErrorLogger.SetOutput(os.Stderr)
+		WarningLogger.SetOutput(nilWriterInstance)
+		DebugLogger.SetOutput(nilWriterInstance)
+
+	case WARN:
+		ErrorLogger.SetOutput(os.Stderr)
+		WarningLogger.SetOutput(os.Stdout)
+		DebugLogger.SetOutput(nilWriterInstance)
+
 	case DEBUG:
-		DebugLogger.Printf(format, a...)
+		ErrorLogger.SetOutput(os.Stderr)
+		WarningLogger.SetOutput(os.Stdout)
+		DebugLogger.SetOutput(os.Stdout)
 	}
 }
 
-// Warn prints a warning statement if logging level matches
-func Warn(format string, a ...interface{}) {
-	switch LoggingLevel {
-	case WARN, DEBUG:
-		WarningLogger.Printf(format, a...)
-	}
+type nilWriter struct {
 }
 
-// Error prints a non-fatal error statement
-func Error(format string, a ...interface{}) {
-	ErrorLogger.Printf(format, a...)
+func (n *nilWriter) Write(p []byte) (int, error) {
+	return 0, nil
 }
+
+var nilWriterInstance = &nilWriter{}

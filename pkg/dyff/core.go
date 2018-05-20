@@ -28,7 +28,7 @@ import (
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/HeavyWombat/dyff/pkg/logs"
+
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
@@ -91,12 +91,12 @@ func getTerminalWidth() int {
 	// Initialize with values read from terminal
 	width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
 	if err != nil {
-		logs.Warn("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
+		WarningLogger.Printf("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
 		terminalWidth = defaultFallbackTerminalWidth
 		return terminalWidth
 	}
 
-	logs.Debug("Terminal width seems to be %d characters", width)
+	DebugLogger.Printf("Terminal width seems to be %d characters", width)
 	terminalWidth = width
 	return terminalWidth
 }

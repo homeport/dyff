@@ -33,7 +33,6 @@ import (
 	"time"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/HeavyWombat/dyff/pkg/logs"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -139,7 +138,7 @@ func LoadFile(location string) (InputFile, error) {
 		return InputFile{}, errors.Wrap(err, fmt.Sprintf("Unable to parse data from %s", location))
 	}
 
-	logs.Debug("Loaded %s (%d byte) with %s in %.2f sec", location, len(data), Plural(len(documents), "document"), time.Since(start).Seconds())
+	DebugLogger.Printf("Loaded %s (%d byte) with %s in %.2f sec", location, len(data), Plural(len(documents), "document"), time.Since(start).Seconds())
 	return InputFile{Location: location, Documents: documents}, nil
 }
 

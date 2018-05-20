@@ -39,14 +39,13 @@ import (
 	"bytes"
 	"fmt"
 	"image/color"
+	"log"
 	"math"
 	"os"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/HeavyWombat/dyff/pkg/logs"
 
 	colorful "github.com/lucasb-eyer/go-colorful"
 	ciede2000 "github.com/mattn/go-ciede2000"
@@ -112,7 +111,6 @@ func IsDumbTerminal() bool {
 	if isDumbTerminal == nil {
 		isTermDumbCheck := os.Getenv("TERM") == "dumb"
 		isDumbTerminal = &isTermDumbCheck
-		logs.Debug("Terminal has limited feature set: %t", *isDumbTerminal)
 	}
 
 	return *isDumbTerminal
@@ -123,7 +121,6 @@ func IsTerminal() bool {
 	if isTerminal == nil {
 		isTerminalCheck := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
 		isTerminal = &isTerminalCheck
-		logs.Debug("Program runs in a user terminal: %t", *isTerminal)
 	}
 
 	return *isTerminal
@@ -139,7 +136,6 @@ func IsTrueColor() bool {
 		}
 
 		isTrueColor = &isTrueColorCheck
-		logs.Debug("Terminal supports 24 bit colors: %t", *isTrueColor)
 	}
 
 	return *isTrueColor
@@ -336,7 +332,7 @@ func wrapTextInSeq(text string, attributes ...Attribute) string {
 func wrapLineInSeq(line string, attributes ...Attribute) string {
 	cstring, err := BreakUpStringIntoColorSegments(line)
 	if err != nil {
-		logs.Warn("Text does have incorrect escape sequence", err)
+		log.New(os.Stderr, "Error: ", log.LstdFlags).Printf("Text does have incorrect escape sequence: %s", err.Error())
 		return line
 	}
 

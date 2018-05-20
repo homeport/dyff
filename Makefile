@@ -53,4 +53,4 @@ build: sanity-check
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --no-local
 
 test: sanity-check
-	@ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace
+	@ginkgo -r --nodes 4 --randomizeAllSpecs --randomizeSuites --race --trace
