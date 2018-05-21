@@ -29,10 +29,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-var restructure bool
-var plainYAML bool
-var omitIndentHelper bool
-
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{
 	Use:     "yaml [flags] <file-location> ...",
@@ -55,7 +51,7 @@ Converts input document into YAML format while preserving the order of all keys.
 					document = dyff.RestructureObject(document)
 				}
 
-				if plainYAML { // Run Go YAML library marshalling if plain mode is enabled
+				if plainMode { // Run Go YAML library marshalling if plain mode is enabled
 					output, err := yaml.Marshal(document)
 					if err != nil {
 						exitWithError("Failed to marshal object into YAML", err)
@@ -64,7 +60,7 @@ Converts input document into YAML format while preserving the order of all keys.
 					fmt.Printf("---\n%s\n", string(output))
 
 				} else { // Run neat mode to create colorful YAML string
-					output, err := neat.NewOutputProcessor(!omitIndentHelper, true, &neat.DefaultColorSchema).ToString(document)
+					output, err := neat.NewOutputProcessor(!omitIndentHelper, true, &neat.DefaultColorSchema).ToYAML(document)
 					if err != nil {
 						exitWithError("Failed to neatly marshal object into YAML", err)
 					}
@@ -82,7 +78,7 @@ func init() {
 	yamlCmd.Flags().SortFlags = false
 	yamlCmd.PersistentFlags().SortFlags = false
 
-	yamlCmd.PersistentFlags().BoolVarP(&plainYAML, "plain", "p", false, "output YAML in plain style without any highlighting")
-	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "restructure YAML map keys in reasonable order")
+	yamlCmd.PersistentFlags().BoolVarP(&plainMode, "plain", "p", false, "output in plain style without any highlighting")
+	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "restructure map keys in reasonable order")
 	yamlCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "i", false, "omit indent helper lines in highlighted output")
 }

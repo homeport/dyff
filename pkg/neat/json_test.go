@@ -18,16 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package bunt_test
+package neat_test
 
 import (
-	"testing"
+	. "github.com/HeavyWombat/dyff/pkg/neat"
+	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func TestBunt(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "bunt suite")
-}
+var _ = Describe("YAML to JSON tests", func() {
+	Context("Processing valid YAML input", func() {
+		It("should convert YAML to JSON", func() {
+			var content yaml.MapSlice
+			if err := yaml.Unmarshal([]byte(`---
+name: foobar
+list:
+- A
+- B
+- C
+`), &content); err != nil {
+				Fail(err.Error())
+			}
+
+			result, err := ToJSONString(content)
+			Expect(err).To(BeNil())
+
+			Expect(result).To(Equal(`{"name": "foobar", "list": ["A", "B", "C"]}`))
+		})
+	})
+})

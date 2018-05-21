@@ -32,6 +32,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
+	"github.com/HeavyWombat/dyff/pkg/neat"
 	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	yaml "gopkg.in/yaml.v2"
@@ -418,6 +419,10 @@ func certificateSummaryAsYAML(cert *x509.Certificate) yaml.MapSlice {
 	result = append(result, yaml.MapItem{Key: "Serial Number", Value: fmt.Sprintf("%d (%#x)", cert.SerialNumber, cert.SerialNumber)})
 
 	return result
+}
+
+func yamlString(input interface{}) (string, error) {
+	return neat.NewOutputProcessor(false, true, nil).ToYAML(input)
 }
 
 func isWhitespaceOnlyChange(from string, to string) bool {

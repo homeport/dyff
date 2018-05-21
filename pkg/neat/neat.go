@@ -21,7 +21,7 @@
 /*
 Package neat provides a YAML Marshaller that supports colors.
 
-The `ToString` function returns neat looking YAML string output using text
+The `ToYAML` function returns neat looking YAML string output using text
 highlighting with emphasis, colors, and indent helper guide lines to create
 pleasing and easy to read YAML.
 */
@@ -30,7 +30,6 @@ package neat
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
@@ -62,18 +61,16 @@ type OutputProcessor struct {
 	boldKeys       bool
 }
 
-// ToYAMLString marshals the provided object into YAML with text decorations
-// and is basically just a convenience function to create the output processor
-// and call its ToString function.
-func ToYAMLString(obj interface{}) (string, error) {
-	return NewOutputProcessor(true, true, &DefaultColorSchema).ToString(obj)
-}
-
 // NewOutputProcessor creates a new output processor including the required
 // internals using the provided preferences
 func NewOutputProcessor(useIndentLines bool, boldKeys bool, colorSchema *map[string]colorful.Color) *OutputProcessor {
 	bytesBuffer := &bytes.Buffer{}
 	writer := bufio.NewWriter(bytesBuffer)
+
+	// Only use indent lines in color mode
+	if !bunt.UseColors() {
+		useIndentLines = false
+	}
 
 	return &OutputProcessor{
 		data:           bytesBuffer,
@@ -82,17 +79,6 @@ func NewOutputProcessor(useIndentLines bool, boldKeys bool, colorSchema *map[str
 		boldKeys:       boldKeys,
 		colorSchema:    colorSchema,
 	}
-}
-
-// ToString processes the provided input object and tries to neatly output it as
-// human readable YAML honoring the preferences provided to the output processor
-func (p *OutputProcessor) ToString(obj interface{}) (string, error) {
-	if err := p.neat("", false, obj); err != nil {
-		return "", err
-	}
-
-	p.out.Flush()
-	return p.data.String(), nil
 }
 
 func (p *OutputProcessor) colorize(text string, colorName string) string {
@@ -105,123 +91,9 @@ func (p *OutputProcessor) colorize(text string, colorName string) string {
 	return text
 }
 
-func (p *OutputProcessor) neat(prefix string, skipIndentOnFirstLine bool, obj interface{}) error {
-	switch obj.(type) {
-	case yaml.MapSlice:
-		if err := p.neatMapSlice(prefix, skipIndentOnFirstLine, obj.(yaml.MapSlice)); err != nil {
-			return err
-		}
-
-	case []interface{}:
-		if err := p.neatSlice(prefix, skipIndentOnFirstLine, obj.([]interface{})); err != nil {
-			return err
-		}
-
-	case []yaml.MapSlice:
-		if err := p.neatMapSliceSlice(prefix, skipIndentOnFirstLine, obj.([]yaml.MapSlice)); err != nil {
-			return err
-		}
-
-	default:
-		if err := p.neatScalar(prefix, skipIndentOnFirstLine, obj); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (p *OutputProcessor) neatMapSlice(prefix string, skipIndentOnFirstLine bool, mapslice yaml.MapSlice) error {
-	for i, mapitem := range mapslice {
-		if !skipIndentOnFirstLine || i > 0 {
-			p.out.WriteString(prefix)
-		}
-
-		keyString := fmt.Sprintf("%v:", mapitem.Key)
-		if p.boldKeys {
-			keyString = bunt.Style(keyString, bunt.Bold)
-		}
-
-		p.out.WriteString(p.colorize(keyString, "keyColor"))
-
-		switch mapitem.Value.(type) {
-		case yaml.MapSlice:
-			if len(mapitem.Value.(yaml.MapSlice)) == 0 {
-				p.out.WriteString(" ")
-				p.out.WriteString(p.colorize("{}", "emptyStructures"))
-				p.out.WriteString("\n")
-
-			} else {
-				p.out.WriteString("\n")
-				if err := p.neatMapSlice(prefix+p.prefixAdd(), false, mapitem.Value.(yaml.MapSlice)); err != nil {
-					return err
-				}
-			}
-
-		case []interface{}:
-			if len(mapitem.Value.([]interface{})) == 0 {
-				p.out.WriteString(" ")
-				p.out.WriteString(p.colorize("[]", "emptyStructures"))
-				p.out.WriteString("\n")
-			} else {
-				p.out.WriteString("\n")
-				if err := p.neatSlice(prefix, false, mapitem.Value.([]interface{})); err != nil {
-					return err
-				}
-			}
-
-		default:
-			p.out.WriteString(" ")
-			if err := p.neatScalar(prefix, false, mapitem.Value); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (p *OutputProcessor) neatSlice(prefix string, skipIndentOnFirstLine bool, list []interface{}) error {
-	for _, entry := range list {
-		p.out.WriteString(prefix)
-		p.out.WriteString(p.colorize("-", "dashColor"))
-		p.out.WriteString(" ")
-		if err := p.neat(prefix+p.prefixAdd(), true, entry); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (p *OutputProcessor) neatMapSliceSlice(prefix string, skipIndentOnFirstLine bool, list []yaml.MapSlice) error {
-	for _, entry := range list {
-		p.out.WriteString(prefix)
-		p.out.WriteString(p.colorize("-", "dashColor"))
-		p.out.WriteString(" ")
-		if err := p.neat(prefix+p.prefixAdd(), true, entry); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (p *OutputProcessor) neatScalar(prefix string, skipIndentOnFirstLine bool, obj interface{}) error {
-	// Process nil values immediately and return afterwards
-	if obj == nil {
-		p.out.WriteString(p.colorize("null", "nullColor"))
-		p.out.WriteString("\n")
-		return nil
-	}
-
-	// Any other value: Run through Go YAML marshaller and colorize afterwards
-	data, err := yaml.Marshal(obj)
-	if err != nil {
-		return err
-	}
-
+func (p *OutputProcessor) determineColorByType(obj interface{}) string {
 	color := "scalarDefaultColor"
+
 	switch obj.(type) {
 	case bool:
 		color = "boolColor"
@@ -231,25 +103,33 @@ func (p *OutputProcessor) neatScalar(prefix string, skipIndentOnFirstLine bool, 
 
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
 		color = "intColor"
-	}
 
-	// Cast byte slice to string, remove trailing newlines, split into lines
-	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-
-	if len(lines) > 1 {
-		color = "multiLineTextColor"
-	}
-
-	for i, line := range lines {
-		if i > 0 {
-			p.out.WriteString(prefix)
+	case string:
+		if len(strings.Split(strings.TrimSpace(obj.(string)), "\n")) > 1 {
+			color = "multiLineTextColor"
 		}
-
-		p.out.WriteString(p.colorize(line, color))
-		p.out.WriteString("\n")
 	}
 
-	return nil
+	return color
+}
+
+func (p *OutputProcessor) isScalar(obj interface{}) bool {
+	switch obj.(type) {
+	case yaml.MapSlice, []interface{}, []yaml.MapSlice:
+		return false
+
+	default:
+		return true
+	}
+}
+
+func (p *OutputProcessor) simplify(list []yaml.MapSlice) []interface{} {
+	result := make([]interface{}, len(list))
+	for idx, value := range list {
+		result[idx] = value
+	}
+
+	return result
 }
 
 func (p *OutputProcessor) prefixAdd() string {

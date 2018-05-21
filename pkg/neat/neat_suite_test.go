@@ -18,47 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package dyff_test
+package neat_test
 
 import (
+	"testing"
+
+	. "github.com/HeavyWombat/dyff/pkg/bunt"
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("JSON to YAML tests", func() {
-	Context("Processing valid JSON input", func() {
-		It("should convert JSON to YAML", func() {
-			content := yml(`{ "name": "foobar", "list": [A, B, C] }`)
+func TestCore(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "neat suite")
+}
 
-			result, err := ToYAMLString(content)
-			Expect(err).To(BeNil())
-
-			Expect(result).To(Equal(`---
-name: foobar
-list:
-- A
-- B
-- C
-
-`))
-		})
-
-		It("should preserve the order inside the structure", func() {
-			content := yml(`{ "list": [C, B, A], "name": "foobar" }`)
-
-			result, err := ToYAMLString(content)
-			Expect(err).To(BeNil())
-
-			Expect(result).To(Equal(`---
-list:
-- C
-- B
-- A
-name: foobar
-
-`))
-		})
-	})
+var _ = BeforeSuite(func() {
+	ColorSetting = OFF
+	LoggingLevel = NONE
+	FixedTerminalWidth = 80
 })

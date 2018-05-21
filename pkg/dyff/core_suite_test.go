@@ -30,6 +30,7 @@ import (
 	"testing"
 
 	. "github.com/HeavyWombat/dyff/pkg/bunt"
+	. "github.com/HeavyWombat/dyff/pkg/neat"
 
 	. "github.com/HeavyWombat/dyff/pkg/dyff"
 	yaml "gopkg.in/yaml.v2"
@@ -40,7 +41,7 @@ import (
 
 func TestCore(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Core Suite")
+	RunSpecs(t, "dyff suite")
 }
 
 var _ = BeforeSuite(func() {

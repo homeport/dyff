@@ -18,30 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package dyff_test
+package neat_test
 
 import (
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	. "github.com/HeavyWombat/dyff/pkg/neat"
+	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("YAML to JSON tests", func() {
-	Context("Processing valid YAML input", func() {
-		It("should convert YAML to JSON", func() {
-			content := yml(`---
-name: foobar
+var _ = Describe("JSON to YAML tests", func() {
+	Context("Processing valid JSON input", func() {
+		It("should convert JSON to YAML", func() {
+			var content yaml.MapSlice
+			if err := yaml.Unmarshal([]byte(`{ "name": "foobar", "list": [A, B, C] }`), &content); err != nil {
+				Fail(err.Error())
+			}
+
+			result, err := ToYAMLString(content)
+			Expect(err).To(BeNil())
+
+			Expect(result).To(BeEquivalentTo(`name: foobar
 list:
 - A
 - B
 - C
-`)
+`))
+		})
 
-			result, err := ToJSONString(content)
+		It("should preserve the order inside the structure", func() {
+			var content yaml.MapSlice
+			err := yaml.Unmarshal([]byte(`{ "list": [C, B, A], "name": "foobar" }`), &content)
+			if err != nil {
+				Fail(err.Error())
+			}
+
+			result, err := ToYAMLString(content)
 			Expect(err).To(BeNil())
 
-			Expect(result).To(Equal(`{"name": "foobar", "list": ["A", "B", "C"]}`))
+			Expect(result).To(Equal(`list:
+- C
+- B
+- A
+name: foobar
+`))
 		})
 	})
 })

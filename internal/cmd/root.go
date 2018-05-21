@@ -38,6 +38,15 @@ var truecolormode string
 // debugMode set to true will set-up the logging package to use the debug logger
 var debugMode bool
 
+// plainMode is used by YAML and JSON output to define whether highlighting should be disabled
+var plainMode bool
+
+// restructure is used by YAML and JSON output to define whether map key orders are supposed to be reorganized
+var restructure bool
+
+// omitIndentHelper is used by YAML and JSON output to define whether indent vertical helper guide lines should be displayed or not
+var omitIndentHelper bool
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use: "dyff",
