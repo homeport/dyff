@@ -23,7 +23,7 @@
   branch = "master"
   name = "github.com/lucasb-eyer/go-colorful"
   packages = ["."]
-  revision = "231272389856c976b7500c4fffcc52ddf06ff4eb"
+  revision = "fa0f842f26263fb2ace6d6118309c8481e029fc1"
 
 [[projects]]
   branch = "master"
@@ -131,7 +131,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "2491c5de3490fced2f6cff376127c667efeed857"
+  revision = "8e0cdda24ed423affc8f35c241e5e9b16180338e"
 
 [[projects]]
   branch = "master"
