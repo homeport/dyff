@@ -35,41 +35,53 @@ import (
 )
 
 var _ = Describe("Input test cases", func() {
-	var server *httptest.Server
+	Context("Input data from local sources", func() {
+		It("should load multiple JSON documents from one stream", func() {
+			doc0, doc1 := `{ "key": "value" }`, `[ { "foo": "bar" } ]`
 
-	BeforeEach(func() {
-		r := NewRouter()
-		r.HandleFunc("/v1/assets/{directory}/{filename}", func(w http.ResponseWriter, r *http.Request) {
-			vars := Vars(r)
-			directory := vars["directory"]
-			filename := vars["filename"]
-
-			location := "../../assets/" + directory + "/" + filename
-			if _, err := os.Stat(location); os.IsNotExist(err) {
-				w.WriteHeader(404)
-				fmt.Fprintf(w, "File not found: %s/%s", directory, filename)
-				return
-			}
-
-			data, err := ioutil.ReadFile(location)
-			if err != nil {
-				Fail(err.Error())
-			}
-
-			w.WriteHeader(200)
-			w.Write(data)
+			documents, err := LoadDocuments([]byte(doc0 + "\n" + doc1))
+			Expect(err).To(BeNil())
+			Expect(len(documents)).To(BeEquivalentTo(2))
+			Expect(documents[0]).To(BeEquivalentTo(yml(doc0)))
+			Expect(documents[1]).To(BeEquivalentTo(list(doc1)))
 		})
-
-		server = httptest.NewServer(r)
-	})
-
-	AfterEach(func() {
-		if server != nil {
-			server.Close()
-		}
 	})
 
 	Context("Input data from remote locations", func() {
+		var server *httptest.Server
+
+		BeforeEach(func() {
+			r := NewRouter()
+			r.HandleFunc("/v1/assets/{directory}/{filename}", func(w http.ResponseWriter, r *http.Request) {
+				vars := Vars(r)
+				directory := vars["directory"]
+				filename := vars["filename"]
+
+				location := "../../assets/" + directory + "/" + filename
+				if _, err := os.Stat(location); os.IsNotExist(err) {
+					w.WriteHeader(404)
+					fmt.Fprintf(w, "File not found: %s/%s", directory, filename)
+					return
+				}
+
+				data, err := ioutil.ReadFile(location)
+				if err != nil {
+					Fail(err.Error())
+				}
+
+				w.WriteHeader(200)
+				w.Write(data)
+			})
+
+			server = httptest.NewServer(r)
+		})
+
+		AfterEach(func() {
+			if server != nil {
+				server.Close()
+			}
+		})
+
 		It("should load a YAML via a HTTP request", func() {
 			inputfile, err := LoadFile(server.URL + "/v1/assets/examples/from.yml")
 			Expect(err).To(BeNil())

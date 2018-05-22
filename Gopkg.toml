@@ -71,6 +71,10 @@
 
 [[constraint]]
   branch = "master"
+  name = "github.com/virtuald/go-ordered-json"
+
+[[constraint]]
+  branch = "master"
   name = "golang.org/x/crypto"
 
 [[constraint]]

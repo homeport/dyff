@@ -98,7 +98,7 @@ func list(input string) []interface{} {
 }
 
 func singleDoc(input string) interface{} {
-	docs, err := LoadDocuments([]byte(input))
+	docs, err := LoadYAMLDocuments([]byte(input))
 	if err != nil {
 		Fail(fmt.Sprintf("Failed to parse as YAML:\n%s\n\n%v", input, err))
 	}
@@ -108,6 +108,15 @@ func singleDoc(input string) interface{} {
 	}
 
 	return docs[0]
+}
+
+func multiDoc(input string) []interface{} {
+	documents, err := LoadYAMLDocuments([]byte(input))
+	if err != nil {
+		Fail(err.Error())
+	}
+
+	return documents
 }
 
 func file(input string) InputFile {
@@ -216,15 +225,6 @@ func compare(from interface{}, to interface{}) ([]Diff, error) {
 	}
 
 	return report.Diffs, nil
-}
-
-func loadTestDocuments(input string) []interface{} {
-	documents, err := LoadDocuments([]byte(input))
-	if err != nil {
-		Fail(err.Error())
-	}
-
-	return documents
 }
 
 func grab(obj interface{}, path string) interface{} {

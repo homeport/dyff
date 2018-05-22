@@ -119,6 +119,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/virtuald/go-ordered-json"
+  packages = ["."]
+  revision = "b18e6e673d74b304ff0f935a436dde5707ee1e57"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
@@ -131,7 +137,13 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "8e0cdda24ed423affc8f35c241e5e9b16180338e"
+  revision = "9ef9f5bb98a1fdc41f8cf6c250a4404b4085e389"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sync"
+  packages = ["syncmap"]
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
 
 [[projects]]
   branch = "master"
@@ -140,7 +152,7 @@
     "unix",
     "windows"
   ]
-  revision = "7c87d13f8e835d2fb3a70a2912c811ed0c1d241b"
+  revision = "88eb85aaee56831ad49eaf7aa80d73de9814cde2"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -175,6 +187,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "afef03aef086789469f7cce2c906fbf82903c862e2ab111087f9ec24ad8dd36b"
+  inputs-digest = "486fc09fbec8216447624abc50f2dac5cc1958990366915e3ce71f27538f6cd7"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -677,13 +677,13 @@ listY: [ Yo, Yo, Yo ]
 
 		Context("change root for comparison", func() {
 			It("should change the root of an input file", func() {
-				from := InputFile{Location: "/ginkgo/compare/test/from", Documents: loadTestDocuments(`---
+				from := InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc(`---
 a: foo
 ---
 b: bar
 `)}
 
-				to := InputFile{Location: "/ginkgo/compare/test/to", Documents: loadTestDocuments(`{
+				to := InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc(`{
 "items": [
   {"a": "Foo"},
   {"b": "Bar"}
