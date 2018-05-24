@@ -38,6 +38,14 @@ import (
 
 const defaultFallbackTerminalWidth = 80
 
+// Internal string constants for type names and type decisions
+const (
+	typeMap         = "map"
+	typeSimpleList  = "list"
+	typeComplexList = "complex-list"
+	typeString      = "string"
+)
+
 // FixedTerminalWidth disables terminal width detection and reset it with a fixed given value
 var FixedTerminalWidth = -1
 
@@ -656,7 +664,7 @@ func listNamesOfNamedList(list []interface{}, identifier string) ([]string, erro
 			result[i] = value.(string)
 
 		default:
-			return nil, fmt.Errorf("unable to list names of a names list, because list entry #%d is not a YAML map but %s", i, typeToName(entry))
+			return nil, fmt.Errorf("unable to list names of a names list, because list entry #%d is not a YAML map but %s", i, getType(entry))
 		}
 	}
 
@@ -774,7 +782,7 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 	for _, element := range path.PathElements {
 		if element.Key != "" { // List
 			if !isList(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), pointerPath.ToGoPatchStyle(false))
+				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeSimpleList, getType(pointer), pointerPath.ToGoPatchStyle(false))
 			}
 
 			entry, ok := getEntryFromNamedList(pointer.([]interface{}), element.Key, element.Name)
@@ -786,19 +794,19 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 
 		} else if id, err := strconv.Atoi(element.Name); err == nil { // List (entry referenced by its index)
 			if !isList(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a list but found type %s at %s", typeToName(pointer), pointerPath.ToGoPatchStyle(false))
+				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeSimpleList, getType(pointer), pointerPath.ToGoPatchStyle(false))
 			}
 
 			list := pointer.([]interface{})
 			if id < 0 || id >= len(list) {
-				return nil, fmt.Errorf("failed to traverse tree, provided list index %d is not in range: 0..%d", id, len(list)-1)
+				return nil, fmt.Errorf("failed to traverse tree, provided %s index %d is not in range: 0..%d", typeSimpleList, id, len(list)-1)
 			}
 
 			pointer = list[id]
 
 		} else { // Map
 			if !isMapSlice(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a YAML map but found type %s at %s", typeToName(pointer), pointerPath.ToGoPatchStyle(false))
+				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeMap, getType(pointer), pointerPath.ToGoPatchStyle(false))
 			}
 
 			entry, err := getValueByKey(pointer.(yaml.MapSlice), element.Name)
@@ -849,15 +857,25 @@ func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool
 	return nil
 }
 
-func typeToName(obj interface{}) string {
-	switch obj.(type) {
+func getType(value interface{}) string {
+	switch value.(type) {
 	case yaml.MapSlice:
-		return "YAML map"
+		return typeMap
 
-	case []yaml.MapSlice, []interface{}:
-		return "YAML list"
+	case []interface{}:
+		if isComplexSlice(value.([]interface{})) {
+			return typeComplexList
+		}
+
+		return typeSimpleList
+
+	case []yaml.MapSlice:
+		return typeComplexList
+
+	case string:
+		return typeString
 
 	default:
-		return reflect.TypeOf(obj).Kind().String()
+		return reflect.TypeOf(value).Kind().String()
 	}
 }

@@ -30,7 +30,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -40,14 +39,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	ordered "github.com/virtuald/go-ordered-json"
-)
-
-// Internal string constants for type names and type decisions
-const (
-	typeMap         = "map"
-	typeSimpleList  = "slice"
-	typeComplexList = "complex-slice"
-	typeString      = "string"
 )
 
 // PreserveKeyOrderInJSON specifies whether a special library is used to decode
@@ -374,18 +365,6 @@ func mapSlicify(obj interface{}) interface{} {
 	default:
 		return obj
 	}
-}
-
-func getType(value interface{}) string {
-	valueType := reflect.TypeOf(value).Kind()
-	switch valueType {
-	case reflect.Slice:
-		if isComplexSlice(value.([]interface{})) {
-			return typeComplexList
-		}
-	}
-
-	return valueType.String()
 }
 
 func getBytesFromLocation(location string) ([]byte, error) {
