@@ -28,6 +28,11 @@ import (
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 )
 
+const (
+	oneline = "%s detected between %s and %s\n"
+	twoline = "%s detected between %s\nand %s\n"
+)
+
 // BriefReport is a reporter that only prints a summary
 type BriefReport struct {
 	Report
@@ -38,10 +43,23 @@ func (report *BriefReport) WriteReport(out io.Writer) error {
 	writer := bufio.NewWriter(out)
 	defer writer.Flush()
 
-	writer.WriteString(fmt.Sprintf("%s detected between %s and %s\n",
-		bunt.BoldText(Plural(len(report.Diffs), "change")),
-		HumanReadableLocationInformation(report.From),
-		HumanReadableLocationInformation(report.To),
+	noOfChanges := bunt.BoldText(Plural(len(report.Diffs), "change"))
+	niceFrom := HumanReadableLocationInformation(report.From)
+	niceTo := HumanReadableLocationInformation(report.To)
+
+	var template string
+	switch {
+	case len(oneline)-6+plainTextLength(noOfChanges)+plainTextLength(niceFrom)+plainTextLength(niceTo) < getTerminalWidth():
+		template = oneline
+
+	default:
+		template = twoline
+	}
+
+	writer.WriteString(fmt.Sprintf(template,
+		noOfChanges,
+		niceFrom,
+		niceTo,
 	))
 
 	// Finish with one last newline so that we do not end next to the prompt

@@ -826,11 +826,16 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 
 // ChangeRoot changes the root of an input file to a position inside its document based on the given path. Input files with more than one document are not supported, since they could have multiple elements with that path.
 func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool) error {
-	if len(inputFile.Documents) != 1 {
+	multipleDocuments := len(inputFile.Documents) != 1
+
+	if multipleDocuments {
 		return fmt.Errorf("change root for an input file is only possible if there is only one document, but %s contains %s",
 			inputFile.Location,
 			Plural(len(inputFile.Documents), "document"))
 	}
+
+	// For reference reasons, keep the original root level
+	originalRoot := inputFile.Documents[0]
 
 	// Find the object at the given path
 	obj, err := Grab(inputFile.Documents[0], path)
@@ -848,8 +853,8 @@ func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool
 	}
 
 	// Parse path string and create nicely formatted output path
-	if resolvedPath, err := NewPath(path, obj); err == nil {
-		path = resolvedPath.String()
+	if resolvedPath, err := NewPath(path, originalRoot); err == nil {
+		path = resolvedPath.ToString(multipleDocuments)
 	}
 
 	inputFile.Note = fmt.Sprintf("YAML root was changed to %s", path)
