@@ -21,6 +21,7 @@
 package dyff
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 )
@@ -43,28 +44,28 @@ var LoggingLevel = ERROR
 var ErrorLogger = log.New(os.Stderr, "Error: ", log.Lshortfile)
 
 // WarningLogger is the warning logger definition
-var WarningLogger = log.New(nilWriterInstance, "Warning: ", log.Lshortfile)
+var WarningLogger = log.New(ioutil.Discard, "Warning: ", log.Lshortfile)
 
 // DebugLogger is the debugging logger definition
-var DebugLogger = log.New(nilWriterInstance, "Debug: ", log.Lshortfile)
+var DebugLogger = log.New(ioutil.Discard, "Debug: ", log.Lshortfile)
 
 // SetLoggingLevel will initialise the logging set-up according to the provided input
 func SetLoggingLevel(loggingLevel LogLevel) {
 	switch loggingLevel {
 	case NONE:
-		ErrorLogger.SetOutput(nilWriterInstance)
-		WarningLogger.SetOutput(nilWriterInstance)
-		DebugLogger.SetOutput(nilWriterInstance)
+		ErrorLogger.SetOutput(ioutil.Discard)
+		WarningLogger.SetOutput(ioutil.Discard)
+		DebugLogger.SetOutput(ioutil.Discard)
 
 	case ERROR:
 		ErrorLogger.SetOutput(os.Stderr)
-		WarningLogger.SetOutput(nilWriterInstance)
-		DebugLogger.SetOutput(nilWriterInstance)
+		WarningLogger.SetOutput(ioutil.Discard)
+		DebugLogger.SetOutput(ioutil.Discard)
 
 	case WARN:
 		ErrorLogger.SetOutput(os.Stderr)
 		WarningLogger.SetOutput(os.Stdout)
-		DebugLogger.SetOutput(nilWriterInstance)
+		DebugLogger.SetOutput(ioutil.Discard)
 
 	case DEBUG:
 		ErrorLogger.SetOutput(os.Stderr)
@@ -72,12 +73,3 @@ func SetLoggingLevel(loggingLevel LogLevel) {
 		DebugLogger.SetOutput(os.Stdout)
 	}
 }
-
-type nilWriter struct {
-}
-
-func (n *nilWriter) Write(p []byte) (int, error) {
-	return 0, nil
-}
-
-var nilWriterInstance = &nilWriter{}
