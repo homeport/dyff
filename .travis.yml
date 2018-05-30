@@ -5,7 +5,7 @@ go:
 - 1.10.x
 
 install:
-- go get honnef.co/go/tools/cmd/unused
+- go get honnef.co/go/tools/cmd/megacheck
 - go get github.com/client9/misspell/cmd/misspell
 - go get github.com/fzipp/gocyclo
 - go get golang.org/x/lint/golint

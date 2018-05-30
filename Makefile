@@ -26,7 +26,7 @@ clean:
 	@go clean -i -r -cache
 	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
 
-sanity-check: unused misspell lint fmt vet gocyclo
+sanity-check: megacheck misspell lint fmt vet gocyclo
 
 vet:
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-vet.sh
@@ -40,8 +40,8 @@ lint:
 gocyclo:
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-cyclo.sh
 
-unused:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/unused.sh
+megacheck:
+	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/megacheck.sh
 
 misspell:
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/misspell.sh
