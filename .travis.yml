@@ -6,12 +6,12 @@ go:
 
 install:
 - go get honnef.co/go/tools/cmd/megacheck
-- go get github.com/client9/misspell/cmd/misspell
-- go get github.com/fzipp/gocyclo
-- go get golang.org/x/lint/golint
-- go get golang.org/x/tools/cmd/cover
-- go get github.com/onsi/ginkgo/ginkgo
-- go get github.com/onsi/gomega/...
+         github.com/client9/misspell/cmd/misspell
+         github.com/fzipp/gocyclo
+         golang.org/x/lint/golint
+         golang.org/x/tools/cmd/cover
+         github.com/onsi/ginkgo/ginkgo
+         github.com/onsi/gomega/...
 - export PATH=$PATH:$HOME/gopath/bin
 
 before_deploy:
