@@ -20,10 +20,10 @@
   version = "v1.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/lucasb-eyer/go-colorful"
   packages = ["."]
-  revision = "fa0f842f26263fb2ace6d6118309c8481e029fc1"
+  revision = "345fbb3dbcdb252d9985ee899a84963c0fa24c82"
+  version = "v1.0"
 
 [[projects]]
   branch = "master"
@@ -127,7 +127,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
-  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
+  revision = "027cca12c2d63e3d62b670d901e8a2c95854feec"
 
 [[projects]]
   branch = "master"
@@ -137,7 +137,7 @@
     "html/atom",
     "html/charset"
   ]
-  revision = "9ef9f5bb98a1fdc41f8cf6c250a4404b4085e389"
+  revision = "db08ff08e8622530d9ed3a0e8ac279f6d4c02196"
 
 [[projects]]
   branch = "master"
@@ -152,7 +152,7 @@
     "unix",
     "windows"
   ]
-  revision = "88eb85aaee56831ad49eaf7aa80d73de9814cde2"
+  revision = "6c888cc515d3ed83fc103cf1d84468aad274b0a7"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -187,6 +187,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "486fc09fbec8216447624abc50f2dac5cc1958990366915e3ce71f27538f6cd7"
+  inputs-digest = "b9b427ce1178d0fee06891945b83d76e9221b5b9d77185d6f72ba1e69c59f14e"
   solver-name = "gps-cdcl"
   solver-version = 1
