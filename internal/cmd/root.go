@@ -21,12 +21,18 @@
 package cmd
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/HeavyWombat/dyff/pkg/bunt"
 	"github.com/HeavyWombat/dyff/pkg/dyff"
+	"github.com/HeavyWombat/dyff/pkg/neat"
 	"github.com/spf13/cobra"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // colormode is used by CLI parser to store user input for further internal processing into the proper value
@@ -46,6 +52,18 @@ var restructure bool
 
 // omitIndentHelper is used by YAML and JSON output to define whether indent vertical helper guide lines should be displayed or not
 var omitIndentHelper bool
+
+// inplace is used by YAML and JSON output to define whether the output should overwrite the input file
+var inplace bool
+
+// OutputWriter encapsulates the required fields to define the look and feel of
+// the output
+type OutputWriter struct {
+	PlainMode        bool
+	Restructure      bool
+	OmitIndentHelper bool
+	OutputStyle      string
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -106,4 +124,76 @@ func exitWithError(text string, err error) {
 	}
 
 	os.Exit(1)
+}
+
+// WriteToStdout is a convenience function to write the content of the documents
+// stored in the provided input file to the standard output
+func (w *OutputWriter) WriteToStdout(filename string) {
+	if err := w.write(os.Stdout, filename); err != nil {
+		exitWithError("Failed to write output", err)
+	}
+}
+
+// WriteInplace writes the content of the documents stored in the provided input
+// file to the file itself overwriting the conent in place.
+func (w *OutputWriter) WriteInplace(filename string) {
+	var buf bytes.Buffer
+	bufWriter := bufio.NewWriter(&buf)
+
+	// Force plain mode to make sure there are no ANSI sequences
+	w.PlainMode = true
+	if err := w.write(bufWriter, filename); err != nil {
+		exitWithError("Failed to write output", err)
+	}
+
+	// Write the buffered output to the provided input file (override in place)
+	bufWriter.Flush()
+	if err := ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+		exitWithError("Failed to overwrite file in place", err)
+	}
+}
+
+func (w *OutputWriter) write(writer io.Writer, filename string) error {
+	inputFile, err := dyff.LoadFile(filename)
+	if err != nil {
+		exitWithError("Failed to load input file", err)
+	}
+
+	for _, document := range inputFile.Documents {
+		if w.Restructure {
+			document = dyff.RestructureObject(document)
+		}
+
+		switch {
+		case w.PlainMode && w.OutputStyle == "json":
+			output, err := neat.NewOutputProcessor(false, false, &neat.DefaultColorSchema).ToCompactJSON(document)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(writer, "%s\n", output)
+
+		case w.PlainMode && w.OutputStyle == "yaml":
+			output, err := yaml.Marshal(document)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(writer, "---\n%s\n", string(output))
+
+		case w.OutputStyle == "json":
+			output, err := neat.NewOutputProcessor(!omitIndentHelper, true, &neat.DefaultColorSchema).ToJSON(document)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(writer, "%s\n", output)
+
+		case w.OutputStyle == "yaml":
+			output, err := neat.NewOutputProcessor(!w.OmitIndentHelper, true, &neat.DefaultColorSchema).ToYAML(document)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(writer, "---\n%s\n", output)
+		}
+	}
+
+	return nil
 }

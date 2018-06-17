@@ -21,12 +21,7 @@
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/HeavyWombat/dyff/pkg/dyff"
-	"github.com/HeavyWombat/dyff/pkg/neat"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // yamlCmd represents the yaml command
@@ -40,33 +35,19 @@ Converts input document into YAML format while preserving the order of all keys.
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, argument := range args {
-			inputFile, err := dyff.LoadFile(argument)
-			if err != nil {
-				exitWithError("Failed to load input file", err)
-			}
+		writer := &OutputWriter{
+			PlainMode:        plainMode,
+			Restructure:      restructure,
+			OmitIndentHelper: omitIndentHelper,
+			OutputStyle:      "yaml",
+		}
 
-			for _, document := range inputFile.Documents {
-				if restructure {
-					document = dyff.RestructureObject(document)
-				}
+		for _, filename := range args {
+			if inplace {
+				writer.WriteInplace(filename)
 
-				if plainMode { // Run Go YAML library marshalling if plain mode is enabled
-					output, err := yaml.Marshal(document)
-					if err != nil {
-						exitWithError("Failed to marshal object into YAML", err)
-					}
-
-					fmt.Printf("---\n%s\n", string(output))
-
-				} else { // Run neat mode to create colorful YAML string
-					output, err := neat.NewOutputProcessor(!omitIndentHelper, true, &neat.DefaultColorSchema).ToYAML(document)
-					if err != nil {
-						exitWithError("Failed to neatly marshal object into YAML", err)
-					}
-
-					fmt.Printf("---\n%s\n", output)
-				}
+			} else {
+				writer.WriteToStdout(filename)
 			}
 		}
 	},
@@ -80,5 +61,6 @@ func init() {
 
 	yamlCmd.PersistentFlags().BoolVarP(&plainMode, "plain", "p", false, "output in plain style without any highlighting")
 	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "restructure map keys in reasonable order")
-	yamlCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "i", false, "omit indent helper lines in highlighted output")
+	yamlCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
+	yamlCmd.PersistentFlags().BoolVarP(&inplace, "in-place", "i", false, "overwrite input file with output of this command")
 }

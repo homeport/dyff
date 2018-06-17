@@ -21,10 +21,6 @@
 package cmd
 
 import (
-	"fmt"
-
-	"github.com/HeavyWombat/dyff/pkg/dyff"
-	"github.com/HeavyWombat/dyff/pkg/neat"
 	"github.com/spf13/cobra"
 )
 
@@ -38,33 +34,19 @@ Converts input document into JSON format while preserving the order of all keys.
 `,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, argument := range args {
-			inputFile, err := dyff.LoadFile(argument)
-			if err != nil {
-				exitWithError("Failed to load input file", err)
-			}
+		writer := &OutputWriter{
+			PlainMode:        plainMode,
+			Restructure:      restructure,
+			OmitIndentHelper: omitIndentHelper,
+			OutputStyle:      "json",
+		}
 
-			for _, document := range inputFile.Documents {
-				if restructure {
-					document = dyff.RestructureObject(document)
-				}
+		for _, filename := range args {
+			if inplace {
+				writer.WriteInplace(filename)
 
-				if plainMode {
-					output, err := neat.NewOutputProcessor(false, false, &neat.DefaultColorSchema).ToCompactJSON(document)
-					if err != nil {
-						exitWithError("Failed to marshal object into JSON", err)
-					}
-
-					fmt.Printf("%s\n", string(output))
-
-				} else {
-					output, err := neat.NewOutputProcessor(!omitIndentHelper, true, &neat.DefaultColorSchema).ToJSON(document)
-					if err != nil {
-						exitWithError("Failed to marshal object into JSON", err)
-					}
-
-					fmt.Printf("%s\n", output)
-				}
+			} else {
+				writer.WriteToStdout(filename)
 			}
 		}
 	},
@@ -78,5 +60,6 @@ func init() {
 
 	jsonCmd.PersistentFlags().BoolVarP(&plainMode, "plain", "p", false, "output in plain style without any highlighting")
 	jsonCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "restructure map keys in reasonable order")
-	jsonCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "i", false, "omit indent helper lines in highlighted output")
+	jsonCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
+	jsonCmd.PersistentFlags().BoolVarP(&inplace, "in-place", "i", false, "overwrite input file with output of this command")
 }
