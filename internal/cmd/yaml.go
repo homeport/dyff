@@ -21,6 +21,9 @@
 package cmd
 
 import (
+	"fmt"
+
+	"github.com/HeavyWombat/dyff/pkg/dyff"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +46,10 @@ Converts input document into YAML format while preserving the order of all keys.
 		}
 
 		for _, filename := range args {
+			if dyff.IsStdin(filename) && inplace {
+				exitWithError("incompatible flag", fmt.Errorf("cannot use in-place flag in combination with input from STDIN"))
+			}
+
 			if inplace {
 				writer.WriteInplace(filename)
 

@@ -107,7 +107,7 @@ func HumanReadableLocationInformation(inputFile InputFile) string {
 func HumanReadableLocation(location string) string {
 	var buf bytes.Buffer
 
-	if location == "-" {
+	if IsStdin(location) {
 		buf.WriteString(bunt.Style("<STDIN>", bunt.Italic))
 
 	} else if _, err := os.Stat(location); err == nil {
@@ -372,7 +372,7 @@ func getBytesFromLocation(location string) ([]byte, error) {
 	var err error
 
 	// Handle special location "-" which referes to STDIN stream
-	if location == "-" {
+	if IsStdin(location) {
 		if data, err = ioutil.ReadAll(os.Stdin); err != nil {
 			return nil, err
 		}
@@ -428,4 +428,11 @@ func isComplexSlice(slice []interface{}) bool {
 	}
 
 	return counter == len(slice)
+}
+
+// IsStdin checks whether the provided input location refers to the dash
+// character which usually serves as the replacement to point to STDIN rather
+// than a file.
+func IsStdin(location string) bool {
+	return strings.TrimSpace(location) == "-"
 }
