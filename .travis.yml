@@ -1,8 +1,9 @@
 ---
 language: go
 go:
-- 1.9.7
-- 1.10.3
+- 1.8.x
+- 1.9.x
+- 1.10.x
 
 install:
 - go get honnef.co/go/tools/cmd/megacheck
@@ -12,8 +13,6 @@ install:
          golang.org/x/tools/cmd/cover
          github.com/onsi/ginkgo/ginkgo
          github.com/onsi/gomega/...
-- export PATH=$PATH:$HOME/gopath/bin
-- echo $TRAVIS_GO_VERSION
 
 before_deploy:
 - make build
@@ -26,5 +25,5 @@ deploy:
   file_glob: true
   file: binaries/*
   on:
-    go: 1.10.3
+    condition: $TRAVIS_GO_VERSION =~ ^1\.10
     tags: true
