@@ -20,6 +20,25 @@ Input files can be local files (filesystem path), remote files (URI), or the sta
 
 All orders of keys in hashes are preserved during processing and output to the terminal, most notably in the sub-commands to convert YAML to JSON and vice versa.
 
+## Installation
+On macOS, `dyff` is available via Homebrew:
+```bash
+brew tap HeavyWombat/tap
+brew install dyff
+```
+
+Prebuilt binaries for a lot of operating systems and architectures can be [downloaded from the releases section](https://github.com/HeavyWombat/dyff/releases/latest).
+
+There is a convenience script to download the latest release for Linux or macOS if you want to keep it simple (you need `curl` and `jq` installed on your machine):
+```bash
+curl --silent --location https://raw.githubusercontent.com/HeavyWombat/dyff/master/scripts/download-latest.sh | bash
+```
+
+And of course, you can download and build `dyff` from source using `go`:
+```bash
+go get github.com/HeavyWombat/dyff/...
+```
+
 ## Examples
 - Show the differences between two versions of [`cf-deployment`](https://github.com/cloudfoundry/cf-deployment/):
     ```
