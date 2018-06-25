@@ -39,20 +39,38 @@ And of course, you can download and build `dyff` from source using `go`:
 go get github.com/HeavyWombat/dyff/...
 ```
 
-## Examples
-- Show the differences between two versions of [`cf-deployment`](https://github.com/cloudfoundry/cf-deployment/):
-    ```
+## Use cases and examples
+- Show the differences between two versions of [`cf-deployment`](https://github.com/cloudfoundry/cf-deployment/) YAMLs:
+    ```bash
     dyff between \
       https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.19.0/cf-deployment.yml \
       https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.20.0/cf-deployment.yml
     ```
 
-- Convert a YAML file to JSON
-    ```
-    dyff json https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.19.0/cf-deployment.yml
+- Convert a JSON stream to YAML
+    ```bash
+    sometool --json | jq --raw-output '.data' | dyff yaml -
     ```
 
-- Convert a JSON file to YAML
+- Sometimes you end up with YAML or JSON files, where the order of the keys in maps was sorted alphabetically. With `dyff` you can restructure keys in maps to a more human appealing order:
+    ```bash
+    sometool --export --json | dyff - yaml --restructure
     ```
+    Or, rewrite a file _in place_ with the restructured order of keys.
+    ```bash
+    dyff yaml --restructure --in-place somefile.yml
+    ```
+
+- Just print a YAML (or JSON) file to the terminal to look at it. By default, `dyff` will use a neat output schema which includes different colors and indent helper lines to improve readability. The colors are roughly based on the default [Atom](https://atom.io) schema and work best on dark terminal backgrounds. The neat output is disabled the output of `dyff` is redirected into a pipe, or you can disable it explicitly using the `--plain` flag.
+    ```bash
+    dyff yaml somefile.yml
+    ```
+
+- Convert a YAML file to JSON and vica versa:
+    ```bash
+    dyff json https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.19.0/cf-deployment.yml
+    ```
+    The `dyff` sub-command (`yaml`, or `json`) defines the output format, the tool automatically detects the input format itself.
+    ```bash
     dyff yaml https://raw.githubusercontent.com/HeavyWombat/dyff/develop/assets/bosh-yaml/manifest.json
     ```
