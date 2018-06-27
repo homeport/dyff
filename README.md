@@ -31,7 +31,7 @@ Prebuilt binaries for a lot of operating systems and architectures can be [downl
 
 There is a convenience script to download the latest release for Linux or macOS if you want to keep it simple (you need `curl` and `jq` installed on your machine):
 ```bash
-curl --silent --location https://raw.githubusercontent.com/HeavyWombat/dyff/master/scripts/download-latest.sh | bash
+curl --silent --location https://goo.gl/DRXDVN | bash
 ```
 
 And of course, you can download and build `dyff` from source using `go`:
@@ -66,7 +66,7 @@ go get github.com/HeavyWombat/dyff/...
     dyff yaml somefile.yml
     ```
 
-- Convert a YAML file to JSON and vica versa:
+- Convert a YAML file to JSON and vice versa:
     ```bash
     dyff json https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.19.0/cf-deployment.yml
     ```
