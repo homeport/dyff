@@ -6,8 +6,8 @@ go:
 - 1.10.x
 
 install:
-- go get honnef.co/go/tools/cmd/megacheck
-         github.com/client9/misspell/cmd/misspell
+- ( eval "$(gimme 1.10)" && go get honnef.co/go/tools/cmd/megacheck && sudo ln -snf $HOME/go/bin/megacheck /usr/local/bin/megacheck )
+- go get github.com/client9/misspell/cmd/misspell
          github.com/fzipp/gocyclo
          golang.org/x/lint/golint
          golang.org/x/tools/cmd/cover

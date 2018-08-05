@@ -21,8 +21,8 @@
 package dyff
 
 import (
-	"github.com/HeavyWombat/dyff/pkg/bunt"
-	"github.com/HeavyWombat/dyff/pkg/neat"
+	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
+	"github.com/HeavyWombat/dyff/pkg/v1/neat"
 	colorful "github.com/lucasb-eyer/go-colorful"
 )
 

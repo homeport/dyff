@@ -18,51 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package dyff
+package neat_test
 
 import (
-	"bufio"
-	"fmt"
-	"io"
+	. "github.com/HeavyWombat/dyff/pkg/v1/neat"
+	yaml "gopkg.in/yaml.v2"
 
-	"github.com/HeavyWombat/dyff/pkg/bunt"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-const (
-	oneline = "%s detected between %s and %s\n"
-	twoline = "%s detected between %s\nand %s\n"
-)
+var _ = Describe("YAML to JSON tests", func() {
+	Context("Processing valid YAML input", func() {
+		It("should convert YAML to JSON", func() {
+			var content yaml.MapSlice
+			if err := yaml.Unmarshal([]byte(`---
+name: foobar
+list:
+- A
+- B
+- C
+`), &content); err != nil {
+				Fail(err.Error())
+			}
 
-// BriefReport is a reporter that only prints a summary
-type BriefReport struct {
-	Report
-}
+			result, err := ToJSONString(content)
+			Expect(err).To(BeNil())
 
-// WriteReport writes a brief summary to the provided writer
-func (report *BriefReport) WriteReport(out io.Writer) error {
-	writer := bufio.NewWriter(out)
-	defer writer.Flush()
-
-	noOfChanges := bunt.BoldText(Plural(len(report.Diffs), "change"))
-	niceFrom := HumanReadableLocationInformation(report.From)
-	niceTo := HumanReadableLocationInformation(report.To)
-
-	var template string
-	switch {
-	case len(oneline)-6+plainTextLength(noOfChanges)+plainTextLength(niceFrom)+plainTextLength(niceTo) < getTerminalWidth():
-		template = oneline
-
-	default:
-		template = twoline
-	}
-
-	writer.WriteString(fmt.Sprintf(template,
-		noOfChanges,
-		niceFrom,
-		niceTo,
-	))
-
-	// Finish with one last newline so that we do not end next to the prompt
-	writer.WriteString("\n")
-	return nil
-}
+			Expect(result).To(Equal(`{"name": "foobar", "list": ["A", "B", "C"]}`))
+		})
+	})
+})

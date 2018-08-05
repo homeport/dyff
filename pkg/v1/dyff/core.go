@@ -27,7 +27,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/HeavyWombat/dyff/pkg/bunt"
+	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"

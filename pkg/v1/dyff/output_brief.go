@@ -18,25 +18,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package neat_test
+package dyff
 
 import (
-	"testing"
+	"bufio"
+	"fmt"
+	"io"
 
-	. "github.com/HeavyWombat/dyff/pkg/bunt"
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
 )
 
-func TestCore(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "neat suite")
+const (
+	oneline = "%s detected between %s and %s\n"
+	twoline = "%s detected between %s\nand %s\n"
+)
+
+// BriefReport is a reporter that only prints a summary
+type BriefReport struct {
+	Report
 }
 
-var _ = BeforeSuite(func() {
-	ColorSetting = OFF
-	LoggingLevel = NONE
-	FixedTerminalWidth = 80
-})
+// WriteReport writes a brief summary to the provided writer
+func (report *BriefReport) WriteReport(out io.Writer) error {
+	writer := bufio.NewWriter(out)
+	defer writer.Flush()
+
+	noOfChanges := bunt.BoldText(Plural(len(report.Diffs), "change"))
+	niceFrom := HumanReadableLocationInformation(report.From)
+	niceTo := HumanReadableLocationInformation(report.To)
+
+	var template string
+	switch {
+	case len(oneline)-6+plainTextLength(noOfChanges)+plainTextLength(niceFrom)+plainTextLength(niceTo) < getTerminalWidth():
+		template = oneline
+
+	default:
+		template = twoline
+	}
+
+	writer.WriteString(fmt.Sprintf(template,
+		noOfChanges,
+		niceFrom,
+		niceTo,
+	))
+
+	// Finish with one last newline so that we do not end next to the prompt
+	writer.WriteString("\n")
+	return nil
+}

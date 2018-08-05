@@ -21,7 +21,7 @@
 package dyff_test
 
 import (
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

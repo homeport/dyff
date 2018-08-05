@@ -21,31 +21,22 @@
 package neat_test
 
 import (
-	. "github.com/HeavyWombat/dyff/pkg/neat"
-	yaml "gopkg.in/yaml.v2"
+	"testing"
+
+	. "github.com/HeavyWombat/dyff/pkg/v1/bunt"
+	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("YAML to JSON tests", func() {
-	Context("Processing valid YAML input", func() {
-		It("should convert YAML to JSON", func() {
-			var content yaml.MapSlice
-			if err := yaml.Unmarshal([]byte(`---
-name: foobar
-list:
-- A
-- B
-- C
-`), &content); err != nil {
-				Fail(err.Error())
-			}
+func TestCore(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "neat suite")
+}
 
-			result, err := ToJSONString(content)
-			Expect(err).To(BeNil())
-
-			Expect(result).To(Equal(`{"name": "foobar", "list": ["A", "B", "C"]}`))
-		})
-	})
+var _ = BeforeSuite(func() {
+	ColorSetting = OFF
+	LoggingLevel = NONE
+	FixedTerminalWidth = 80
 })

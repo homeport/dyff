@@ -26,8 +26,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/HeavyWombat/dyff/pkg/bunt"
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	. "github.com/HeavyWombat/dyff/pkg/v1/bunt"
+	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 )
 
 var _ = Describe("Human readable report", func() {

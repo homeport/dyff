@@ -32,7 +32,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/HeavyWombat/dyff/pkg/bunt"
+	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
 	colorful "github.com/lucasb-eyer/go-colorful"
 	yaml "gopkg.in/yaml.v2"
 )

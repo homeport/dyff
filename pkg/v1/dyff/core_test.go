@@ -21,7 +21,7 @@
 package dyff_test
 
 import (
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"
@@ -47,7 +47,7 @@ var _ = Describe("Common core functions", func() {
 
 	Context("loading input data", func() {
 		It("should load input files from disk", func() {
-			from, to, err := LoadFiles("../../assets/examples/from.yml", "../../assets/examples/to.yml")
+			from, to, err := LoadFiles("../../../assets/examples/from.yml", "../../../assets/examples/to.yml")
 			Expect(err).To(BeNil())
 			Expect(from).ToNot(BeNil())
 			Expect(to).ToNot(BeNil())
@@ -159,7 +159,7 @@ list:
 
 	Context("Grabing values by path", func() {
 		It("should create the same path using Go-patch and Spruce style", func() {
-			obj := yml("../../assets/bosh-yaml/manifest.yml")
+			obj := yml("../../../assets/bosh-yaml/manifest.yml")
 			Expect(obj).ToNot(BeNil())
 
 			Expect(pathFromString("/name", obj)).To(
@@ -176,7 +176,7 @@ list:
 		})
 
 		It("should return the value referenced by the path", func() {
-			example := yml("../../assets/examples/from.yml")
+			example := yml("../../../assets/examples/from.yml")
 			Expect(example).ToNot(BeNil())
 
 			Expect(grab(example, "/yaml/map/before")).To(BeEquivalentTo("after"))
@@ -193,7 +193,7 @@ list:
 
 			// --- --- ---
 
-			example = yml("../../assets/bosh-yaml/manifest.yml")
+			example = yml("../../../assets/bosh-yaml/manifest.yml")
 			Expect(example).ToNot(BeNil())
 
 			Expect(grab(example, "/instance_groups/name=web/networks/name=concourse/static_ips/0")).To(BeEquivalentTo("XX.XX.XX.XX"))
@@ -201,7 +201,7 @@ list:
 		})
 
 		It("should return the value referenced by the path", func() {
-			example := yml("../../assets/examples/from.yml")
+			example := yml("../../../assets/examples/from.yml")
 			Expect(example).ToNot(BeNil())
 
 			Expect(grabError(example, "/yaml/simple-list/-1")).To(BeEquivalentTo("failed to traverse tree, provided list index -1 is not in range: 0..4"))

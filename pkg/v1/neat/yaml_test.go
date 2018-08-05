@@ -21,7 +21,7 @@
 package neat_test
 
 import (
-	. "github.com/HeavyWombat/dyff/pkg/neat"
+	. "github.com/HeavyWombat/dyff/pkg/v1/neat"
 	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"

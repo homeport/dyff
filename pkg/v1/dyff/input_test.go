@@ -27,7 +27,7 @@ import (
 	"net/http/httptest"
 	"os"
 
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 	. "github.com/gorilla/mux"
 
 	. "github.com/onsi/ginkgo"
@@ -57,7 +57,7 @@ var _ = Describe("Input test cases", func() {
 				directory := vars["directory"]
 				filename := vars["filename"]
 
-				location := "../../assets/" + directory + "/" + filename
+				location := "../../../assets/" + directory + "/" + filename
 				if _, err := os.Stat(location); os.IsNotExist(err) {
 					w.WriteHeader(404)
 					fmt.Fprintf(w, "File not found: %s/%s", directory, filename)

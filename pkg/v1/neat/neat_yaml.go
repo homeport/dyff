@@ -31,7 +31,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/HeavyWombat/dyff/pkg/bunt"
+	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
 	yaml "gopkg.in/yaml.v2"
 )
 

@@ -26,7 +26,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/HeavyWombat/dyff/pkg/dyff"
+	"github.com/HeavyWombat/dyff/pkg/v1/dyff"
 	"github.com/spf13/cobra"
 )
 

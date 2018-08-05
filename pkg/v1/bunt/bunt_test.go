@@ -23,7 +23,7 @@ package bunt_test
 import (
 	"fmt"
 
-	. "github.com/HeavyWombat/dyff/pkg/bunt"
+	. "github.com/HeavyWombat/dyff/pkg/v1/bunt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

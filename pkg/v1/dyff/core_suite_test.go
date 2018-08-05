@@ -29,10 +29,10 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/HeavyWombat/dyff/pkg/bunt"
-	. "github.com/HeavyWombat/dyff/pkg/neat"
+	. "github.com/HeavyWombat/dyff/pkg/v1/bunt"
+	. "github.com/HeavyWombat/dyff/pkg/v1/neat"
 
-	. "github.com/HeavyWombat/dyff/pkg/dyff"
+	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"
