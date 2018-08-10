@@ -21,8 +21,10 @@
 package dyff_test
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"strconv"
@@ -49,6 +51,32 @@ var _ = BeforeSuite(func() {
 	LoggingLevel = NONE
 	FixedTerminalWidth = 80
 })
+
+func compareAgainstExpected(fromPath string, toPath string, expectedPath string) {
+	from, to, err := LoadFiles(fromPath, toPath)
+	Expect(err).To(BeNil())
+
+	expected, err := ioutil.ReadFile(expectedPath)
+	Expect(err).To(BeNil())
+
+	report, err := CompareInputFiles(from, to)
+	Expect(report).ToNot(BeNil())
+	Expect(err).To(BeNil())
+
+	reportWriter := &HumanReport{
+		Report:            report,
+		DoNotInspectCerts: false,
+		NoTableStyle:      false,
+		ShowBanner:        false,
+	}
+
+	buffer := &bytes.Buffer{}
+	writer := bufio.NewWriter(buffer)
+	reportWriter.WriteReport(writer)
+	writer.Flush()
+
+	Expect(string(expected)).To(BeIdenticalTo(buffer.String()))
+}
 
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML

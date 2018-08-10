@@ -98,6 +98,12 @@ input: |+
 				"      issues.↵                       issues.↵\n" +
 				"                                     ↵\n\n\n"))
 		})
+
+		It("should show a binary data difference in hex dump style", func() {
+			compareAgainstExpected("../../../assets/binary/from.yml",
+				"../../../assets/binary/to.yml",
+				"../../../assets/binary/dyff.expected")
+		})
 	})
 
 	Context("writing nice column output", func() {

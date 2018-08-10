@@ -26,6 +26,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
 
@@ -737,6 +738,10 @@ func isMinorChange(from string, to string) bool {
 
 func isMultiLine(from string, to string) bool {
 	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
+}
+
+func isValidUTF8String(from string, to string) bool {
+	return utf8.Valid([]byte(from)) || utf8.Valid([]byte(to))
 }
 
 // SimplifyList will cast a slice of YAML MapSlices into a slice of interfaces.

@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -251,6 +252,12 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 	if fromCertText, toCertText, err := report.LoadX509Certs(from, to); err == nil {
 		output.WriteString(yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
 		output.WriteString(report.highlightByLine(fromCertText, toCertText))
+
+	} else if !isValidUTF8String(from, to) {
+		output.WriteString(yellow(fmt.Sprintf("%c content change\n", MODIFICATION)))
+		report.writeTextBlocks(output, 0,
+			createStringWithPrefix("  - ", hex.Dump([]byte(from)), bunt.RemovalRed),
+			createStringWithPrefix("  + ", hex.Dump([]byte(to)), bunt.AdditionGreen))
 
 	} else if isWhitespaceOnlyChange(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
