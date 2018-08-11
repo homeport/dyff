@@ -86,27 +86,24 @@ func yellow(text string) string {
 }
 
 func getTerminalWidth() int {
-	// Immediately return known value if it was initialized already
-	if terminalWidth > 0 {
-		return terminalWidth
+	if terminalWidth < 0 {
+		if FixedTerminalWidth > 0 {
+			// Initialize with user preference (overwrite)
+			terminalWidth = FixedTerminalWidth
+
+		} else if width, _, err := terminal.GetSize(int(os.Stdout.Fd())); err == nil {
+			// Initialize with values read from terminal
+			terminalWidth = width
+
+		} else {
+			// Initialize with default fall-back value
+			terminalWidth = defaultFallbackTerminalWidth
+			WarningLogger.Printf("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
+		}
+
+		DebugLogger.Printf("Terminal width set to %d characters", terminalWidth)
 	}
 
-	// Initialize internal terminal width setting with user preference
-	if FixedTerminalWidth > 0 {
-		terminalWidth = FixedTerminalWidth
-		return terminalWidth
-	}
-
-	// Initialize with values read from terminal
-	width, _, err := terminal.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		WarningLogger.Printf("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
-		terminalWidth = defaultFallbackTerminalWidth
-		return terminalWidth
-	}
-
-	DebugLogger.Printf("Terminal width seems to be %d characters", width)
-	terminalWidth = width
 	return terminalWidth
 }
 
