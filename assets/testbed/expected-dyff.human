@@ -1,0 +1,11 @@
+
+nil-tests.something
+  ± type change from <nil> to string
+    - <nil>
+    + value
+
+nil-tests.to-be-reset
+  ± type change from string to <nil>
+    - value
+    + <nil>
+

@@ -159,11 +159,8 @@ func CompareInputFiles(from InputFile, to InputFile) (Report, error) {
 
 func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error) {
 	// Save some time and process some simple nil and type-change use cases immediately
-	if from == nil && to != nil {
-		return []Diff{{path, []Detail{{Kind: ADDITION, From: from, To: to}}}}, nil
-
-	} else if from != nil && to == nil {
-		return []Diff{{path, []Detail{{Kind: REMOVAL, From: from, To: to}}}}, nil
+	if (from == nil && to != nil) || (from != nil && to == nil) {
+		return []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}, nil
 
 	} else if from == nil && to == nil {
 		return []Diff{}, nil

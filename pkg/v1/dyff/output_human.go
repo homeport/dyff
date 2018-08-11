@@ -184,8 +184,8 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) (string, error) {
 	var output bytes.Buffer
 
-	fromType := reflect.TypeOf(detail.From).Kind()
-	toType := reflect.TypeOf(detail.To).Kind()
+	fromType := determineReflectKind(detail.From)
+	toType := determineReflectKind(detail.To)
 	if fromType == reflect.String && toType == reflect.String {
 		// delegate to special string output
 		report.writeStringDiff(&output, detail.From.(string), detail.To.(string))
@@ -193,7 +193,7 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 	} else {
 		// default output
 		if fromType != toType {
-			output.WriteString(yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, italic(fromType.String()), italic(toType.String()))))
+			output.WriteString(yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, italic(reflectKindToString(fromType)), italic(reflectKindToString(toType)))))
 
 		} else {
 			output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
@@ -313,6 +313,24 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 	}
 
 	return buf.String()
+}
+
+func determineReflectKind(obj interface{}) reflect.Kind {
+	if obj == nil {
+		return reflect.Invalid
+	}
+
+	return reflect.TypeOf(obj).Kind()
+}
+
+func reflectKindToString(kind reflect.Kind) string {
+	switch kind {
+	case reflect.Invalid:
+		return "<nil>"
+
+	default:
+		return kind.String()
+	}
 }
 
 func highlightRemovals(diffs []diffmatchpatch.Diff) string {
