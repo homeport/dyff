@@ -24,4 +24,4 @@ set -euo pipefail
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs gofmt -s -w )
+(cd "$BASEDIR" && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs gofmt -s -w)

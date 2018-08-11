@@ -22,11 +22,11 @@
 
 set -euo pipefail
 
-if ! hash gocyclo > /dev/null 2>&1; then
-  echo 'Unable to find tool `gocyclo` in the path. Run `go get github.com/fzipp/gocyclo` to install it.'
+if ! hash gocyclo >/dev/null 2>&1; then
+  echo 'Unable to find tool "gocyclo" in the path. Run "go get github.com/fzipp/gocyclo" to install it.'
   exit 1
 fi
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs gocyclo -over 15 )
+(cd "$BASEDIR" && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs gocyclo -over 15)

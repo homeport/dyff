@@ -22,11 +22,11 @@
 
 set -euo pipefail
 
-if ! hash megacheck > /dev/null 2>&1; then
-  echo 'Unable to find tool `megacheck` in the path. Run `go get honnef.co/go/tools/cmd/megacheck` to install it.'
+if ! hash megacheck >/dev/null 2>&1; then
+  echo 'Unable to find tool "megacheck" in the path. Run "go get honnef.co/go/tools/cmd/megacheck" to install it.'
   exit 1
 fi
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs megacheck )
+(cd "$BASEDIR" && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs megacheck)

@@ -22,12 +22,12 @@
 
 set -euo pipefail
 
-if ! hash curl 2> /dev/null; then
+if ! hash curl 2>/dev/null; then
   echo "Required tool curl is not installed."
   exit 1
 fi
 
-if ! hash jq 2> /dev/null; then
+if ! hash jq 2>/dev/null; then
   echo "Required tool jq is not installed."
   exit 1
 fi
@@ -37,7 +37,7 @@ SYSTEM_UNAME="$(uname | tr '[:upper:]' '[:lower:]')"
 TARGET_FILE=/usr/local/bin/dyff
 
 case "${SYSTEM_UNAME}" in
-  darwin|linux)
+  darwin | linux)
     DYFF_URI="https://github.com/HeavyWombat/dyff/releases/download/${LATEST_TAG}/dyff-${SYSTEM_UNAME}-amd64"
 
     echo -e "Downloading \\033[4;94m${DYFF_URI}\\033[0m to \\033[1m${TARGET_FILE}\\033[0m"

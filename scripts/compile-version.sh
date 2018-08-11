@@ -62,10 +62,10 @@ perl -pi -e "s/const version = \"\\(development\\)\"/const version = \"${VERSION
 
 # Compile a local version into GOPATH bin if it exists
 if [[ ${SKIP_LOCAL_BUILD} == 0 ]]; then
-  if [[ ! -z ${GOPATH+x} ]]; then
+  if [[ -n ${GOPATH+x} ]]; then
     if [[ -d "${GOPATH}/bin" ]]; then
       echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for local machine to \\033[1m${GOPATH}/bin\\033[0m"
-      ( cd "${BASEDIR}/cmd/dyff/" && go install )
+      (cd "${BASEDIR}/cmd/dyff/" && go install)
     fi
   fi
 fi
@@ -81,13 +81,13 @@ mkdir -p "$TARGET_PATH"
 while read -r OS ARCH; do
   echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for OS \\033[1m${OS}\\033[0m and architecture \\033[1m${ARCH}\\033[0m"
   TARGET_FILE="${TARGET_PATH}/dyff-${OS}-${ARCH}"
-  if [[ "${OS}" == "windows" ]]; then
+  if [[ ${OS} == "windows" ]]; then
     TARGET_FILE="${TARGET_FILE}.exe"
   fi
 
-  ( cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -ldflags="-s -w" -o "$TARGET_FILE" cmd/dyff/main.go )
+  (cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -ldflags="-s -w" -o "$TARGET_FILE" cmd/dyff/main.go)
 
-done << EOL
+done <<EOL
 darwin	386
 darwin	amd64
 freebsd	386

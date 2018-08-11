@@ -22,11 +22,11 @@
 
 set -euo pipefail
 
-if ! hash golint > /dev/null 2>&1; then
-  echo 'Unable to find tool `golint` in the path. Run `go get golang.org/x/lint/golint` to install it.'
+if ! hash golint >/dev/null 2>&1; then
+  echo 'Unable to find tool "golint" in the path. Run "go get golang.org/x/lint/golint" to install it.'
   exit 1
 fi
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
-( cd $BASEDIR && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs golint -set_exit_status )
+(cd "$BASEDIR" && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs golint -set_exit_status)
