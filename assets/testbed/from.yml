@@ -3,3 +3,5 @@ nil-tests:
   nil-value: ~
   something: ~
   to-be-reset: value
+
+empty-list-compare: []

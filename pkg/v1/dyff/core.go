@@ -187,8 +187,7 @@ func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error)
 
 	case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
 		if from != to {
-			diffs = []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}
-			err = nil
+			diffs, err = []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}, nil
 		}
 
 	default:
