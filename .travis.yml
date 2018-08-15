@@ -7,9 +7,6 @@ go:
 
 install:
 - curl --silent --location https://goo.gl/g1CpPX | bash
-- go get golang.org/x/tools/cmd/cover
-         github.com/onsi/ginkgo/ginkgo
-         github.com/onsi/gomega/...
 
 before_deploy:
 - make build
