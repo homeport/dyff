@@ -52,7 +52,13 @@ func (path *Path) ToDotStyle(showDocumentIdx bool) string {
 	// The Dot style does not really support the root level. An empty path
 	// will just return a text indicating the root level is meant
 	if pathLength == 0 {
-		return bunt.Style("(root level)", bunt.Italic, bunt.Bold)
+		restultString := bunt.Style("(root level)", bunt.Italic, bunt.Bold)
+
+		if showDocumentIdx {
+			restultString += bunt.Colorize(fmt.Sprintf("  (document #%d)", path.DocumentIdx+1), bunt.Aquamarine)
+		}
+
+		return restultString
 	}
 
 	result := make([]string, 0, pathLength)

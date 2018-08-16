@@ -265,17 +265,17 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 			createStringWithPrefix("  - ", showWhitespaceCharacters(from), bunt.RemovalRed),
 			createStringWithPrefix("  + ", showWhitespaceCharacters(to), bunt.AdditionGreen))
 
-	} else if isMinorChange(from, to) {
-		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-		diffs := diffmatchpatch.New().DiffMain(from, to, false)
-		output.WriteString(highlightRemovals(diffs))
-		output.WriteString(highlightAdditions(diffs))
-
 	} else if isMultiLine(from, to) {
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
 		report.writeTextBlocks(output, 0,
 			createStringWithPrefix("  - ", from, bunt.RemovalRed),
 			createStringWithPrefix("  + ", to, bunt.AdditionGreen))
+
+	} else if isMinorChange(from, to) {
+		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+		diffs := diffmatchpatch.New().DiffMain(from, to, false)
+		output.WriteString(highlightRemovals(diffs))
+		output.WriteString(highlightAdditions(diffs))
 
 	} else {
 		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))

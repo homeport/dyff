@@ -245,6 +245,11 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, 
 }
 
 func compareLists(path Path, from []interface{}, to []interface{}) ([]Diff, error) {
+	// Bail out quickly if there is nothing to check
+	if len(from) == 0 && len(to) == 0 {
+		return []Diff{}, nil
+	}
+
 	if identifier := getIdentifierFromNamedLists(from, to); identifier != "" {
 		return compareNamedEntryLists(path, identifier, from, to)
 	}
@@ -269,11 +274,6 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) ([]Diff
 
 	fromLength := len(from)
 	toLength := len(to)
-
-	// Back out immediately if both lists are empty
-	if fromLength == 0 && fromLength == toLength {
-		return result, nil
-	}
 
 	// Special case if both lists only contain one entry: directly compare the two entries with each other
 	if fromLength == 1 && fromLength == toLength {
@@ -333,17 +333,10 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
-	fromLength := len(from)
-	toLength := len(to)
-
 	result := make([]Diff, 0)
 
-	// Bail out quickly if there is nothing to check
-	if fromLength == 0 && toLength == 0 {
-		return result, nil
-	}
-
 	// Fill two lists with the names of the entries that are common to both provided lists
+	fromLength := len(from)
 	fromNames := make([]string, 0, fromLength)
 	toNames := make([]string, 0, fromLength)
 

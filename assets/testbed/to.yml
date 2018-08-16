@@ -5,3 +5,26 @@ nil-tests:
   to-be-reset: null
 
 empty-list-compare: []
+
+minor:
+  change: Value
+
+string-lengths:
+  textA: shrt txt
+  textB: very long text
+
+orderchanges:
+- name: one
+- name: two
+- name: three
+- name: four
+- name: five
+- name: six
+
+multiline: |
+  Yes, strings
+  can have multiple
+  lines
+
+---
+- name: three
