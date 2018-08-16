@@ -39,6 +39,37 @@ multiline  (document #1)
       lines
 
 
+certs.data  (document #1)
+  ± certificate change
+    - Subject:
+        Common Name: www.example.com
+        Organization: Company Name
+        Organization Unit: Org
+        Locality: Portland
+        State: Oregon
+        Country: US
+      Validity Period:
+        NotBefore: Apr 2 19:29:56 2018 UTC
+        NotAfter: Apr 2 19:29:56 2019 UTC
+      Issuer: www.example.com, Company Name
+      Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
+
+
+    + Subject:
+        Common Name: www.example.com
+        Organization: My Company Name
+        Organization Unit: Org
+        Locality: Portland
+        State: Oregon
+        Country: US
+      Validity Period:
+        NotBefore: Apr 2 19:37:46 2018 UTC
+        NotAfter: Apr 1 19:37:46 2020 UTC
+      Issuer: www.example.com, My Company Name
+      Serial Number: 12453678034067864896 (0xacd45a3087b33d40)
+
+
+
 (root level)  (document #2)
 - two list entries removed:   + one list entry added:
   - name: one                   - name: three
