@@ -1,0 +1,77 @@
+
+/nil-tests/something  (document #1)
+  ± type change from <nil> to string
+    - <nil>
+    + value
+
+/nil-tests/to-be-reset  (document #1)
+  ± type change from string to <nil>
+    - value
+    + <nil>
+
+/minor/change  (document #1)
+  ± value change
+    - VaLue
+    + Value
+
+/string-lengths/textA  (document #1)
+  ± value change
+    - very long text
+    + shrt txt
+
+/string-lengths/textB  (document #1)
+  ± value change
+    - shrt txt
+    + very long text
+
+/orderchanges  (document #1)
+  ⇆ order changed
+    - one, two, four, five, three, six
+    + one, two, three, four, five, six
+
+/multiline  (document #1)
+  ± value change
+    - Yes,         + Yes, strings
+      strings        can have multiple
+      can            lines
+      have
+      multiple
+      lines
+
+
+/certs/data  (document #1)
+  ± certificate change
+    - Subject:
+        Common Name: www.example.com
+        Organization: Company Name
+        Organization Unit: Org
+        Locality: Portland
+        State: Oregon
+        Country: US
+      Validity Period:
+        NotBefore: Apr 2 19:29:56 2018 UTC
+        NotAfter: Apr 2 19:29:56 2019 UTC
+      Issuer: www.example.com, Company Name
+      Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
+
+
+    + Subject:
+        Common Name: www.example.com
+        Organization: My Company Name
+        Organization Unit: Org
+        Locality: Portland
+        State: Oregon
+        Country: US
+      Validity Period:
+        NotBefore: Apr 2 19:37:46 2018 UTC
+        NotAfter: Apr 1 19:37:46 2020 UTC
+      Issuer: www.example.com, My Company Name
+      Serial Number: 12453678034067864896 (0xacd45a3087b33d40)
+
+
+
+/  (document #2)
+- two list entries removed:   + one list entry added:
+  - name: one                   - name: three
+  - name: two
+

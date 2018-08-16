@@ -105,7 +105,12 @@ input: |+
 		It("should show the testbed results as expected", func() {
 			compareAgainstExpected("../../../assets/testbed/from.yml",
 				"../../../assets/testbed/to.yml",
-				"../../../assets/testbed/expected-dyff.human")
+				"../../../assets/testbed/expected-dyff-spruce.human")
+
+			UseGoPatchPaths = true
+			compareAgainstExpected("../../../assets/testbed/from.yml",
+				"../../../assets/testbed/to.yml",
+				"../../../assets/testbed/expected-dyff-gopatch.human")
 		})
 	})
 })
