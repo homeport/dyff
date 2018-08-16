@@ -26,31 +26,31 @@ clean:
 	@go clean -i -r -cache
 	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
 
-sanity-check: megacheck misspell lint fmt vet gocyclo
-
 vet:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-vet.sh
+	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-vet.sh
 
 fmt:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-fmt.sh
+	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-fmt.sh
 
 lint:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-lint.sh
+	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-lint.sh
 
 gocyclo:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/go-cyclo.sh
+	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-cyclo.sh
 
 megacheck:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/megacheck.sh
+	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/megacheck.sh
 
 misspell:
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/misspell.sh
+	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/misspell.sh
 
-install: sanity-check
+ginkgo:
+	ginkgo -r --nodes 4 --randomizeAllSpecs --randomizeSuites --race --trace
+
+test: vet fmt lint gocyclo megacheck misspell ginkgo
+
+install: test
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --only-local
 
-build: sanity-check
+build: test
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --no-local
-
-test: sanity-check
-	@ginkgo -r --nodes 4 --randomizeAllSpecs --randomizeSuites --race --trace
