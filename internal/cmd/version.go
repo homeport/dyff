@@ -27,7 +27,7 @@ import (
 )
 
 // version string will be injected by automation
-const version = "(development)"
+var version string
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
@@ -36,6 +36,10 @@ var versionCmd = &cobra.Command{
 	Short: "Shows the version of this tool",
 	Long:  `Shows the version of this tool`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(version) == 0 {
+			version = "(development)"
+		}
+
 		fmt.Printf("dyff version %s\n", version)
 	},
 }

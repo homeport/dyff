@@ -24,7 +24,6 @@ set -euo pipefail
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="$(cd "$BASEDIR" && git describe --tags)"
-VERFILE="$BASEDIR/internal/cmd/version.go"
 
 SKIP_FULL_BUILD=0
 SKIP_LOCAL_BUILD=0
@@ -46,19 +45,6 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
-
-on_exit() {
-  if [[ -f "${VERFILE}.bak" ]]; then
-    mv "${VERFILE}.bak" "${VERFILE}"
-  fi
-}
-
-# Run on exit function to clean-up
-trap on_exit EXIT
-
-# Backup current version of the version subcommand and set current tag as version
-cp -p "${VERFILE}" "${VERFILE}.bak"
-perl -pi -e "s/const version = \"\\(development\\)\"/const version = \"${VERSION}\"/g" "${VERFILE}"
 
 # Compile a local version into GOPATH bin if it exists
 if [[ ${SKIP_LOCAL_BUILD} == 0 ]]; then
@@ -85,7 +71,7 @@ while read -r OS ARCH; do
     TARGET_FILE="${TARGET_FILE}.exe"
   fi
 
-  (cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -ldflags='-s -w -extldflags "-static"' -o "$TARGET_FILE" cmd/dyff/main.go)
+  (cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -ldflags="-s -w -extldflags '-static' -X github.com/HeavyWombat/dyff/internal/cmd.version=${VERSION}" -o "$TARGET_FILE" cmd/dyff/main.go)
 
 done <<EOL
 darwin	386
