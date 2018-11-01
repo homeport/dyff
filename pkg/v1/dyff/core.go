@@ -875,3 +875,21 @@ func getType(value interface{}) string {
 		return reflect.TypeOf(value).Kind().String()
 	}
 }
+
+func isComplexSlice(slice []interface{}) bool {
+	// This is kind of a weird case, but by definition an empty list is a simple slice
+	if len(slice) == 0 {
+		return false
+	}
+
+	// Count the number of entries which are maps or YAML MapSlices
+	counter := 0
+	for _, entry := range slice {
+		switch entry.(type) {
+		case map[string]interface{}, map[interface{}]interface{}, yaml.MapSlice:
+			counter++
+		}
+	}
+
+	return counter == len(slice)
+}

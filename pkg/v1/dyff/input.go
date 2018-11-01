@@ -368,66 +368,34 @@ func mapSlicify(obj interface{}) interface{} {
 }
 
 func getBytesFromLocation(location string) ([]byte, error) {
-	var data []byte
-	var err error
-
 	// Handle special location "-" which referes to STDIN stream
 	if IsStdin(location) {
-		if data, err = ioutil.ReadAll(os.Stdin); err != nil {
-			return nil, err
-		}
-
-		return data, nil
+		return ioutil.ReadAll(os.Stdin)
 	}
 
 	// Handle location as local file if there is a file at that location
-	if _, err = os.Stat(location); err == nil {
-		if data, err = ioutil.ReadFile(location); err != nil {
-			return nil, err
-		}
-
-		return data, nil
+	if _, err := os.Stat(location); err == nil {
+		return ioutil.ReadFile(location)
 	}
 
 	// Handle location as a URI if it looks like one
-	if _, err = url.ParseRequestURI(location); err == nil {
-		var response *http.Response
-		response, err = http.Get(location)
+	if _, err := url.ParseRequestURI(location); err == nil {
+		response, err := http.Get(location)
 		if err != nil {
 			return nil, err
 		}
 		defer response.Body.Close()
 
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(response.Body)
-
+		data, err := ioutil.ReadAll(response.Body)
 		if response.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("failed to load from location: %s", buf.Bytes())
+			return nil, fmt.Errorf("failed to retrieve data from location %s: %s", location, string(data))
 		}
 
-		return buf.Bytes(), nil
+		return data, err
 	}
 
 	// In any other case, bail out ...
 	return nil, fmt.Errorf("Unable to get any content using location %s: it is not a file or usable URI", location)
-}
-
-func isComplexSlice(slice []interface{}) bool {
-	// This is kind of a weird case, but by definition an empty list is a simple slice
-	if len(slice) == 0 {
-		return false
-	}
-
-	// Count the number of entries which are maps or YAML MapSlices
-	counter := 0
-	for _, entry := range slice {
-		switch entry.(type) {
-		case map[string]interface{}, map[interface{}]interface{}, yaml.MapSlice:
-			counter++
-		}
-	}
-
-	return counter == len(slice)
 }
 
 // IsStdin checks whether the provided input location refers to the dash
