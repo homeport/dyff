@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
+	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
 )
 
 const (

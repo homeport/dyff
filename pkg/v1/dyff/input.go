@@ -34,7 +34,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
+	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 

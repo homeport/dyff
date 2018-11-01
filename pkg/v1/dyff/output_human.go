@@ -32,8 +32,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/HeavyWombat/dyff/pkg/v1/bunt"
-	"github.com/HeavyWombat/dyff/pkg/v1/neat"
+	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
+	"github.com/HeavyWombat/gonvenience/pkg/v1/neat"
 	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	yaml "gopkg.in/yaml.v2"

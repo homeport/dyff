@@ -26,8 +26,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/HeavyWombat/dyff/pkg/v1/bunt"
 	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
+	. "github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
 )
 
 var _ = Describe("general output tests", func() {

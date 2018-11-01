@@ -31,8 +31,8 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/HeavyWombat/dyff/pkg/v1/bunt"
-	. "github.com/HeavyWombat/dyff/pkg/v1/neat"
+	. "github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
+	. "github.com/HeavyWombat/gonvenience/pkg/v1/neat"
 
 	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 	yaml "gopkg.in/yaml.v2"
