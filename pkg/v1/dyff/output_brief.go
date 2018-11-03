@@ -26,6 +26,7 @@ import (
 	"io"
 
 	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 )
 
 const (
@@ -44,8 +45,8 @@ func (report *BriefReport) WriteReport(out io.Writer) error {
 	defer writer.Flush()
 
 	noOfChanges := bunt.BoldText(Plural(len(report.Diffs), "change"))
-	niceFrom := HumanReadableLocationInformation(report.From)
-	niceTo := HumanReadableLocationInformation(report.To)
+	niceFrom := ytbx.HumanReadableLocationInformation(report.From)
+	niceTo := ytbx.HumanReadableLocationInformation(report.To)
 
 	var template string
 	switch {

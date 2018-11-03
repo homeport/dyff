@@ -23,7 +23,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/HeavyWombat/dyff/pkg/v1/dyff"
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +46,7 @@ Converts input document into YAML format while preserving the order of all keys.
 		}
 
 		for _, filename := range args {
-			if dyff.IsStdin(filename) && inplace {
+			if ytbx.IsStdin(filename) && inplace {
 				exitWithError("incompatible flag", fmt.Errorf("cannot use in-place flag in combination with input from STDIN"))
 			}
 

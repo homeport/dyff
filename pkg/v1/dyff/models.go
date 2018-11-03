@@ -22,6 +22,8 @@ package dyff
 
 import (
 	"io"
+
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 )
 
 // Constants to distinguish between the different kinds of differences
@@ -61,8 +63,8 @@ type Diff struct {
 
 // Report encapsulates the actual end-result of the comparison: The input data and the list of differences.
 type Report struct {
-	From  InputFile
-	To    InputFile
+	From  ytbx.InputFile
+	To    ytbx.InputFile
 	Diffs []Diff
 }
 

@@ -22,6 +22,7 @@ package dyff_test
 
 import (
 	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -677,13 +678,13 @@ listY: [ Yo, Yo, Yo ]
 
 		Context("change root for comparison", func() {
 			It("should change the root of an input file", func() {
-				from := InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc(`---
+				from := ytbx.InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc(`---
 a: foo
 ---
 b: bar
 `)}
 
-				to := InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc(`{
+				to := ytbx.InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc(`{
 "items": [
   {"a": "Foo"},
   {"b": "Bar"}

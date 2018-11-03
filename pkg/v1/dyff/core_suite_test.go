@@ -32,7 +32,7 @@ import (
 	"testing"
 
 	. "github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
-	. "github.com/HeavyWombat/gonvenience/pkg/v1/neat"
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 
 	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 	yaml "gopkg.in/yaml.v2"
@@ -53,7 +53,7 @@ var _ = BeforeSuite(func() {
 })
 
 func compareAgainstExpected(fromPath string, toPath string, expectedPath string) {
-	from, to, err := LoadFiles(fromPath, toPath)
+	from, to, err := ytbx.LoadFiles(fromPath, toPath)
 	Expect(err).To(BeNil())
 
 	expected, err := ioutil.ReadFile(expectedPath)
@@ -81,9 +81,9 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string)
 func yml(input string) yaml.MapSlice {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {
-		var content InputFile
+		var content ytbx.InputFile
 		var err error
-		if content, err = LoadFile(input); err != nil {
+		if content, err = ytbx.LoadFile(input); err != nil {
 			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %s", input, err.Error()))
 		}
 
@@ -118,7 +118,7 @@ func list(input string) []interface{} {
 		return doc.([]interface{})
 
 	case []yaml.MapSlice:
-		return SimplifyList(doc.([]yaml.MapSlice))
+		return ytbx.SimplifyList(doc.([]yaml.MapSlice))
 	}
 
 	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of any kind:\n%s\nIt was parsed as: %#v", input, doc))
@@ -126,7 +126,7 @@ func list(input string) []interface{} {
 }
 
 func singleDoc(input string) interface{} {
-	docs, err := LoadYAMLDocuments([]byte(input))
+	docs, err := ytbx.LoadYAMLDocuments([]byte(input))
 	if err != nil {
 		Fail(fmt.Sprintf("Failed to parse as YAML:\n%s\n\n%v", input, err))
 	}
@@ -139,7 +139,7 @@ func singleDoc(input string) interface{} {
 }
 
 func multiDoc(input string) []interface{} {
-	documents, err := LoadYAMLDocuments([]byte(input))
+	documents, err := ytbx.LoadYAMLDocuments([]byte(input))
 	if err != nil {
 		Fail(err.Error())
 	}
@@ -147,8 +147,8 @@ func multiDoc(input string) []interface{} {
 	return documents
 }
 
-func file(input string) InputFile {
-	inputfile, err := LoadFile(input)
+func file(input string) ytbx.InputFile {
+	inputfile, err := ytbx.LoadFile(input)
 	if err != nil {
 		Fail(fmt.Sprintf("Failed to load input file from %s: %s", input, err.Error()))
 	}
@@ -245,35 +245,12 @@ func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, fr
 
 func compare(from interface{}, to interface{}) ([]Diff, error) {
 	report, err := CompareInputFiles(
-		InputFile{Documents: []interface{}{from}},
-		InputFile{Documents: []interface{}{to}})
+		ytbx.InputFile{Documents: []interface{}{from}},
+		ytbx.InputFile{Documents: []interface{}{to}})
 
 	if err != nil {
 		return nil, err
 	}
 
 	return report.Diffs, nil
-}
-
-func grab(obj interface{}, path string) interface{} {
-	value, err := Grab(obj, path)
-	if err != nil {
-		out, _ := ToYAMLString(obj)
-		Fail(fmt.Sprintf("Failed to grab by path %s from %s", path, out))
-	}
-
-	return value
-}
-
-func grabError(obj interface{}, path string) string {
-	value, err := Grab(obj, path)
-	Expect(value).To(BeNil())
-	return err.Error()
-}
-
-func pathFromString(path string, obj interface{}) Path {
-	result, err := NewPath(path, obj)
-	Expect(err).To(BeNil())
-
-	return result
 }

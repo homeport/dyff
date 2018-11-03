@@ -29,6 +29,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
@@ -38,14 +39,6 @@ import (
 )
 
 const defaultFallbackTerminalWidth = 80
-
-// Internal string constants for type names and type decisions
-const (
-	typeMap         = "map"
-	typeSimpleList  = "list"
-	typeComplexList = "complex-list"
-	typeString      = "string"
-)
 
 // FixedTerminalWidth disables terminal width detection and reset it with a fixed given value
 var FixedTerminalWidth = -1
@@ -139,7 +132,7 @@ func Plural(amount int, text ...string) string {
 }
 
 // CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a report with the list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
-func CompareInputFiles(from InputFile, to InputFile) (Report, error) {
+func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 	if len(from.Documents) != len(to.Documents) {
 		return Report{}, fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported")
 	}
@@ -263,7 +256,7 @@ func compareLists(path Path, from []interface{}, to []interface{}) ([]Diff, erro
 
 func compareListOfMapSlices(path Path, from []yaml.MapSlice, to []yaml.MapSlice) ([]Diff, error) {
 	// TODO Check if there is another way to do this, or if we can save time by doing something else
-	return compareLists(path, SimplifyList(from), SimplifyList(to))
+	return compareLists(path, ytbx.SimplifyList(from), ytbx.SimplifyList(to))
 }
 
 func compareSimpleLists(path Path, from []interface{}, to []interface{}) ([]Diff, error) {
@@ -651,7 +644,7 @@ func listNamesOfNamedList(list []interface{}, identifier string) ([]string, erro
 			result[i] = value.(string)
 
 		default:
-			return nil, fmt.Errorf("unable to list names of a names list, because list entry #%d is not a YAML map but %s", i, getType(entry))
+			return nil, fmt.Errorf("unable to list names of a names list, because list entry #%d is not a YAML map but %s", i, ytbx.GetType(entry))
 		}
 	}
 
@@ -730,16 +723,6 @@ func isValidUTF8String(from string, to string) bool {
 	return utf8.Valid([]byte(from)) || utf8.Valid([]byte(to))
 }
 
-// SimplifyList will cast a slice of YAML MapSlices into a slice of interfaces.
-func SimplifyList(input []yaml.MapSlice) []interface{} {
-	result := make([]interface{}, len(input))
-	for i := range input {
-		result[i] = input[i]
-	}
-
-	return result
-}
-
 func isList(obj interface{}) bool {
 	switch obj.(type) {
 	case []interface{}:
@@ -760,63 +743,8 @@ func isMapSlice(obj interface{}) bool {
 	}
 }
 
-// Grab get the value from the provided YAML tree using a path to traverse through the tree structure
-func Grab(obj interface{}, pathString string) (interface{}, error) {
-	path, err := NewPath(pathString, obj)
-	if err != nil {
-		return nil, err
-	}
-
-	pointer := obj
-	pointerPath := Path{DocumentIdx: path.DocumentIdx}
-
-	for _, element := range path.PathElements {
-		if element.Key != "" { // List
-			if !isList(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeSimpleList, getType(pointer), pointerPath.ToGoPatchStyle(false))
-			}
-
-			entry, ok := getEntryFromNamedList(pointer.([]interface{}), element.Key, element.Name)
-			if !ok {
-				return nil, fmt.Errorf("there is no entry %s: %s in the list", element.Key, element.Name)
-			}
-
-			pointer = entry
-
-		} else if id, err := strconv.Atoi(element.Name); err == nil { // List (entry referenced by its index)
-			if !isList(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeSimpleList, getType(pointer), pointerPath.ToGoPatchStyle(false))
-			}
-
-			list := pointer.([]interface{})
-			if id < 0 || id >= len(list) {
-				return nil, fmt.Errorf("failed to traverse tree, provided %s index %d is not in range: 0..%d", typeSimpleList, id, len(list)-1)
-			}
-
-			pointer = list[id]
-
-		} else { // Map
-			if !isMapSlice(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeMap, getType(pointer), pointerPath.ToGoPatchStyle(false))
-			}
-
-			entry, err := getValueByKey(pointer.(yaml.MapSlice), element.Name)
-			if err != nil {
-				return nil, err
-			}
-
-			pointer = entry
-		}
-
-		// Update the path that the current pointer has (only used in error case to point to the right position)
-		pointerPath.PathElements = append(pointerPath.PathElements, element)
-	}
-
-	return pointer, nil
-}
-
 // ChangeRoot changes the root of an input file to a position inside its document based on the given path. Input files with more than one document are not supported, since they could have multiple elements with that path.
-func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool) error {
+func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments bool) error {
 	multipleDocuments := len(inputFile.Documents) != 1
 
 	if multipleDocuments {
@@ -829,7 +757,7 @@ func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool
 	originalRoot := inputFile.Documents[0]
 
 	// Find the object at the given path
-	obj, err := Grab(inputFile.Documents[0], path)
+	obj, err := ytbx.Grab(inputFile.Documents[0], path)
 	if err != nil {
 		return err
 	}
@@ -851,45 +779,4 @@ func ChangeRoot(inputFile *InputFile, path string, translateListToDocuments bool
 	inputFile.Note = fmt.Sprintf("YAML root was changed to %s", path)
 
 	return nil
-}
-
-func getType(value interface{}) string {
-	switch value.(type) {
-	case yaml.MapSlice:
-		return typeMap
-
-	case []interface{}:
-		if isComplexSlice(value.([]interface{})) {
-			return typeComplexList
-		}
-
-		return typeSimpleList
-
-	case []yaml.MapSlice:
-		return typeComplexList
-
-	case string:
-		return typeString
-
-	default:
-		return reflect.TypeOf(value).Kind().String()
-	}
-}
-
-func isComplexSlice(slice []interface{}) bool {
-	// This is kind of a weird case, but by definition an empty list is a simple slice
-	if len(slice) == 0 {
-		return false
-	}
-
-	// Count the number of entries which are maps or YAML MapSlices
-	counter := 0
-	for _, entry := range slice {
-		switch entry.(type) {
-		case map[string]interface{}, map[interface{}]interface{}, yaml.MapSlice:
-			counter++
-		}
-	}
-
-	return counter == len(slice)
 }

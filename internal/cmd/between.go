@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/HeavyWombat/dyff/pkg/v1/dyff"
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +61,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			toLocation = args[1]
 		}
 
-		from, to, err := dyff.LoadFiles(fromLocation, toLocation)
+		from, to, err := ytbx.LoadFiles(fromLocation, toLocation)
 		if err != nil {
 			exitWithError("Failed to load input files", err)
 		}

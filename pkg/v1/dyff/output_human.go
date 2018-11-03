@@ -34,6 +34,7 @@ import (
 
 	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
 	"github.com/HeavyWombat/gonvenience/pkg/v1/neat"
+	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	yaml "gopkg.in/yaml.v2"
@@ -73,8 +74,8 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 	if report.ShowBanner {
 		var stats bytes.Buffer
 		stats.WriteString("\n")
-		stats.WriteString(fmt.Sprintf(" between %s\n", HumanReadableLocationInformation(report.From)))
-		stats.WriteString(fmt.Sprintf("     and %s\n", HumanReadableLocationInformation(report.To)))
+		stats.WriteString(fmt.Sprintf(" between %s\n", ytbx.HumanReadableLocationInformation(report.From)))
+		stats.WriteString(fmt.Sprintf("     and %s\n", ytbx.HumanReadableLocationInformation(report.To)))
 		stats.WriteString("\n")
 		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(Plural(len(report.Diffs), "difference"), bunt.Bold)))
 
