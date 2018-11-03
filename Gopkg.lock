@@ -13,20 +13,12 @@
   version = "v1.0"
 
 [[projects]]
-  digest = "1:c01767916c59f084bb7c41a7d5877c0f3099b1595cfa066e84ec6ad6b084dd89"
-  name = "github.com/gorilla/context"
-  packages = ["."]
+  digest = "1:c04418bbdc4230be5fea9d3a051ad930cc2aef80b7c6b4b8ac62c36191323872"
+  name = "github.com/HeavyWombat/ytbx"
+  packages = ["pkg/v1/ytbx"]
   pruneopts = "NUT"
-  revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
-  version = "v1.1.1"
-
-[[projects]]
-  digest = "1:bf5cf1d53d703332e9bd8984c69784645b73a938317bf5ace9aadf20ac49379a"
-  name = "github.com/gorilla/mux"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
-  version = "v1.6.2"
+  revision = "4a3e5fadf87863fc94b528d39ec7c3d6e48c990b"
+  version = "v0.5-alpha"
 
 [[projects]]
   digest = "1:41933d387bfa3eaa6a82647914ed7044f7b8355764c24fb920892bc8c03ef0c3"
@@ -196,7 +188,7 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "c44066c5c816ec500d459a2a324a753f78531ae0"
+  revision = "c10e9556a7bc0e7c942242b606f0acf024ad5d6a"
 
 [[projects]]
   branch = "master"
@@ -274,10 +266,8 @@
   input-imports = [
     "github.com/HeavyWombat/gonvenience/pkg/v1/bunt",
     "github.com/HeavyWombat/gonvenience/pkg/v1/neat",
-    "github.com/gorilla/mux",
+    "github.com/HeavyWombat/ytbx/pkg/v1/ytbx",
     "github.com/lucasb-eyer/go-colorful",
-    "github.com/mattn/go-ciede2000",
-    "github.com/mattn/go-isatty",
     "github.com/mitchellh/hashstructure",
     "github.com/onsi/ginkgo",
     "github.com/onsi/gomega",
@@ -285,7 +275,6 @@
     "github.com/sergi/go-diff/diffmatchpatch",
     "github.com/spf13/cobra",
     "github.com/texttheater/golang-levenshtein/levenshtein",
-    "github.com/virtuald/go-ordered-json",
     "golang.org/x/crypto/ssh/terminal",
     "gopkg.in/fsnotify.v1",
     "gopkg.in/yaml.v2",
