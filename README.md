@@ -23,8 +23,7 @@ All orders of keys in hashes are preserved during processing and output to the t
 ## Installation
 On macOS, `dyff` is available via Homebrew:
 ```bash
-brew tap HeavyWombat/tap
-brew install dyff
+brew install HeavyWombat/tap/dyff
 ```
 
 Prebuilt binaries for a lot of operating systems and architectures can be [downloaded from the releases section](https://github.com/HeavyWombat/dyff/releases/latest).
@@ -36,7 +35,7 @@ curl --silent --location https://goo.gl/DRXDVN | bash
 
 And of course, you can download and build `dyff` from source using `go`:
 ```bash
-go get github.com/HeavyWombat/dyff/...
+go get github.com/HeavyWombat/dyff
 ```
 
 ## Use cases and examples
