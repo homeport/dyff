@@ -45,7 +45,7 @@ misspell:
 	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/misspell.sh
 
 ginkgo:
-	ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --nodes=4 --compilers=2
+	ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --nodes=4 --compilers=2 --cover
 
 test: vet fmt lint gocyclo megacheck misspell ginkgo
 
