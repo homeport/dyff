@@ -1,6 +1,7 @@
 [![License](https://img.shields.io/github/license/HeavyWombat/dyff.svg)](https://github.com/HeavyWombat/dyff/blob/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/HeavyWombat/dyff)](https://goreportcard.com/report/github.com/HeavyWombat/dyff)
 [![Build Status](https://travis-ci.org/HeavyWombat/dyff.svg?branch=master)](https://travis-ci.org/HeavyWombat/dyff)
+[![Codecov](https://img.shields.io/codecov/c/github/HeavyWombat/dyff/master.svg)](https://codecov.io/gh/HeavyWombat/dyff)
 [![GoDoc](https://godoc.org/github.com/HeavyWombat/dyff/pkg?status.svg)](https://godoc.org/github.com/HeavyWombat/dyff/pkg)
 [![Release](https://img.shields.io/github/release/HeavyWombat/dyff.svg)](https://github.com/HeavyWombat/dyff/releases/latest)
 
