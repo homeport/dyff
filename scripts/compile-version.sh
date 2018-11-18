@@ -71,7 +71,7 @@ while read -r OS ARCH; do
     TARGET_FILE="${TARGET_FILE}.exe"
   fi
 
-  (cd "$BASEDIR" && GOOS="$OS" GOARCH="$ARCH" go build -ldflags="-s -w -extldflags '-static' -X github.com/HeavyWombat/dyff/internal/cmd.version=${VERSION}" -o "$TARGET_FILE" cmd/dyff/main.go)
+  (cd "$BASEDIR" && CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -a -tags netgo -ldflags="-s -w -extldflags '-static' -X github.com/HeavyWombat/dyff/internal/cmd.version=${VERSION}" -o "$TARGET_FILE" cmd/dyff/main.go)
 
 done <<EOL
 darwin	386

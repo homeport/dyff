@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-.PHONY: clean
+.PHONY: all vet fmt lint gocyclo megacheck misspell ginkgo test install build
 
 all: test
 
@@ -45,7 +45,7 @@ misspell:
 	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/misspell.sh
 
 ginkgo:
-	ginkgo -r --nodes 4 --randomizeAllSpecs --randomizeSuites --race --trace
+	ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --nodes=4 --compilers=2
 
 test: vet fmt lint gocyclo megacheck misspell ginkgo
 
