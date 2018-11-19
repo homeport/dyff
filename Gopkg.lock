@@ -2,23 +2,32 @@
 
 
 [[projects]]
-  digest = "1:74e95f19090163c1d90c2fb3c98838d8e719ffa6513eeb4a0500560b990385d3"
+  digest = "1:5d72bbcc9c8667b11c3dc3cbe681c5a6f71e5096744c0bf7726ab5c6425d5dc4"
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
+  version = "v0.3.1"
+
+[[projects]]
+  digest = "1:7b2cc9936f0b7a7373d6a3ce7ba719ec3537069c992ea6bcc04d6c0b84ba9aa5"
   name = "github.com/HeavyWombat/gonvenience"
   packages = [
     "pkg/v1/bunt",
     "pkg/v1/neat",
+    "pkg/v1/term",
   ]
   pruneopts = "NUT"
-  revision = "3905975288526a3a1c355f8f433e701e3e29a122"
-  version = "v1.0"
+  revision = "25de2e728b7a62796e3219c12565b7ffad290ae4"
+  version = "v1.1"
 
 [[projects]]
-  digest = "1:c04418bbdc4230be5fea9d3a051ad930cc2aef80b7c6b4b8ac62c36191323872"
+  digest = "1:09a0fc5fbe018c11effd6286fd05e4eebd24c58413a12e6bf64afb55b1235dff"
   name = "github.com/HeavyWombat/ytbx"
   packages = ["pkg/v1/ytbx"]
   pruneopts = "NUT"
-  revision = "4a3e5fadf87863fc94b528d39ec7c3d6e48c990b"
-  version = "v0.5-alpha"
+  revision = "b1a634f414620a09fabf1a59fd1c62a37e1571fd"
+  version = "v0.6-alpha"
 
 [[projects]]
   digest = "1:41933d387bfa3eaa6a82647914ed7044f7b8355764c24fb920892bc8c03ef0c3"
@@ -176,7 +185,7 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NUT"
-  revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
+  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
 
 [[projects]]
   branch = "master"
@@ -188,7 +197,7 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "c10e9556a7bc0e7c942242b606f0acf024ad5d6a"
+  revision = "adae6a3d119ae4890b46832a2e88a95adc62b8e7"
 
 [[projects]]
   branch = "master"
@@ -196,18 +205,18 @@
   name = "golang.org/x/sync"
   packages = ["syncmap"]
   pruneopts = "NUT"
-  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
+  revision = "42b317875d0fa942474b76e1b46a6060d720ae6e"
 
 [[projects]]
   branch = "master"
-  digest = "1:3bcf6eb3757db3e22c41d212f886b86d0f940f86e1af85b13cd31122ac341193"
+  digest = "1:1435bb97e37d0ba44239bcaf413539d3bcfc37098c24f1c795c49d654af5e956"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "9b800f95dbbc54abff0acf7ee32d88ba4e328c89"
+  revision = "ec83556a53fe16b65c452a104ea9d1e86a671852"
 
 [[projects]]
   digest = "1:7c61a813b250ba8bb02bebb0382e6c3d00e04da2b577dc58985b86312fb89ffd"

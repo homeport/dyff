@@ -25,6 +25,8 @@ import (
 	"strings"
 )
 
+// KeyNotFoundInMapError represents an error when a key in a map was expected,
+// but could not be found.
 type KeyNotFoundInMapError struct {
 	MissingKey    string
 	AvailableKeys []string
@@ -36,6 +38,8 @@ func (e *KeyNotFoundInMapError) Error() string {
 		strings.Join(e.AvailableKeys, ", "))
 }
 
+// NoNamedEntryListError represents the situation where a list was expected to
+// be a named-entry list, but one or more entries were not maps.
 type NoNamedEntryListError struct {
 }
 
@@ -43,6 +47,8 @@ func (e *NoNamedEntryListError) Error() string {
 	return "not a named-entry list, one or more entries are not of type map"
 }
 
+// InvalidPathString represents the error that a path string is not a valid
+// Dot-style or GoPatch path syntax and does not match a provided document.
 type InvalidPathString struct {
 	Style       PathStyle
 	PathString  string

@@ -35,9 +35,10 @@ import (
 
 	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
 
+	toml "github.com/BurntSushi/toml"
 	ordered "github.com/virtuald/go-ordered-json"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // PreserveKeyOrderInJSON specifies whether a special library is used to decode
@@ -163,7 +164,8 @@ func LoadFiles(locationA string, locationB string) (InputFile, InputFile, error)
 	return from.result, to.result, nil
 }
 
-// LoadFile processes the provided input location to load a YAML (or JSON, or raw text)
+// LoadFile processes the provided input location to load it as one of the
+// supported document formats, or plain text if nothing else works.
 func LoadFile(location string) (InputFile, error) {
 	var (
 		documents []interface{}
@@ -182,10 +184,20 @@ func LoadFile(location string) (InputFile, error) {
 	return InputFile{Location: location, Documents: documents}, nil
 }
 
-// LoadDocuments reads the provided input data slice as a YAML or JSON file with
-// potential multiple documents. It only acts as a dispatcher and depending on
-// the input will either use `LoadJSONDocuments` or `LoadYAMLDocuments`.
+// LoadDocuments reads the provided input data slice as a YAML, JSON, or TOML
+// file with potential multiple documents. It only acts as a dispatcher and
+// depending on the input will either use `LoadTOMLDocuments`,
+// `LoadJSONDocuments`, or `LoadYAMLDocuments`.
 func LoadDocuments(input []byte) ([]interface{}, error) {
+	// There is no easy check whether the input data is TOML format, this is
+	// why there is currently no other option than simply trying to parse it.
+	if toml, err := LoadTOMLDocuments(input); err == nil {
+		return toml, err
+	}
+
+	// In case the input data set starts with either a map or list start
+	// symbol, it is assumed to be a JSON document. In any other case, use
+	// the YAML parser function which also covers plain text documents.
 	switch input[0] {
 	case '{', '[':
 		return LoadJSONDocuments(input)
@@ -312,6 +324,21 @@ func LoadYAMLDocuments(input []byte) ([]interface{}, error) {
 	}
 
 	return values, nil
+}
+
+// LoadTOMLDocuments reads the provided input data slice as a TOML file, which
+// can only have one document. For the sake of having similar sounding
+// functions and the same signatures, the function uses the plural in its name
+// and returns a list of results even though it will only contain one entry.
+// All map entries inside the result document are converted into YAML MapSlice
+// types to make it compatible with the rest of the package.
+func LoadTOMLDocuments(input []byte) ([]interface{}, error) {
+	var data interface{}
+	if err := toml.Unmarshal(input, &data); err != nil {
+		return nil, err
+	}
+
+	return []interface{}{mapSlicify(data)}, nil
 }
 
 // mapSlicify makes sure that each occurrence of a map in the provided structure

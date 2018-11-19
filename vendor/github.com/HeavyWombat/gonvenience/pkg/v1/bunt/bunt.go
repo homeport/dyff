@@ -47,22 +47,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/HeavyWombat/gonvenience/pkg/v1/term"
 	colorful "github.com/lucasb-eyer/go-colorful"
 	ciede2000 "github.com/mattn/go-ciede2000"
-	isatty "github.com/mattn/go-isatty"
 )
 
 // The named colors are based upon https://en.wikipedia.org/wiki/Web_colors
 // Nice page for color code conversions: https://convertingcolors.com/
-
-// isDumbTerminal points to true if the current terminal has limited support for escape sequences, false otherwise, or nil if uninitialised
-var isDumbTerminal *bool
-
-// isTerminal points to true if the current STDOUT stream writes to a terminal (not a redirect), false otherwise, or nil if uninitialised
-var isTerminal *bool
-
-// isTrueColor points to true if the current terminal reports to support 24-bit colors, false otherwise, or nil if uninitialised
-var isTrueColor *bool
 
 // ColorSetting defines the coloring setting to be used
 var ColorSetting = AUTO
@@ -106,52 +97,17 @@ type Segment struct {
 // https://regex101.com/segmentRegexp/ulipXZ/3
 var segmentRegexp = regexp.MustCompile(fmt.Sprintf(`(?m)(.*?)((%s\[(\d+(;\d+)*)m)(.+?)(%s\[0m))`, seq, seq))
 
-// IsDumbTerminal returns whether the current terminal has a limited feature set
-func IsDumbTerminal() bool {
-	if isDumbTerminal == nil {
-		isTermDumbCheck := os.Getenv("TERM") == "dumb"
-		isDumbTerminal = &isTermDumbCheck
-	}
-
-	return *isDumbTerminal
-}
-
-// IsTerminal returns whether this program runs in a terminal (and not in a pipe)
-func IsTerminal() bool {
-	if isTerminal == nil {
-		isTerminalCheck := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
-		isTerminal = &isTerminalCheck
-	}
-
-	return *isTerminal
-}
-
-// IsTrueColor returns whether the current terminal supports 24 bit colors
-func IsTrueColor() bool {
-	if isTrueColor == nil {
-		var isTrueColorCheck = false
-		switch os.Getenv("COLORTERM") {
-		case "truecolor", "24bit":
-			isTrueColorCheck = true
-		}
-
-		isTrueColor = &isTrueColorCheck
-	}
-
-	return *isTrueColor
-}
-
 // UseColors return whether colors are used or not based on the configured color setting
 func UseColors() bool {
 	return (ColorSetting == ON) ||
-		(ColorSetting == AUTO && IsTerminal() && !IsDumbTerminal())
+		(ColorSetting == AUTO && term.IsTerminal() && !term.IsDumbTerminal())
 }
 
 // UseTrueColor returns whether true color colors should be used or not base on
 // the configured true color usage setting
 func UseTrueColor() bool {
 	return (TrueColorSetting == ON) ||
-		(TrueColorSetting == AUTO && IsTrueColor())
+		(TrueColorSetting == AUTO && term.IsTrueColor())
 }
 
 // Colorize applies an ANSI truecolor sequence for the provided color to the given text.

@@ -28,18 +28,33 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// PathStyle is a custom type for supported path styles
 type PathStyle int
 
+// Supported styles are the Dot-Style (used by Spruce for example) and GoPatch
+// Style which is used by BOSH
 const (
 	DotStyle PathStyle = iota
 	GoPatchStyle
 )
 
+// Path points to a section in a data struture by using names to identify the
+// location.
+// Example:
+//   ---
+//   sizing:
+//     api:
+//       count: 2
+// For example, `sizing.api.count` points to the key `sizing` of the root
+// element and in there to the key `api` and so on and so forth.
 type Path struct {
 	DocumentIdx  int
 	PathElements []PathElement
 }
 
+// PathElement represents one part of a path, which can either address an entry
+// in a map (by name), a named-entry list entry (key and name), or an entry in a
+// list (by index).
 type PathElement struct {
 	Idx  int
 	Key  string
@@ -50,6 +65,7 @@ func (path Path) String() string {
 	return path.ToGoPatchStyle()
 }
 
+// ToGoPatchStyle returns the path as a GoPatch style string.
 func (path *Path) ToGoPatchStyle() string {
 	sections := []string{""}
 
@@ -69,6 +85,7 @@ func (path *Path) ToGoPatchStyle() string {
 	return strings.Join(sections, "/")
 }
 
+// ToDotStyle returns the path as a Dot-Style string.
 func (path *Path) ToDotStyle() string {
 	sections := []string{}
 
@@ -85,6 +102,8 @@ func (path *Path) ToDotStyle() string {
 	return strings.Join(sections, ".")
 }
 
+// NewPathWithPathElement returns a new path based on a given path adding a new
+// path element.
 func NewPathWithPathElement(path Path, pathElement PathElement) Path {
 	result := make([]PathElement, len(path.PathElements))
 	copy(result, path.PathElements)
@@ -94,12 +113,16 @@ func NewPathWithPathElement(path Path, pathElement PathElement) Path {
 		PathElements: append(result, pathElement)}
 }
 
+// NewPathWithNamedElement returns a new path based on a given path adding a new
+// of type entry in map using the name.
 func NewPathWithNamedElement(path Path, name interface{}) Path {
 	return NewPathWithPathElement(path, PathElement{
 		Idx:  -1,
 		Name: fmt.Sprintf("%v", name)})
 }
 
+// NewPathWithNamedListElement returns a new path based on a given path adding a
+// new of type entry in a named-entry list by using key and name.
 func NewPathWithNamedListElement(path Path, identifier interface{}, name interface{}) Path {
 	return NewPathWithPathElement(path, PathElement{
 		Idx:  -1,
@@ -107,12 +130,16 @@ func NewPathWithNamedListElement(path Path, identifier interface{}, name interfa
 		Name: fmt.Sprintf("%v", name)})
 }
 
+// NewPathWithIndexedListElement returns a new path based on a given path adding
+// a new of type list entry using the index.
 func NewPathWithIndexedListElement(path Path, idx int) Path {
 	return NewPathWithPathElement(path, PathElement{
 		Idx: idx,
 	})
 }
 
+// ListPaths returns all paths in the documents using the provided choice of
+// path style.
 func ListPaths(location string, style PathStyle) ([]Path, error) {
 	inputfile, err := LoadFile(location)
 	if err != nil {
@@ -156,9 +183,19 @@ func traverseTree(path Path, obj interface{}, leafFunc func(path Path, value int
 	}
 }
 
+// ParseGoPatchStylePathString returns a path by parsing a string representation
+// which is assumed to be a GoPatch style path.
 func ParseGoPatchStylePathString(path string) (Path, error) {
-	elements := make([]PathElement, 0)
+	// Special case for root path
+	if path == "/" {
+		return Path{DocumentIdx: 0, PathElements: nil}, nil
+	}
 
+	// Poor mans solution to deal with escaped slashes, replace them with a "safe"
+	// replacement string that is later resolved into a simple slash
+	path = strings.Replace(path, `\/`, `%2F`, -1)
+
+	elements := make([]PathElement, 0)
 	for i, section := range strings.Split(path, "/") {
 		if i == 0 {
 			continue
@@ -168,14 +205,22 @@ func ParseGoPatchStylePathString(path string) (Path, error) {
 		switch len(keyNameSplit) {
 		case 1:
 			if idx, err := strconv.Atoi(keyNameSplit[0]); err == nil {
-				elements = append(elements, PathElement{Idx: idx})
+				elements = append(elements, PathElement{
+					Idx: idx,
+				})
 
 			} else {
-				elements = append(elements, PathElement{Name: keyNameSplit[0]})
+				elements = append(elements, PathElement{
+					Idx:  -1,
+					Name: strings.Replace(keyNameSplit[0], `%2F`, "/", -1),
+				})
 			}
 
 		case 2:
-			elements = append(elements, PathElement{Key: keyNameSplit[0], Name: keyNameSplit[1]})
+			elements = append(elements, PathElement{Idx: -1,
+				Key:  strings.Replace(keyNameSplit[0], `%2F`, "/", -1),
+				Name: strings.Replace(keyNameSplit[1], `%2F`, "/", -1),
+			})
 
 		default:
 			return Path{}, &InvalidPathString{
@@ -189,6 +234,8 @@ func ParseGoPatchStylePathString(path string) (Path, error) {
 	return Path{DocumentIdx: 0, PathElements: elements}, nil
 }
 
+// ParseDotStylePathString returns a path by parsing a string representation
+// which is assumed to be a Dot-Style path.
 func ParseDotStylePathString(path string, obj interface{}) (Path, error) {
 	elements := make([]PathElement, 0)
 
@@ -199,11 +246,11 @@ func ParseDotStylePathString(path string, obj interface{}) (Path, error) {
 			mapslice := pointer.(yaml.MapSlice)
 			if value, err := getValueByKey(mapslice, section); err == nil {
 				pointer = value
-				elements = append(elements, PathElement{Name: section})
+				elements = append(elements, PathElement{Idx: -1, Name: section})
 
 			} else {
 				pointer = nil
-				elements = append(elements, PathElement{Name: section})
+				elements = append(elements, PathElement{Idx: -1, Name: section})
 			}
 
 		case isList(pointer):
@@ -241,28 +288,26 @@ func ParseDotStylePathString(path string, obj interface{}) (Path, error) {
 				}
 
 				pointer = value
-				elements = append(elements, PathElement{Key: identifier, Name: section})
+				elements = append(elements, PathElement{Idx: -1, Key: identifier, Name: section})
 			}
 
 		case pointer == nil:
 			// If the pointer is nil, it means that the previous section of the path
 			// string could not be found in the data structure and that all remaining
 			// sections are assumed to be of type map.
-			elements = append(elements, PathElement{Name: section})
+			elements = append(elements, PathElement{Idx: -1, Name: section})
 		}
 	}
 
 	return Path{DocumentIdx: 0, PathElements: elements}, nil
 }
 
+// ParsePathString returns a path by parsing a string representation
+// of a path, which can be one of the supported types.
 func ParsePathString(pathString string, obj interface{}) (Path, error) {
-	if IsDotStylePath(pathString) {
-		return ParseDotStylePathString(pathString, obj)
+	if strings.HasPrefix(pathString, "/") {
+		return ParseGoPatchStylePathString(pathString)
 	}
 
-	return ParseGoPatchStylePathString(pathString)
-}
-
-func IsDotStylePath(pathString string) bool {
-	return !strings.HasPrefix(pathString, "/")
+	return ParseDotStylePathString(pathString, obj)
 }
