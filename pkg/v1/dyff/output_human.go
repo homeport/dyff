@@ -97,7 +97,7 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
 func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, showDocumentIdx bool) error {
 	output.WriteString("\n")
-	output.WriteString(diff.Path.ToString(showDocumentIdx))
+	output.WriteString(pathToString(diff.Path, showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
@@ -575,4 +575,50 @@ func CreateTableStyleString(separator string, indent int, columns ...string) str
 	}
 
 	return buf.String()
+}
+
+func styledGoPatchPath(path ytbx.Path) string {
+	if path.PathElements == nil {
+		return bunt.Sprint("*/*")
+	}
+
+	sections := []string{""}
+
+	for _, element := range path.PathElements {
+		switch {
+		case element.Name != "" && element.Key == "":
+			sections = append(sections, bunt.Sprintf("*%s*", element.Name))
+
+		case element.Name != "" && element.Key != "":
+			sections = append(sections, bunt.Sprintf("*%s*=_*%s*_", element.Key, element.Name))
+
+		default:
+			sections = append(sections, bunt.Sprintf("*%d*", element.Idx))
+		}
+	}
+
+	return strings.Join(sections, "/")
+}
+
+func styledDotStylePath(path ytbx.Path) string {
+	if path.PathElements == nil {
+		return bunt.Sprint("*(root level)*")
+	}
+
+	sections := []string{}
+
+	for _, element := range path.PathElements {
+		switch {
+		case element.Key == "" && element.Name != "":
+			sections = append(sections, bunt.Sprintf("*%s*", element.Name))
+
+		case element.Key != "" && element.Name != "":
+			sections = append(sections, bunt.Sprintf("_*%s*_", element.Name))
+
+		case element.Idx >= 0:
+			sections = append(sections, bunt.Sprintf("*%d*", element.Idx))
+		}
+	}
+
+	return strings.Join(sections, ".")
 }

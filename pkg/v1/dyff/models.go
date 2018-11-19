@@ -36,18 +36,6 @@ const (
 	// ATTENTION    = '⚠'
 )
 
-// PathElement describes a part of a path, meaning its name. In this case the "Key" string is empty. Named list entries such as "name: one" use both "Key" and "Name" to properly specify the path element.
-type PathElement struct {
-	Key  string
-	Name string
-}
-
-// Path describes a position inside a YAML (or JSON) structure by providing a name to each hierarchy level (tree structure).
-type Path struct {
-	DocumentIdx  int
-	PathElements []PathElement
-}
-
 // Detail encapsulate the actual details of a change, mainly the kind of difference and the values.
 type Detail struct {
 	Kind rune
@@ -57,7 +45,7 @@ type Detail struct {
 
 // Diff encapsulates everything noteworthy about a difference
 type Diff struct {
-	Path    Path
+	Path    ytbx.Path
 	Details []Detail
 }
 

@@ -53,6 +53,9 @@ var NonStandardIdentifierGuessCountThreshold = 3
 // changed so that it still qualifies as being a minor string change.
 var MinorChangeThreshold = 0.1
 
+// UseGoPatchPaths style paths instead of Spruce Dot-Style
+var UseGoPatchPaths = false
+
 // terminalWidth contains the terminal width as it was looked up
 var terminalWidth = -1
 
@@ -139,7 +142,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 
 	result := make([]Diff, 0)
 	for idx := range from.Documents {
-		diffs, err := compareObjects(Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])
+		diffs, err := compareObjects(ytbx.Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])
 		if err != nil {
 			return Report{}, err
 		}
@@ -150,7 +153,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 	return Report{from, to, result}, nil
 }
 
-func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error) {
+func compareObjects(path ytbx.Path, from interface{}, to interface{}) ([]Diff, error) {
 	// Save some time and process some simple nil and type-change use cases immediately
 	if (from == nil && to != nil) || (from != nil && to == nil) {
 		return []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}, nil
@@ -190,7 +193,7 @@ func compareObjects(path Path, from interface{}, to interface{}) ([]Diff, error)
 	return diffs, err
 }
 
-func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, error) {
+func compareMapSlices(path ytbx.Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, error) {
 	removals := yaml.MapSlice{}
 	additions := yaml.MapSlice{}
 
@@ -200,7 +203,7 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, 
 		key := fromItem.Key
 		if toItem, ok := getMapItemByKeyFromMapSlice(key, to); ok {
 			// `from` and `to` contain the same `key` -> require comparison
-			diffs, err := compareObjects(newPath(path, "", key), fromItem.Value, toItem.Value)
+			diffs, err := compareObjects(ytbx.NewPathWithNamedElement(path, key), fromItem.Value, toItem.Value)
 			if err != nil {
 				return nil, err
 			}
@@ -237,7 +240,7 @@ func compareMapSlices(path Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, 
 	return result, nil
 }
 
-func compareLists(path Path, from []interface{}, to []interface{}) ([]Diff, error) {
+func compareLists(path ytbx.Path, from []interface{}, to []interface{}) ([]Diff, error) {
 	// Bail out quickly if there is nothing to check
 	if len(from) == 0 && len(to) == 0 {
 		return []Diff{}, nil
@@ -254,12 +257,12 @@ func compareLists(path Path, from []interface{}, to []interface{}) ([]Diff, erro
 	return compareSimpleLists(path, from, to)
 }
 
-func compareListOfMapSlices(path Path, from []yaml.MapSlice, to []yaml.MapSlice) ([]Diff, error) {
+func compareListOfMapSlices(path ytbx.Path, from []yaml.MapSlice, to []yaml.MapSlice) ([]Diff, error) {
 	// TODO Check if there is another way to do this, or if we can save time by doing something else
 	return compareLists(path, ytbx.SimplifyList(from), ytbx.SimplifyList(to))
 }
 
-func compareSimpleLists(path Path, from []interface{}, to []interface{}) ([]Diff, error) {
+func compareSimpleLists(path ytbx.Path, from []interface{}, to []interface{}) ([]Diff, error) {
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
@@ -270,7 +273,7 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) ([]Diff
 
 	// Special case if both lists only contain one entry: directly compare the two entries with each other
 	if fromLength == 1 && fromLength == toLength {
-		return compareObjects(newPath(path, "", 0), from[0], to[0])
+		return compareObjects(ytbx.NewPathWithIndexedListElement(path, 0), from[0], to[0])
 	}
 
 	fromLookup, err := createLookUpMap(from)
@@ -322,7 +325,7 @@ func compareSimpleLists(path Path, from []interface{}, to []interface{}) ([]Diff
 	return packChangesAndAddToResult(result, true, path, orderchanges, additions, removals)
 }
 
-func compareNamedEntryLists(path Path, identifier string, from []interface{}, to []interface{}) ([]Diff, error) {
+func compareNamedEntryLists(path ytbx.Path, identifier string, from []interface{}, to []interface{}) ([]Diff, error) {
 	removals := make([]interface{}, 0)
 	additions := make([]interface{}, 0)
 
@@ -342,7 +345,7 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 
 		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
 			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
-			diffs, err := compareObjects(newPath(path, identifier, name), fromEntry, toEntry)
+			diffs, err := compareObjects(ytbx.NewPathWithNamedListElement(path, identifier, name), fromEntry, toEntry)
 			if err != nil {
 				return nil, err
 			}
@@ -377,7 +380,7 @@ func compareNamedEntryLists(path Path, identifier string, from []interface{}, to
 	return packChangesAndAddToResult(result, true, path, orderchanges, additions, removals)
 }
 
-func compareStrings(path Path, from string, to string) ([]Diff, error) {
+func compareStrings(path ytbx.Path, from string, to string) ([]Diff, error) {
 	result := make([]Diff, 0)
 	if strings.Compare(from, to) != 0 {
 		result = append(result, Diff{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}})
@@ -435,7 +438,7 @@ func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
 	return orderchanges
 }
 
-func packChangesAndAddToResult(list []Diff, prepend bool, path Path, orderchanges []Detail, additions, removals []interface{}) ([]Diff, error) {
+func packChangesAndAddToResult(list []Diff, prepend bool, path ytbx.Path, orderchanges []Detail, additions, removals []interface{}) ([]Diff, error) {
 	// Prepare a diff for this path to added to the result set (if there are changes)
 	diff := Diff{Path: path, Details: []Detail{}}
 
@@ -465,19 +468,6 @@ func packChangesAndAddToResult(list []Diff, prepend bool, path Path, orderchange
 	}
 
 	return list, nil
-}
-
-func newPath(path Path, key interface{}, name interface{}) Path {
-	result := make([]PathElement, len(path.PathElements))
-	copy(result, path.PathElements)
-
-	result = append(result, PathElement{
-		Key:  fmt.Sprintf("%v", key),
-		Name: fmt.Sprintf("%v", name)})
-
-	return Path{
-		DocumentIdx:  path.DocumentIdx,
-		PathElements: result}
 }
 
 // getMapItemByKeyFromMapSlice returns the MapItem (tuple of key/value) where the MapItem key matches the provided key. It will return an empty MapItem and bool false if the given MapSlice does not contain a suitable MapItem.
@@ -631,26 +621,6 @@ func getNonStandardIdentifierFromNamedLists(listA, listB []interface{}) string {
 	return ""
 }
 
-func listNamesOfNamedList(list []interface{}, identifier string) ([]string, error) {
-	result := make([]string, len(list))
-	for i, entry := range list {
-		switch entry.(type) {
-		case yaml.MapSlice:
-			value, err := getValueByKey(entry.(yaml.MapSlice), identifier)
-			if err != nil {
-				return nil, errors.Wrap(err, "unable to list names of a names list")
-			}
-
-			result[i] = value.(string)
-
-		default:
-			return nil, fmt.Errorf("unable to list names of a names list, because list entry #%d is not a YAML map but %s", i, ytbx.GetType(entry))
-		}
-	}
-
-	return result, nil
-}
-
 func createLookUpMap(list []interface{}) (map[uint64]int, error) {
 	result := make(map[uint64]int, len(list))
 	for idx, entry := range list {
@@ -733,16 +703,6 @@ func isList(obj interface{}) bool {
 	}
 }
 
-func isMapSlice(obj interface{}) bool {
-	switch obj.(type) {
-	case yaml.MapSlice:
-		return true
-
-	default:
-		return false
-	}
-}
-
 // ChangeRoot changes the root of an input file to a position inside its document based on the given path. Input files with more than one document are not supported, since they could have multiple elements with that path.
 func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments bool) error {
 	multipleDocuments := len(inputFile.Documents) != 1
@@ -772,11 +732,28 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments
 	}
 
 	// Parse path string and create nicely formatted output path
-	if resolvedPath, err := NewPath(path, originalRoot); err == nil {
-		path = resolvedPath.ToString(multipleDocuments)
+	if resolvedPath, err := ytbx.ParsePathString(path, originalRoot); err == nil {
+		path = pathToString(resolvedPath, multipleDocuments)
 	}
 
 	inputFile.Note = fmt.Sprintf("YAML root was changed to %s", path)
 
 	return nil
+}
+
+func pathToString(path ytbx.Path, showDocumentIdx bool) string {
+	var result string
+
+	if UseGoPatchPaths {
+		result = styledGoPatchPath(path)
+
+	} else {
+		result = styledDotStylePath(path)
+	}
+
+	if showDocumentIdx {
+		result += bunt.Sprintf("  LightSteelBlue{(document #%d)}", path.DocumentIdx+1)
+	}
+
+	return result
 }

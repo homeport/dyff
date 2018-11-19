@@ -27,8 +27,8 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
-	"strings"
 	"testing"
 
 	. "github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
@@ -156,48 +156,27 @@ func file(input string) ytbx.InputFile {
 	return inputfile
 }
 
-func path(path string) Path {
-	// path string looks like: /additions/named-entry-list-using-id/id=new
+func path(path string) ytbx.Path {
+	re := regexp.MustCompile(`^(#(\d+))?(/.+)$`)
 
-	if path == "" {
-		panic("Implementation issue: Unable to create path using an empty string")
+	captures := re.FindStringSubmatch(path)
+	docIdxStr, pathString := captures[2], captures[3]
+
+	result, err := ytbx.ParseGoPatchStylePathString(pathString)
+	if err != nil {
+		Fail(err.Error())
 	}
 
-	documentIdx := 0
-
-	result := make([]PathElement, 0)
-	for i, section := range strings.Split(path, "/") {
-		if i == 0 {
-			if section != "" {
-				if !strings.HasPrefix(section, "#") {
-					panic("Implementation issue: Invalid Go-Patch style path, it cannot start with anything other than a slash, or a document idx using #<number>")
-				}
-
-				num, err := strconv.Atoi(section[1:])
-				if err != nil {
-					panic("Implementation issue: Invalid Go-Patch style path, document idx must be a number")
-				}
-
-				documentIdx = num
-			}
-
-			continue
+	if len(docIdxStr) > 0 {
+		num, err := strconv.Atoi(docIdxStr)
+		if err != nil {
+			Fail(err.Error())
 		}
 
-		keyNameSplit := strings.Split(section, "=")
-		switch len(keyNameSplit) {
-		case 1:
-			result = append(result, PathElement{Name: keyNameSplit[0]})
-
-		case 2:
-			result = append(result, PathElement{Key: keyNameSplit[0], Name: keyNameSplit[1]})
-
-		default:
-			panic(fmt.Sprintf("Implementation issue: Invalid Go-Patch style path, path element '%s' cannot contain more than one equal sign", section))
-		}
+		result.DocumentIdx = num
 	}
 
-	return Path{DocumentIdx: documentIdx, PathElements: result}
+	return result
 }
 
 func humanDiff(diff Diff) string {
