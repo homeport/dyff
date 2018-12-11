@@ -10,24 +10,34 @@
   version = "v0.3.1"
 
 [[projects]]
-  digest = "1:7b2cc9936f0b7a7373d6a3ce7ba719ec3537069c992ea6bcc04d6c0b84ba9aa5"
+  digest = "1:7b82341f4971cad0558ba7c68981105e1612aa6dfc1c8a74f272443cb5b0d0c8"
   name = "github.com/HeavyWombat/gonvenience"
   packages = [
     "pkg/v1/bunt",
     "pkg/v1/neat",
-    "pkg/v1/term",
   ]
   pruneopts = "NUT"
-  revision = "25de2e728b7a62796e3219c12565b7ffad290ae4"
-  version = "v1.1"
+  revision = "675de31aa5337f0019588aa9c1e01ba2b6b467ac"
+  version = "v1.5"
 
 [[projects]]
-  digest = "1:09a0fc5fbe018c11effd6286fd05e4eebd24c58413a12e6bf64afb55b1235dff"
+  digest = "1:ad8afd4fd8b84471f52c72e59aa29c53360259de971f4a86cfeee17c9d988296"
   name = "github.com/HeavyWombat/ytbx"
   packages = ["pkg/v1/ytbx"]
   pruneopts = "NUT"
-  revision = "b1a634f414620a09fabf1a59fd1c62a37e1571fd"
-  version = "v0.6-alpha"
+  revision = "02ce8b0d042f1ea5ee3a2309bd18c5a6af697b5f"
+  version = "v0.7-alpha"
+
+[[projects]]
+  digest = "1:3f442ad93190c9d6512e8f4ee93990b2be09632d900b74f66a30d68af13fdcec"
+  name = "github.com/homeport/gonvenience"
+  packages = [
+    "pkg/v1/bunt",
+    "pkg/v1/term",
+  ]
+  pruneopts = "NUT"
+  revision = "675de31aa5337f0019588aa9c1e01ba2b6b467ac"
+  version = "v1.5"
 
 [[projects]]
   digest = "1:41933d387bfa3eaa6a82647914ed7044f7b8355764c24fb920892bc8c03ef0c3"
@@ -76,6 +86,14 @@
   version = "v0.0.4"
 
 [[projects]]
+  branch = "master"
+  digest = "1:2d209eb757bb4101584c2618becd4026593509343ce55491233fd090faa1f1da"
+  name = "github.com/mitchellh/go-ps"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4fdf99ab29366514c69ccccddab5dc58b8d84062"
+
+[[projects]]
   digest = "1:e34decedbcec12332c5836d16a6838f864e0b43c5b4f9aa9d9a85101015f87c2"
   name = "github.com/mitchellh/hashstructure"
   packages = ["."]
@@ -84,7 +102,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:0be1cd4c73d5e22a30edcf32a18e9809a370a7a4a52c4f41a86070b34da93fef"
+  digest = "1:cdc5cfc04dd0b98f86433207fe6d9879757c46734441a08886acc11251c7ed4a"
   name = "github.com/onsi/ginkgo"
   packages = [
     ".",
@@ -107,11 +125,11 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "3774a09d95489ccaa16032e0770d08ea77ba6184"
-  version = "v1.6.0"
+  revision = "2e1be8f7d90e9d3e3e58b0ce470f2f14d075406f"
+  version = "v1.7.0"
 
 [[projects]]
-  digest = "1:95f40a9db820078d1795c7ba2d476016aca05dc4267eaf6752a925e437cb351f"
+  digest = "1:0db10c512b410a1ecd8845e31db52622c08b76198f7ab76afb25319c84a7fd4b"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
@@ -128,8 +146,8 @@
     "types",
   ]
   pruneopts = "NUT"
-  revision = "7615b9433f86a8bdf29709bf288bc4fd0636a369"
-  version = "v1.4.2"
+  revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
+  version = "v1.4.3"
 
 [[projects]]
   digest = "1:5cf3f025cbee5951a4ee961de067c8a89fc95a5adabead774f82822efabab121"
@@ -181,11 +199,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
+  digest = "1:38f553aff0273ad6f367cb0a0f8b6eecbaef8dc6cb8b50e57b6a81c1d5b1e332"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NUT"
-  revision = "3d3f9f413869b949e48070b5bc593aa22cc2b8f2"
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 
 [[projects]]
   branch = "master"
@@ -197,7 +215,7 @@
     "html/charset",
   ]
   pruneopts = "NUT"
-  revision = "adae6a3d119ae4890b46832a2e88a95adc62b8e7"
+  revision = "610586996380ceef02dd726cc09df7e00a3f8e56"
 
 [[projects]]
   branch = "master"
@@ -209,14 +227,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1435bb97e37d0ba44239bcaf413539d3bcfc37098c24f1c795c49d654af5e956"
+  digest = "1:09c9cc2c9ca78f520d47d5db8a2c8ea73e0a5c56f6d72baed3988d1a858fe306"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "ec83556a53fe16b65c452a104ea9d1e86a671852"
+  revision = "7da8ea5c81829e397bdf930c5d8ba4b703616f33"
 
 [[projects]]
   digest = "1:7c61a813b250ba8bb02bebb0382e6c3d00e04da2b577dc58985b86312fb89ffd"
@@ -262,12 +280,12 @@
   revision = "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
 
 [[projects]]
-  digest = "1:7c95b35057a0ff2e19f707173cc1a947fa43a6eb5c4d300d196ece0334046082"
+  digest = "1:18108594151654e9e696b27b181b953f9a90b16bf14d253dd1b397b025a1487f"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
 
 [solve-meta]
   analyzer-name = "dep"

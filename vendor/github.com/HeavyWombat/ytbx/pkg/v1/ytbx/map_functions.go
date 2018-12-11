@@ -46,3 +46,15 @@ func getValueByKey(mapslice yaml.MapSlice, key string) (interface{}, error) {
 
 	return nil, &KeyNotFoundInMapError{MissingKey: key, AvailableKeys: listKeys(mapslice)}
 }
+
+func getEntryByIdentifierAndName(list []yaml.MapSlice, identifier string, name interface{}) (yaml.MapSlice, error) {
+	for _, mapslice := range list {
+		for _, element := range mapslice {
+			if element.Key == identifier && element.Value == name {
+				return mapslice, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("there is no entry %s=%v in the list", identifier, name)
+}

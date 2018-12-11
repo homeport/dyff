@@ -30,10 +30,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
-	"github.com/HeavyWombat/gonvenience/pkg/v1/bunt"
+	"github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/pkg/errors"
 
 	toml "github.com/BurntSushi/toml"
@@ -339,58 +338,6 @@ func LoadTOMLDocuments(input []byte) ([]interface{}, error) {
 	}
 
 	return []interface{}{mapSlicify(data)}, nil
-}
-
-// mapSlicify makes sure that each occurrence of a map in the provided structure
-// is changed to a YAML MapSlice.
-//
-// Please note: In case the input data were decoded by the default standard JSON
-// parser, there will be no preservation of the order of keys, because JSON does
-// not support such thing as an order of keys. Therfore, the keys are sorted to
-// have a consistent and testable output structure.
-//
-// This function supports `OrderedObjects` from the JSON library fork
-// `github.com/virtuald/go-ordered-json` and will translate this structure into
-// the compatible YAML structure.
-func mapSlicify(obj interface{}) interface{} {
-	switch obj.(type) {
-	case ordered.OrderedObject:
-		orderedObj := obj.(ordered.OrderedObject)
-		result := make(yaml.MapSlice, 0, len(orderedObj))
-		for _, member := range orderedObj {
-			result = append(result, yaml.MapItem{Key: member.Key, Value: mapSlicify(member.Value)})
-		}
-
-		return result
-
-	case map[string]interface{}:
-		hash := obj.(map[string]interface{})
-		keys := make([]string, 0, len(hash))
-		for key := range hash {
-			keys = append(keys, key)
-		}
-
-		sort.Strings(keys)
-
-		result := make(yaml.MapSlice, 0, len(hash))
-		for _, key := range keys {
-			result = append(result, yaml.MapItem{Key: key, Value: mapSlicify(hash[key])})
-		}
-
-		return result
-
-	case []interface{}:
-		list := obj.([]interface{})
-		result := make([]interface{}, len(list))
-		for idx, entry := range list {
-			result[idx] = mapSlicify(entry)
-		}
-
-		return result
-
-	default:
-		return obj
-	}
 }
 
 func getBytesFromLocation(location string) ([]byte, error) {

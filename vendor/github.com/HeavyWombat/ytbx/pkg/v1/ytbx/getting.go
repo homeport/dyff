@@ -37,7 +37,8 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 	pointerPath := Path{DocumentIdx: path.DocumentIdx}
 	for _, element := range path.PathElements {
 		switch {
-		case element.Name != "" && element.Key == "": // Map
+		// Key/Value Map, where the element name is the key for the map
+		case len(element.Key) == 0 && len(element.Name) > 0:
 			if !isMapSlice(pointer) {
 				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeMap, GetType(pointer), pointerPath.ToGoPatchStyle())
 			}
@@ -49,19 +50,22 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 
 			pointer = entry
 
-		case element.Name != "" && element.Key != "": // List (identified by name)
-			if !isList(pointer) {
-				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeSimpleList, GetType(pointer), pointerPath.ToGoPatchStyle())
+		// Complex List, where each list entry is a Key/Value map and the entry is identified by name using an indentifier (e.g. name, key, or id)
+		case len(element.Key) > 0 && len(element.Name) > 0:
+			complexList, ok := castAsComplexList(pointer)
+			if !ok {
+				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeComplexList, GetType(pointer), pointerPath.ToGoPatchStyle())
 			}
 
-			entry, ok := getEntryFromNamedList(pointer.([]interface{}), element.Key, element.Name)
-			if !ok {
-				return nil, fmt.Errorf("there is no entry %s: %s in the list", element.Key, element.Name)
+			entry, err := getEntryByIdentifierAndName(complexList, element.Key, element.Name)
+			if err != nil {
+				return nil, err
 			}
 
 			pointer = entry
 
-		default: // List (identified by index)
+		// Simple List (identified by index)
+		case len(element.Key) == 0 && len(element.Name) == 0:
 			if !isList(pointer) {
 				return nil, fmt.Errorf("failed to traverse tree, expected a %s but found type %s at %s", typeSimpleList, GetType(pointer), pointerPath.ToGoPatchStyle())
 			}
@@ -72,6 +76,9 @@ func Grab(obj interface{}, pathString string) (interface{}, error) {
 			}
 
 			pointer = list[element.Idx]
+
+		default:
+			return nil, fmt.Errorf("failed to traverse tree, the provided path %s seems to be invalid", path)
 		}
 
 		// Update the path that the current pointer has (only used in error case to point to the right position)
