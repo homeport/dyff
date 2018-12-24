@@ -24,4 +24,6 @@ set -euo pipefail
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
 
+export GO111MODULE=on
+
 (cd "$BASEDIR" && find . -path ./vendor -prune -o -type f -name "*.go" -exec dirname {} \; | sort -u | xargs go vet)

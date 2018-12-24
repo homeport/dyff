@@ -1,15 +1,13 @@
 ---
 language: go
 go:
-- 1.8.x
-- 1.9.x
-- 1.10.x
+- 1.11.x
 
 install:
 - curl --silent --location https://goo.gl/g1CpPX | bash -s v1.0.4
 
 script:
-- make --jobs test
+- make test
 
 after_success:
 - for FILE in $(find . -type f -name "*.coverprofile" 2>/dev/null); do echo >> $FILE; done
@@ -27,5 +25,5 @@ deploy:
   file_glob: true
   file: binaries/*
   on:
-    condition: $TRAVIS_GO_VERSION =~ ^1\.10
+    condition: $TRAVIS_GO_VERSION =~ ^1\.11
     tags: true

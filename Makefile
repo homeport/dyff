@@ -38,16 +38,13 @@ lint:
 gocyclo:
 	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-cyclo.sh
 
-megacheck:
-	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/megacheck.sh
-
 misspell:
 	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/misspell.sh
 
 ginkgo:
-	ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --nodes=4 --compilers=2 --cover
+	GO111MODULE=on ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --nodes=4 --compilers=2 --cover
 
-test: vet fmt lint gocyclo megacheck misspell ginkgo
+test: vet fmt lint gocyclo misspell ginkgo
 
 install: test
 	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --only-local
