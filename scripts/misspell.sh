@@ -23,7 +23,7 @@
 set -euo pipefail
 
 if ! hash misspell >/dev/null 2>&1; then
-  echo 'Unable to find tool "misspell" in the path. Run "go get -u github.com/client9/misspell/cmd/misspell" to install it.'
+  echo 'Unable to find tool "misspell" in the path. Run "go get github.com/client9/misspell/cmd/misspell" to install it.'
   exit 1
 fi
 

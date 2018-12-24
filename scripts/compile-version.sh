@@ -51,7 +51,7 @@ if [[ ${SKIP_LOCAL_BUILD} == 0 ]]; then
   if [[ -n ${GOPATH+x} ]]; then
     if [[ -d "${GOPATH}/bin" ]]; then
       echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for local machine to \\033[1m${GOPATH}/bin\\033[0m"
-      (cd "${BASEDIR}/cmd/dyff/" && go install)
+      (cd "${BASEDIR}/cmd/dyff/" && GO111MODULE=on go install)
     fi
   fi
 fi
@@ -71,18 +71,13 @@ while read -r OS ARCH; do
     TARGET_FILE="${TARGET_FILE}.exe"
   fi
 
-  (cd "$BASEDIR" && CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -a -tags netgo -ldflags="-s -w -extldflags '-static' -X github.com/HeavyWombat/dyff/internal/cmd.version=${VERSION}" -o "$TARGET_FILE" cmd/dyff/main.go)
+  (cd "$BASEDIR" && GO111MODULE=on CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -tags netgo -ldflags="-s -w -extldflags '-static' -X github.com/HeavyWombat/dyff/internal/cmd.version=${VERSION}" -o "$TARGET_FILE" cmd/dyff/main.go)
 
 done <<EOL
 darwin	386
 darwin	amd64
-freebsd	386
-freebsd	amd64
 linux	386
 linux	amd64
-linux	ppc64
-linux	ppc64le
-linux	s390x
 windows	386
 windows	amd64
 EOL
