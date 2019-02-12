@@ -22,7 +22,7 @@ package dyff_test
 
 import (
 	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
-	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
+	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"

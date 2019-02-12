@@ -31,8 +31,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
 	. "github.com/homeport/gonvenience/pkg/v1/bunt"
+	"github.com/homeport/ytbx/pkg/v1/ytbx"
 
 	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
 	yaml "gopkg.in/yaml.v2"
