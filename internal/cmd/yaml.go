@@ -23,7 +23,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/HeavyWombat/ytbx/pkg/v1/ytbx"
+	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 )
 
