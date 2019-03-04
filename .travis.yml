@@ -2,9 +2,10 @@
 language: go
 go:
 - 1.11.x
+- 1.12.x
 
 install:
-- curl --silent --location https://goo.gl/g1CpPX | bash -s v1.0.5
+- curl --silent --location https://goo.gl/g1CpPX | bash -s v1.0.6
 
 script:
 - GO111MODULE=on go mod download
