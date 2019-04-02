@@ -137,7 +137,7 @@ func Plural(amount int, text ...string) string {
 // CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a report with the list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
 func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 	if len(from.Documents) != len(to.Documents) {
-		return Report{}, fmt.Errorf("Comparing YAMLs with a different number of documents is currently not supported")
+		return Report{}, fmt.Errorf("comparing YAMLs with a different number of documents is currently not supported")
 	}
 
 	result := make([]Diff, 0)
@@ -187,7 +187,7 @@ func compareObjects(path ytbx.Path, from interface{}, to interface{}) ([]Diff, e
 		}
 
 	default:
-		err = fmt.Errorf("Failed to compare objects due to unsupported type %s", reflect.TypeOf(from))
+		err = fmt.Errorf("failed to compare objects due to unsupported type %s", reflect.TypeOf(from))
 	}
 
 	return diffs, err
@@ -516,9 +516,9 @@ func GetIdentifierFromNamedList(list []interface{}) string {
 	counters := map[interface{}]int{}
 
 	for _, sliceEntry := range list {
-		switch sliceEntry.(type) {
+		switch mapslice := sliceEntry.(type) {
 		case yaml.MapSlice:
-			for _, mapSliceEntry := range sliceEntry.(yaml.MapSlice) {
+			for _, mapSliceEntry := range mapslice {
 				if _, ok := counters[mapSliceEntry.Key]; !ok {
 					counters[mapSliceEntry.Key] = 0
 				}
@@ -542,9 +542,9 @@ func getIdentifierFromNamedLists(listA, listB []interface{}) string {
 	createKeyCountMap := func(list []interface{}) map[interface{}]int {
 		result := map[interface{}]int{}
 		for _, entry := range list {
-			switch entry.(type) {
+			switch mapslice := entry.(type) {
 			case yaml.MapSlice:
-				for _, mapitem := range entry.(yaml.MapSlice) {
+				for _, mapitem := range mapslice {
 					if _, ok := result[mapitem.Key]; !ok {
 						result[mapitem.Key] = 0
 					}
@@ -639,10 +639,10 @@ func calcHash(obj interface{}) (uint64, error) {
 	var err error
 
 	// Convert YAML MapSlices to maps first so that the order of keys does not matter for the hash value of this object
-	switch obj.(type) {
+	switch mapslice := obj.(type) {
 	case yaml.MapSlice:
-		tmp := make(map[interface{}]interface{}, len(obj.(yaml.MapSlice)))
-		for _, entry := range obj.(yaml.MapSlice) {
+		tmp := make(map[interface{}]interface{}, len(mapslice))
+		for _, entry := range mapslice {
 			tmp[entry.Key] = entry.Value
 		}
 		obj = tmp

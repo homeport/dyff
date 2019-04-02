@@ -137,7 +137,7 @@ func (report *HumanReport) generateHumanDetailOutput(detail Detail) (string, err
 		return report.generateHumanDetailOutputOrderchange(detail)
 	}
 
-	return "", fmt.Errorf("Unsupported detail type %c", detail.Kind)
+	return "", fmt.Errorf("unsupported detail type %c", detail.Kind)
 }
 
 func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (string, error) {
@@ -374,7 +374,7 @@ func highlightAdditions(diffs []diffmatchpatch.Diff) string {
 func (report *HumanReport) LoadX509Certs(from, to string) (string, string, error) {
 	// Back out quickly if cert inspection is disabled
 	if report.DoNotInspectCerts {
-		return "", "", fmt.Errorf("Certificate inspection is disabled")
+		return "", "", fmt.Errorf("certificate inspection is disabled")
 	}
 
 	fromDecoded, _ := pem.Decode([]byte(from))
