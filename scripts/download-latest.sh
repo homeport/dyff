@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2018 Matthias Diester
+# Copyright © 2019 The Homeport Team
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ if ! hash jq 2>/dev/null; then
 fi
 
 # Find the latest dyff version using the GitHub API
-LATEST_TAG="$(curl --silent --location https://api.github.com/repos/HeavyWombat/dyff/releases | jq --raw-output '.[0].tag_name')"
+LATEST_TAG="$(curl --silent --location https://api.github.com/repos/homeport/dyff/releases | jq --raw-output '.[0].tag_name')"
 SYSTEM_UNAME="$(uname | tr '[:upper:]' '[:lower:]')"
 
 # Find a suitable install location
@@ -51,7 +51,7 @@ fi
 # Download and install dyff
 case "${SYSTEM_UNAME}" in
   darwin | linux)
-    DYFF_URI="https://github.com/HeavyWombat/dyff/releases/download/${LATEST_TAG}/dyff-${SYSTEM_UNAME}-amd64"
+    DYFF_URI="https://github.com/homeport/dyff/releases/download/${LATEST_TAG}/dyff-${SYSTEM_UNAME}-amd64"
 
     echo -e "Downloading \\033[4;94m${DYFF_URI}\\033[0m to \\033[1m${TARGET_FILE}\\033[0m"
     if curl --progress-bar --location "${DYFF_URI}" --output "${TARGET_FILE}" && chmod a+rx "${TARGET_FILE}"; then

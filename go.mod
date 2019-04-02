@@ -1,4 +1,4 @@
-module github.com/HeavyWombat/dyff
+module github.com/homeport/dyff
 
 require (
 	github.com/homeport/gonvenience v1.7.0

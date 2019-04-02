@@ -1,4 +1,4 @@
-# Copyright © 2018 Matthias Diester
+# Copyright © 2019 The Homeport Team
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
 all: test
 
 clean:
-	@go clean -i -r -cache
 	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
+	@go clean -i -cache $(shell go list ./...)
 
 vet:
 	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-vet.sh

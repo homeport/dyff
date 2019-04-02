@@ -1,4 +1,4 @@
-// Copyright © 2018 Matthias Diester
+// Copyright © 2019 The Homeport Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/HeavyWombat/dyff/internal/cmd"
+	. "github.com/homeport/dyff/internal/cmd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

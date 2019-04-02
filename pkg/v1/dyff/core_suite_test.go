@@ -1,4 +1,4 @@
-// Copyright © 2018 Matthias Diester
+// Copyright © 2019 The Homeport Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ import (
 	. "github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 
-	. "github.com/HeavyWombat/dyff/pkg/v1/dyff"
+	. "github.com/homeport/dyff/pkg/v1/dyff"
 	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/onsi/ginkgo"
