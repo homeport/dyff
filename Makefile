@@ -18,36 +18,38 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-.PHONY: all vet fmt lint gocyclo megacheck misspell ginkgo test install build
+sources := $(wildcard cmd/dyff/*.go internal/cmd/*.go pkg/v1/dyff/*.go)
 
-all: test
+.PHONY: all clean vet fmt lint gocyclo misspell ginkgo test install build
+
+all: test build
 
 clean:
-	@rm -rf $(dir $(realpath $(firstword $(MAKEFILE_LIST))))/binaries
+	@rm -rf binaries internal/cmd/cmd.coverprofile pkg/v1/dyff/dyff.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
-vet:
-	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-vet.sh
+vet: $(sources)
+	scripts/go-vet.sh
 
-fmt:
-	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-fmt.sh
+fmt: $(sources)
+	scripts/go-fmt.sh
 
-lint:
-	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-lint.sh
+lint: $(sources)
+	scripts/go-lint.sh
 
-gocyclo:
-	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/go-cyclo.sh
+gocyclo: $(sources)
+	scripts/go-cyclo.sh
 
-misspell:
-	$(dir $(realpath $(firstword $(MAKEFILE_LIST))))scripts/misspell.sh
+misspell: $(sources)
+	scripts/misspell.sh
 
-ginkgo:
+ginkgo: $(sources)
 	GO111MODULE=on ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --nodes=4 --compilers=2 --cover
 
 test: vet fmt lint gocyclo misspell ginkgo
 
-install: test
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --only-local
+install: test $(sources)
+	@scripts/compile-version.sh --only-local
 
-build: test
-	@$(dir $(realpath $(firstword $(MAKEFILE_LIST))))/scripts/compile-version.sh --no-local
+build: test $(sources)
+	@scripts/compile-version.sh --no-local
