@@ -101,9 +101,9 @@ func yml(input string) yaml.MapSlice {
 
 	// Load YAML by parsing the actual string as YAML if it was not a file location
 	doc := singleDoc(input)
-	switch doc.(type) {
+	switch mapslice := doc.(type) {
 	case yaml.MapSlice:
-		return doc.(yaml.MapSlice)
+		return mapslice
 	}
 
 	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a YAML MapSlice:\n%s\n", input))
@@ -113,12 +113,12 @@ func yml(input string) yaml.MapSlice {
 func list(input string) []interface{} {
 	doc := singleDoc(input)
 
-	switch doc.(type) {
+	switch obj := doc.(type) {
 	case []interface{}:
-		return doc.([]interface{})
+		return obj
 
 	case []yaml.MapSlice:
-		return ytbx.SimplifyList(doc.([]yaml.MapSlice))
+		return ytbx.SimplifyList(obj)
 	}
 
 	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of any kind:\n%s\nIt was parsed as: %#v", input, doc))

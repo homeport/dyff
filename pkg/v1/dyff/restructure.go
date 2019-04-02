@@ -111,7 +111,7 @@ func ListStringKeys(mapslice yaml.MapSlice) ([]string, error) {
 			keys[i] = mapitem.Key.(string)
 
 		default:
-			return nil, fmt.Errorf("Provided mapslice mapitem contains non-string key: %#v", mapitem.Key)
+			return nil, fmt.Errorf("provided mapslice mapitem contains non-string key: %#v", mapitem.Key)
 		}
 	}
 
@@ -120,30 +120,27 @@ func ListStringKeys(mapslice yaml.MapSlice) ([]string, error) {
 
 // RestructureObject takes an object and traverses down any sub elements such as list entries or map values to recursively call restructure itself. On YAML MapSlices (maps), it will use a look-up mechanism to decide if the order of key in that map needs to be rearranged to meet some known established human order.
 func RestructureObject(obj interface{}) interface{} {
-	switch obj.(type) {
+	switch val := obj.(type) {
 	case yaml.MapSlice:
-		mapslice := obj.(yaml.MapSlice)
-
 		// Restructure the YAML MapSlice keys
-		if keys, err := ListStringKeys(mapslice); err == nil {
+		if keys, err := ListStringKeys(val); err == nil {
 			if fn := getSuitableReorderFunction(keys); fn != nil {
-				mapslice = fn(mapslice)
+				val = fn(val)
 			}
 		}
 
 		// Restructure the values of the respective keys of this YAML MapSlice
-		for _, mapitem := range mapslice {
+		for _, mapitem := range val {
 			mapitem.Value = RestructureObject(mapitem.Value)
 		}
 
-		return mapslice
+		return val
 
 	case []interface{}:
-		list := obj.([]interface{})
-		for i := range list {
-			list[i] = RestructureObject(list[i])
+		for i := range val {
+			val[i] = RestructureObject(val[i])
 		}
-		return list
+		return val
 
 	default:
 		return obj
