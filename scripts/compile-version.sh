@@ -81,3 +81,18 @@ linux	amd64
 windows	386
 windows	amd64
 EOL
+
+if hash file >/dev/null 2>&1; then
+  echo -e '\n\033[1mFile details of compiled binaries:\033[0m'
+  file binaries/*
+fi
+
+if hash shasum >/dev/null 2>&1; then
+  echo -e '\n\033[1mSHA sum of compiled binaries:\033[0m'
+  shasum --algorithm 256 binaries/*
+
+elif hash sha1sum >/dev/null 2>&1; then
+  echo -e '\n\033[1mSHA sum of compiled binaries:\033[0m'
+  sha1sum binaries/*
+  echo
+fi
