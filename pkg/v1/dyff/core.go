@@ -22,7 +22,6 @@ package dyff
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -30,18 +29,11 @@ import (
 
 	"github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
-
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
-	"golang.org/x/crypto/ssh/terminal"
 	yaml "gopkg.in/yaml.v2"
 )
-
-const defaultFallbackTerminalWidth = 80
-
-// FixedTerminalWidth disables terminal width detection and reset it with a fixed given value
-var FixedTerminalWidth = -1
 
 // NonStandardIdentifierGuessCountThreshold specifies how many list entries are
 // needed for the guess-the-identifier function to actually consider the key
@@ -55,9 +47,6 @@ var MinorChangeThreshold = 0.1
 
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
-
-// terminalWidth contains the terminal width as it was looked up
-var terminalWidth = -1
 
 // bold returns the provided string in 'bold' format
 func bold(text string) string {
@@ -79,28 +68,6 @@ func red(text string) string {
 
 func yellow(text string) string {
 	return bunt.Colorize(text, bunt.ModificationYellow)
-}
-
-func getTerminalWidth() int {
-	if terminalWidth < 0 {
-		if FixedTerminalWidth > 0 {
-			// Initialize with user preference (overwrite)
-			terminalWidth = FixedTerminalWidth
-
-		} else if width, _, err := terminal.GetSize(int(os.Stdout.Fd())); err == nil {
-			// Initialize with values read from terminal
-			terminalWidth = width
-
-		} else {
-			// Initialize with default fall-back value
-			terminalWidth = defaultFallbackTerminalWidth
-			WarningLogger.Printf("Unable to determine terminal width, using default width %d", defaultFallbackTerminalWidth)
-		}
-
-		DebugLogger.Printf("Terminal width set to %d characters", terminalWidth)
-	}
-
-	return terminalWidth
 }
 
 // Plural returns a string with the number and noun in either singular or plural form.

@@ -26,6 +26,7 @@ import (
 	"io"
 
 	"github.com/homeport/gonvenience/pkg/v1/bunt"
+	"github.com/homeport/gonvenience/pkg/v1/term"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 )
 
@@ -50,7 +51,7 @@ func (report *BriefReport) WriteReport(out io.Writer) error {
 
 	var template string
 	switch {
-	case len(oneline)-6+plainTextLength(noOfChanges)+plainTextLength(niceFrom)+plainTextLength(niceTo) < getTerminalWidth():
+	case len(oneline)-6+plainTextLength(noOfChanges)+plainTextLength(niceFrom)+plainTextLength(niceTo) < term.GetTerminalWidth():
 		template = oneline
 
 	default:
