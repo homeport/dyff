@@ -31,6 +31,7 @@ import (
 	"github.com/homeport/dyff/pkg/v1/dyff"
 	"github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/gonvenience/pkg/v1/neat"
+	"github.com/homeport/gonvenience/pkg/v1/term"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
@@ -92,7 +93,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&colormode, "color", "c", "auto", "specify color usage: on, off, or auto")
 	rootCmd.PersistentFlags().StringVarP(&truecolormode, "truecolor", "t", "auto", "specify true color usage: on, off, or auto")
-	rootCmd.PersistentFlags().IntVarP(&dyff.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
+	rootCmd.PersistentFlags().IntVarP(&term.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
 	rootCmd.PersistentFlags().BoolVarP(&ytbx.PreserveKeyOrderInJSON, "preserve-key-order-in-json", "k", false, "use ordered keys during JSON decoding (non standard behavior)")
 	rootCmd.PersistentFlags().BoolVarP(&debugMode, "debug", "d", false, "enable debug mode")
 }

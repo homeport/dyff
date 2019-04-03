@@ -31,11 +31,12 @@ import (
 	"strconv"
 	"testing"
 
-	. "github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
+	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/homeport/dyff/pkg/v1/dyff"
-	yaml "gopkg.in/yaml.v2"
+	. "github.com/homeport/gonvenience/pkg/v1/bunt"
+	. "github.com/homeport/gonvenience/pkg/v1/term"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

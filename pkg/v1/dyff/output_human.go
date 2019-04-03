@@ -34,6 +34,7 @@ import (
 
 	"github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/gonvenience/pkg/v1/neat"
+	"github.com/homeport/gonvenience/pkg/v1/term"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -217,7 +218,7 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 		to := detail.To.([]string)
 		const singleLineSeparator = ", "
 
-		threshold := getTerminalWidth() / 2
+		threshold := term.GetTerminalWidth() / 2
 		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
 		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
 		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
@@ -517,7 +518,7 @@ func (report *HumanReport) writeTextBlocks(buf stringWriter, indent int, blocks 
 	}
 
 	// In case the line with blocks next to each other would surpass the terminal width, fall back to the no-table-style
-	if report.NoTableStyle || theoreticalMaxLineLength > getTerminalWidth() {
+	if report.NoTableStyle || theoreticalMaxLineLength > term.GetTerminalWidth() {
 		for _, block := range blocks {
 			lines := strings.Split(block, "\n")
 			for _, line := range lines {
