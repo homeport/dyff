@@ -27,6 +27,7 @@ import (
 
 	"github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/gonvenience/pkg/v1/term"
+	"github.com/homeport/gonvenience/pkg/v1/text"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 )
 
@@ -45,7 +46,7 @@ func (report *BriefReport) WriteReport(out io.Writer) error {
 	writer := bufio.NewWriter(out)
 	defer writer.Flush()
 
-	noOfChanges := bunt.BoldText(Plural(len(report.Diffs), "change"))
+	noOfChanges := bunt.BoldText(text.Plural(len(report.Diffs), "change"))
 	niceFrom := ytbx.HumanReadableLocationInformation(report.From)
 	niceTo := ytbx.HumanReadableLocationInformation(report.To)
 

@@ -1,5 +1,7 @@
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/DATA-DOG/go-sqlmock v1.3.3 h1:CWUqKXe0s8A2z6qCgkP4Kru7wC11YoAnoupUKFDnH08=
+github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
@@ -12,6 +14,8 @@ github.com/homeport/gonvenience v1.7.0 h1:w41b0ehw45R6OR6NxgHKrNdfsQV8QN6kX7P8xN
 github.com/homeport/gonvenience v1.7.0/go.mod h1:G2NH1mGKb2RtQ/xy7Axv5Tnnwzq4yE6NoYyINd1Lvuk=
 github.com/homeport/gonvenience v1.7.4 h1:23L+d9Ydb4mmceYc7l+hAuCuH08H8ol8c+QX90Yv61o=
 github.com/homeport/gonvenience v1.7.4/go.mod h1:G2NH1mGKb2RtQ/xy7Axv5Tnnwzq4yE6NoYyINd1Lvuk=
+github.com/homeport/gonvenience v1.7.6 h1:XJIykzrxOLZkOYwk2mj61YnWbIM+47XWrYJ3BSOMbAg=
+github.com/homeport/gonvenience v1.7.6/go.mod h1:G2NH1mGKb2RtQ/xy7Axv5Tnnwzq4yE6NoYyINd1Lvuk=
 github.com/homeport/ytbx v1.0.1 h1:h4pTIbknMb/Q+y0GZOF3zI5Do0WaX0h9o4e0PllhoBo=
 github.com/homeport/ytbx v1.0.1/go.mod h1:YygYRuIWr0dsa1CNYubBrMX4xCZFItPDv+MTFqGKOoo=
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=
