@@ -35,6 +35,7 @@ import (
 	"github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/gonvenience/pkg/v1/neat"
 	"github.com/homeport/gonvenience/pkg/v1/term"
+	"github.com/homeport/gonvenience/pkg/v1/text"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -78,7 +79,7 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 		stats.WriteString(fmt.Sprintf(" between %s\n", ytbx.HumanReadableLocationInformation(report.From)))
 		stats.WriteString(fmt.Sprintf("     and %s\n", ytbx.HumanReadableLocationInformation(report.To)))
 		stats.WriteString("\n")
-		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(Plural(len(report.Diffs), "difference"), bunt.Bold)))
+		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(text.Plural(len(report.Diffs), "difference"), bunt.Bold)))
 
 		writer.WriteString(CreateTableStyleString(" ", 0, bunt.Style(banner, bunt.Bold), stats.String()))
 	}
@@ -146,10 +147,10 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 
 	switch detail.To.(type) {
 	case []interface{}:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, text.Plural(len(detail.To.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
 
 	case yaml.MapSlice:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, text.Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 	}
 
 	yamlOutput, err := yamlStringInGreenishColors(RestructureObject(detail.To))
@@ -167,10 +168,10 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 
 	switch detail.From.(type) {
 	case []interface{}:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, text.Plural(len(detail.From.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
 
 	case yaml.MapSlice:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
+		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, text.Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 	}
 
 	yamlOutput, err := yamlStringInRedishColors(RestructureObject(detail.From))

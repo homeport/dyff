@@ -23,11 +23,11 @@ package dyff
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/homeport/gonvenience/pkg/v1/bunt"
+	"github.com/homeport/gonvenience/pkg/v1/text"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
@@ -68,37 +68,6 @@ func red(text string) string {
 
 func yellow(text string) string {
 	return bunt.Colorize(text, bunt.ModificationYellow)
-}
-
-// Plural returns a string with the number and noun in either singular or plural form.
-// If one text argument is given, the plural will be done with the plural s. If two
-// arguments are provided, the second text is the irregular plural. If more than two
-// are provided, then the additional ones are simply ignored.
-func Plural(amount int, text ...string) string {
-	words := [...]string{"no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"}
-
-	var number string
-	if amount < len(words) {
-		number = words[amount]
-	} else {
-		number = strconv.Itoa(amount)
-	}
-
-	switch len(text) {
-	case 1:
-		if amount == 1 {
-			return fmt.Sprintf("%s %s", number, text[0])
-		}
-
-		return fmt.Sprintf("%s %ss", number, text[0])
-
-	default:
-		if amount == 1 {
-			return fmt.Sprintf("%s %s", number, text[0])
-		}
-
-		return fmt.Sprintf("%s %s", number, text[1])
-	}
 }
 
 // CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a report with the list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
@@ -677,7 +646,7 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments
 	if multipleDocuments {
 		return fmt.Errorf("change root for an input file is only possible if there is only one document, but %s contains %s",
 			inputFile.Location,
-			Plural(len(inputFile.Documents), "document"))
+			text.Plural(len(inputFile.Documents), "document"))
 	}
 
 	// For reference reasons, keep the original root level
