@@ -71,14 +71,15 @@ while read -r OS ARCH; do
     TARGET_FILE="${TARGET_FILE}.exe"
   fi
 
-  (cd "$BASEDIR" && GO111MODULE=on CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -tags netgo -ldflags="-s -w -extldflags '-static' -X github.com/homeport/dyff/internal/cmd.version=${VERSION}" -o "$TARGET_FILE" cmd/dyff/main.go)
+  (cd "$BASEDIR" && GO111MODULE=on CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build \
+    -tags netgo \
+    -ldflags="-s -w -extldflags '-static' -X github.com/homeport/dyff/internal/cmd.version=${VERSION}" \
+    -o "$TARGET_FILE" \
+    cmd/dyff/main.go)
 
 done <<EOL
-darwin	386
 darwin	amd64
-linux	386
-linux	amd64
-windows	386
+linux	  amd64
 windows	amd64
 EOL
 

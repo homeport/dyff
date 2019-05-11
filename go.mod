@@ -1,10 +1,9 @@
 module github.com/homeport/dyff
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/homeport/gonvenience v1.7.6
 	github.com/homeport/ytbx v1.0.1
-	github.com/lucasb-eyer/go-colorful v1.0.1
+	github.com/lucasb-eyer/go-colorful v1.0.2
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/onsi/ginkgo v1.8.0
 	github.com/onsi/gomega v1.5.0
