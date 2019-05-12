@@ -153,7 +153,7 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, text.Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 	}
 
-	yamlOutput, err := yamlStringInGreenishColors(RestructureObject(detail.To))
+	yamlOutput, err := yamlStringInGreenishColors(ytbx.RestructureObject(detail.To))
 	if err != nil {
 		return "", err
 	}
@@ -174,7 +174,7 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, text.Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
 	}
 
-	yamlOutput, err := yamlStringInRedishColors(RestructureObject(detail.From))
+	yamlOutput, err := yamlStringInRedishColors(ytbx.RestructureObject(detail.From))
 	if err != nil {
 		return "", err
 	}

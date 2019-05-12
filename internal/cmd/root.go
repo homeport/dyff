@@ -163,7 +163,7 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 
 	for _, document := range inputFile.Documents {
 		if w.Restructure {
-			document = dyff.RestructureObject(document)
+			document = ytbx.RestructureObject(document)
 		}
 
 		switch {

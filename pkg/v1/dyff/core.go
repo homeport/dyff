@@ -425,7 +425,7 @@ func getValueByKey(mapslice yaml.MapSlice, key string) (interface{}, error) {
 		}
 	}
 
-	if names, err := ListStringKeys(mapslice); err == nil {
+	if names, err := ytbx.ListStringKeys(mapslice); err == nil {
 		return nil, fmt.Errorf("no key '%s' found in map, available keys are: %s", key, strings.Join(names, ", "))
 	}
 

@@ -22,7 +22,7 @@ sources := $(wildcard cmd/dyff/*.go internal/cmd/*.go pkg/v1/dyff/*.go)
 
 .PHONY: all clean vet fmt lint gocyclo misspell ginkgo test install build
 
-all: test build
+all: clean test build
 
 clean:
 	@rm -rf binaries internal/cmd/cmd.coverprofile pkg/v1/dyff/dyff.coverprofile
