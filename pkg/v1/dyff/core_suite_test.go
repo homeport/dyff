@@ -35,7 +35,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	. "github.com/homeport/dyff/pkg/v1/dyff"
-	. "github.com/homeport/gonvenience/pkg/v1/bunt"
 	. "github.com/homeport/gonvenience/pkg/v1/term"
 
 	. "github.com/onsi/ginkgo"
@@ -48,7 +47,6 @@ func TestCore(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	ColorSetting = OFF
 	LoggingLevel = NONE
 	FixedTerminalWidth = 80
 })

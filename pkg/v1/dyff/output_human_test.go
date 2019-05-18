@@ -25,10 +25,16 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/homeport/dyff/pkg/v1/dyff"
+	. "github.com/homeport/gonvenience/pkg/v1/bunt"
+	"github.com/homeport/ytbx/pkg/v1/ytbx"
 )
 
 var _ = Describe("human readable report", func() {
 	Context("reporting differences", func() {
+		BeforeEach(func() {
+			ColorSetting = OFF
+		})
+
 		It("should show a nice string difference", func() {
 			content := singleDiff("/some/yaml/structure/string", MODIFICATION, "fOObar?", "Foobar!")
 			Expect(humanDiff(content)).To(BeEquivalentTo(`
@@ -111,6 +117,32 @@ input: |+
 			compareAgainstExpected("../../../assets/testbed/from.yml",
 				"../../../assets/testbed/to.yml",
 				"../../../assets/testbed/expected-dyff-gopatch.human")
+		})
+	})
+
+	Context("human path rendering", func() {
+		BeforeEach(func() {
+			ColorSetting = ON
+		})
+
+		It("should render path with underscores correctly (https://github.com/homeport/dyff/issues/33)", func() {
+			// Please note: The actual error is in the gonvenience package, this test
+			// case exists to verify the issue from with dyff.
+
+			path, err := ytbx.ParseGoPatchStylePathString("/variables/name=ROUTER_TLS_PEM/options")
+			Expect(err).ToNot(HaveOccurred())
+
+			content := singleDiff(path.String(), MODIFICATION, 12, 12.0)
+			actual := humanDiff(content)
+
+			Expect(RemoveAllEscapeSequences(actual)).To(
+				BeEquivalentTo(`
+variables.ROUTER_TLS_PEM.options
+  ± type change from int to float64
+    - 12
+    + 12
+
+`))
 		})
 	})
 })
