@@ -80,7 +80,6 @@ while read -r OS ARCH; do
 done <<EOL
 darwin	amd64
 linux	  amd64
-windows	amd64
 EOL
 
 if hash file >/dev/null 2>&1; then
