@@ -1,7 +1,7 @@
 module github.com/homeport/dyff
 
 require (
-	github.com/homeport/gonvenience v1.7.8
+	github.com/homeport/gonvenience v1.8.0
 	github.com/homeport/ytbx v1.1.0
 	github.com/lucasb-eyer/go-colorful v0.0.0-20180526135729-345fbb3dbcdb
 	github.com/mitchellh/hashstructure v1.0.0
