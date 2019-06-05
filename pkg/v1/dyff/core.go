@@ -182,7 +182,7 @@ func compareLists(path ytbx.Path, from []interface{}, to []interface{}) ([]Diff,
 		return []Diff{}, nil
 	}
 
-	if identifier := getIdentifierFromNamedLists(from, to); identifier != "" {
+	if identifier, err := getIdentifierFromNamedLists(from, to); err == nil {
 		return compareNamedEntryLists(path, identifier, from, to)
 	}
 
@@ -474,40 +474,50 @@ func GetIdentifierFromNamedList(list []interface{}) string {
 	return ""
 }
 
-func getIdentifierFromNamedLists(listA, listB []interface{}) string {
-	createKeyCountMap := func(list []interface{}) map[interface{}]int {
-		result := map[interface{}]int{}
+func getIdentifierFromNamedLists(listA, listB []interface{}) (string, error) {
+	createKeyCountMap := func(list []interface{}) (map[interface{}]map[uint64]struct{}, error) {
+		result := map[interface{}]map[uint64]struct{}{}
 		for _, entry := range list {
 			switch mapslice := entry.(type) {
 			case yaml.MapSlice:
 				for _, mapitem := range mapslice {
-					if _, ok := result[mapitem.Key]; !ok {
-						result[mapitem.Key] = 0
+					hash, err := calcHash(mapitem.Value)
+					if err != nil {
+						return nil, err
 					}
 
-					result[mapitem.Key]++
+					if _, found := result[mapitem.Key]; !found {
+						result[mapitem.Key] = map[uint64]struct{}{}
+					}
+
+					result[mapitem.Key][hash] = struct{}{}
 				}
 			}
 		}
 
-		return result
+		return result, nil
 	}
 
-	listALength := len(listA)
-	listBLength := len(listB)
-	counterA := createKeyCountMap(listA)
-	counterB := createKeyCountMap(listB)
+	counterA, err := createKeyCountMap(listA)
+	if err != nil {
+		return "", err
+	}
+
+	counterB, err := createKeyCountMap(listB)
+	if err != nil {
+		return "", err
+	}
 
 	// Check for the usual suspects: name, key, and id
 	for _, identifier := range []string{"name", "key", "id"} {
-		if countA, okA := counterA[identifier]; okA && countA == listALength {
-			if countB, okB := counterB[identifier]; okB && countB == listBLength {
-				return identifier
+		if countA, okA := counterA[identifier]; okA && len(countA) == len(listA) {
+			if countB, okB := counterB[identifier]; okB && len(countB) == len(listB) {
+				return identifier, nil
 			}
 		}
 	}
 
-	return ""
+	return "", fmt.Errorf("unable to find a key that can serve as an unique identifier")
 }
 
 func getNonStandardIdentifierFromNamedLists(listA, listB []interface{}) string {

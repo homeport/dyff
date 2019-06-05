@@ -105,24 +105,30 @@ input: |+
 		It("should show a binary data difference in hex dump style", func() {
 			compareAgainstExpected("../../../assets/binary/from.yml",
 				"../../../assets/binary/to.yml",
-				"../../../assets/binary/dyff.expected")
+				"../../../assets/binary/dyff.expected",
+				false)
 		})
 
 		It("should show the testbed results as expected", func() {
 			compareAgainstExpected("../../../assets/testbed/from.yml",
 				"../../../assets/testbed/to.yml",
-				"../../../assets/testbed/expected-dyff-spruce.human")
+				"../../../assets/testbed/expected-dyff-spruce.human",
+				false)
 
-			UseGoPatchPaths = true
 			compareAgainstExpected("../../../assets/testbed/from.yml",
 				"../../../assets/testbed/to.yml",
-				"../../../assets/testbed/expected-dyff-gopatch.human")
+				"../../../assets/testbed/expected-dyff-gopatch.human",
+				true)
 		})
 	})
 
 	Context("human path rendering", func() {
 		BeforeEach(func() {
 			ColorSetting = ON
+		})
+
+		AfterEach(func() {
+			ColorSetting = OFF
 		})
 
 		It("should render path with underscores correctly (https://github.com/homeport/dyff/issues/33)", func() {

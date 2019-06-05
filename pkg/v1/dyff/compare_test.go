@@ -710,5 +710,20 @@ b: bar
 				}
 			})
 		})
+
+		Context("checking known issues of compare", func() {
+			It("should not return order change differences in case the named-entry list does not have unique identifiers", func() {
+				from, to, err := ytbx.LoadFiles("../../../assets/issues/issue-38/from.yml", "../../../assets/issues/issue-38/to.yml")
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+
+				Expect(len(results.Diffs)).To(BeEquivalentTo(0))
+			})
+		})
 	})
 })

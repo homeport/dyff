@@ -51,7 +51,10 @@ var _ = BeforeSuite(func() {
 	FixedTerminalWidth = 80
 })
 
-func compareAgainstExpected(fromPath string, toPath string, expectedPath string) {
+func compareAgainstExpected(fromPath string, toPath string, expectedPath string, useGoPatch bool) {
+	tmp := UseGoPatchPaths
+	UseGoPatchPaths = useGoPatch
+
 	from, to, err := ytbx.LoadFiles(fromPath, toPath)
 	Expect(err).To(BeNil())
 
@@ -75,6 +78,8 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string)
 	writer.Flush()
 
 	Expect(string(expected)).To(BeIdenticalTo(buffer.String()))
+
+	UseGoPatchPaths = tmp
 }
 
 func yml(input string) yaml.MapSlice {
