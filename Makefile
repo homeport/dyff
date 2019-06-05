@@ -20,7 +20,7 @@
 
 sources := $(wildcard cmd/dyff/*.go internal/cmd/*.go pkg/v1/dyff/*.go)
 
-.PHONY: all clean vet fmt lint gocyclo misspell ginkgo test install build
+.PHONY: all clean fmt gobuild vet lint gocyclo misspell ginkgo test build build-all
 
 all: clean test build
 
@@ -28,28 +28,40 @@ clean:
 	@rm -rf binaries internal/cmd/cmd.coverprofile pkg/v1/dyff/dyff.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
-vet: $(sources)
-	scripts/go-vet.sh
-
 fmt: $(sources)
-	scripts/go-fmt.sh
+	@GO111MODULE=on gofmt -s -w $(sources)
 
-lint: $(sources)
-	scripts/go-lint.sh
+gobuild: $(sources)
+	@GO111MODULE=on go build ./...
 
-gocyclo: $(sources)
-	scripts/go-cyclo.sh
+vet: gobuild
+	@GO111MODULE=on go vet $(shell go list ./...)
 
-misspell: $(sources)
-	scripts/misspell.sh
+lint: gobuild
+	@GO111MODULE=on golint -set_exit_status $(shell go list ./...)
 
-ginkgo: $(sources)
-	GO111MODULE=on ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --trace --race --nodes=4 --compilers=2 --cover
+gocyclo: gobuild
+	@GO111MODULE=on gocyclo -over 15 $(sources)
 
-test: vet fmt lint gocyclo misspell ginkgo
+misspell: gobuild
+	@misspell -error README.md $(sources)
 
-install: test $(sources)
-	@scripts/compile-version.sh --only-local
+ginkgo: gobuild
+	@GO111MODULE=on ginkgo \
+		-r \
+		-randomizeAllSpecs \
+		-randomizeSuites \
+		-failOnPending \
+		-trace \
+		-race \
+		-nodes=4 \
+		-compilers=2 \
+		-cover
 
-build: test $(sources)
-	@scripts/compile-version.sh --no-local
+test: vet lint gocyclo misspell ginkgo
+
+build: $(sources)
+	@scripts/compile-version.sh --local
+
+build-all: $(sources)
+	@scripts/compile-version.sh --all

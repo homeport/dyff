@@ -23,19 +23,35 @@
 set -euo pipefail
 
 BASEDIR="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="$(cd "$BASEDIR" && git describe --tags)"
+VERSION="$(cd "${BASEDIR}" && git describe --tags)"
+TARGET_PATH="${BASEDIR}/binaries"
 
-SKIP_FULL_BUILD=0
-SKIP_LOCAL_BUILD=0
+function build-binary() {
+  OS="$1"
+  ARCH="$2"
+
+  echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for OS \\033[1m${OS}\\033[0m and architecture \\033[1m${ARCH}\\033[0m"
+  TARGET_FILE="${TARGET_PATH}/dyff-${OS}-${ARCH}"
+  if [[ ${OS} == "windows" ]]; then
+    TARGET_FILE="${TARGET_FILE}.exe"
+  fi
+
+  GO111MODULE=on CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build \
+    -tags netgo \
+    -ldflags="-s -w -extldflags '-static' -X github.com/homeport/dyff/internal/cmd.version=${VERSION}" \
+    -o "$TARGET_FILE" \
+    "${BASEDIR}/cmd/dyff/main.go"
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --only-local)
-      SKIP_FULL_BUILD=1
+    --local)
+      build-binary "$(uname | tr '[:upper:]' '[:lower:]')" "$(uname -m | sed 's/x86_64/amd64/')"
       ;;
 
-    --no-local)
-      SKIP_LOCAL_BUILD=1
+    --all)
+      build-binary darwin amd64
+      build-binary linux amd64
       ;;
 
     *)
@@ -45,42 +61,6 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
-
-# Compile a local version into GOPATH bin if it exists
-if [[ ${SKIP_LOCAL_BUILD} == 0 ]]; then
-  if [[ -n ${GOPATH+x} ]]; then
-    if [[ -d "${GOPATH}/bin" ]]; then
-      echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for local machine to \\033[1m${GOPATH}/bin\\033[0m"
-      (cd "${BASEDIR}/cmd/dyff/" && GO111MODULE=on go install)
-    fi
-  fi
-fi
-
-# Stop here if skip full build flag was used
-if [[ $SKIP_FULL_BUILD == 1 ]]; then
-  exit 0
-fi
-
-# Compile all possible operating systems and architectures into the binaries directory (to be used for distribution)
-TARGET_PATH="${BASEDIR}/binaries"
-mkdir -p "$TARGET_PATH"
-while read -r OS ARCH; do
-  echo -e "Compiling \\033[1mdyff version ${VERSION}\\033[0m for OS \\033[1m${OS}\\033[0m and architecture \\033[1m${ARCH}\\033[0m"
-  TARGET_FILE="${TARGET_PATH}/dyff-${OS}-${ARCH}"
-  if [[ ${OS} == "windows" ]]; then
-    TARGET_FILE="${TARGET_FILE}.exe"
-  fi
-
-  (cd "$BASEDIR" && GO111MODULE=on CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build \
-    -tags netgo \
-    -ldflags="-s -w -extldflags '-static' -X github.com/homeport/dyff/internal/cmd.version=${VERSION}" \
-    -o "$TARGET_FILE" \
-    cmd/dyff/main.go)
-
-done <<EOL
-darwin	amd64
-linux	  amd64
-EOL
 
 if hash file >/dev/null 2>&1; then
   echo -e '\n\033[1mFile details of compiled binaries:\033[0m'

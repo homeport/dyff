@@ -9,7 +9,8 @@ install:
 script:
 - GO111MODULE=on go mod download
 - GO111MODULE=on go mod verify
-- make test
+- make gobuild
+- make -j test
 
 after_success:
 - for FILE in $(find . -type f -name "*.coverprofile" 2>/dev/null); do echo >> $FILE; done
@@ -17,7 +18,7 @@ after_success:
 - bash <(curl -s https://codecov.io/bash)
 
 before_deploy:
-- make build
+- make build-all
 
 deploy:
   provider: releases

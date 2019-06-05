@@ -27,35 +27,47 @@ if ! hash curl 2>/dev/null; then
   exit 1
 fi
 
-if ! hash jq 2>/dev/null; then
-  echo "Required tool jq is not installed."
+if [[ "$(uname -m)" != "x86_64" ]]; then
+  echo -e "Unsupported machine type \\033[1m$(uname -m)\\033[0m: Please check \\033[4;94mhttps://api.github.com/repos/homeport/dyff/releases\\033[0m manually"
   exit 1
 fi
 
-# Find the latest dyff version using the GitHub API
-LATEST_TAG="$(curl --silent --location https://api.github.com/repos/homeport/dyff/releases | jq --raw-output '.[0].tag_name')"
+if [[ $# -eq 0 ]]; then
+  if ! hash jq 2>/dev/null; then
+    echo -e 'Required tool \033[1mjq\033[0m is not installed.'
+    exit 1
+  fi
+
+  # Find the latest version using the GitHub API
+  SELECTED_TAG="$(curl --silent --location https://api.github.com/repos/homeport/dyff/releases | jq --raw-output '.[0].tag_name')"
+else
+  # Use provided argument as tag to download
+  SELECTED_TAG="$1"
+fi
+
 SYSTEM_UNAME="$(uname | tr '[:upper:]' '[:lower:]')"
 
 # Find a suitable install location
-if touch /usr/local/bin/dyff 2>/dev/null; then
-  TARGET_FILE=/usr/local/bin/dyff
+if [[ -w /usr/local/bin ]]; then
+  TARGET_DIR=/usr/local/bin
 
-elif grep -q -e "$HOME/bin" -e '\~/bin' <<<"$PATH"; then
-  TARGET_FILE=$HOME/bin/dyff
+elif [[ -w "$HOME/bin" ]] && grep -q -e "$HOME/bin" -e '\~/bin' <<<"$PATH"; then
+  TARGET_DIR=$HOME/bin
 
 else
-  echo "Unable to determine a writable install location. Make sure that you have write access to either /usr/local/bin or $HOME/bin."
+  echo -e "Unable to determine a writable install location. Make sure that you have write access to either \\033[1m/usr/local/bin\\033[0m or \\033[1m$HOME/bin\\033[0m and that is in your PATH."
   exit 1
 fi
 
-# Download and install dyff
+# Download and install
 case "${SYSTEM_UNAME}" in
   darwin | linux)
-    DYFF_URI="https://github.com/homeport/dyff/releases/download/${LATEST_TAG}/dyff-${SYSTEM_UNAME}-amd64"
+    DOWNLOAD_URI="https://github.com/homeport/dyff/releases/download/${SELECTED_TAG}/dyff-${SYSTEM_UNAME}-amd64"
 
-    echo -e "Downloading \\033[4;94m${DYFF_URI}\\033[0m to \\033[1m${TARGET_FILE}\\033[0m"
-    if curl --progress-bar --location "${DYFF_URI}" --output "${TARGET_FILE}" && chmod a+rx "${TARGET_FILE}"; then
-      echo -e "\\nSuccessfully installed \\033[1m$(${TARGET_FILE} version)\\033[0m\\n"
+    echo -e "Downloading \\033[4;94m${DOWNLOAD_URI}\\033[0m to place it into \\033[1m${TARGET_DIR}\\033[0m"
+    if curl --progress-bar --location "${DOWNLOAD_URI}" --output "${TARGET_DIR}/dyff"; then
+      chmod a+rx "${TARGET_DIR}/dyff"
+      echo -e "\\nSuccessfully installed \\033[1mdyff\\033[0m into \\033[1m${TARGET_DIR}\\033[0m\\n"
     fi
     ;;
 
