@@ -32,12 +32,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/homeport/gonvenience/pkg/v1/bunt"
-	"github.com/homeport/gonvenience/pkg/v1/neat"
-	"github.com/homeport/gonvenience/pkg/v1/term"
-	"github.com/homeport/gonvenience/pkg/v1/text"
+	"github.com/gonvenience/bunt"
+	"github.com/gonvenience/neat"
+	"github.com/gonvenience/term"
+	"github.com/gonvenience/text"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
-	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -79,9 +78,12 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 		stats.WriteString(fmt.Sprintf(" between %s\n", ytbx.HumanReadableLocationInformation(report.From)))
 		stats.WriteString(fmt.Sprintf("     and %s\n", ytbx.HumanReadableLocationInformation(report.To)))
 		stats.WriteString("\n")
-		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(text.Plural(len(report.Diffs), "difference"), bunt.Bold)))
+		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(text.Plural(len(report.Diffs), "difference"), bunt.Bold())))
 
-		writer.WriteString(CreateTableStyleString(" ", 0, bunt.Style(banner, bunt.Bold), stats.String()))
+		writer.WriteString(CreateTableStyleString(" ", 0,
+			bunt.Style(banner, bunt.EachLine(), bunt.Bold()),
+			stats.String(),
+		))
 	}
 
 	// Loop over the diff and generate each report into the buffer
@@ -145,12 +147,18 @@ func (report *HumanReport) generateHumanDetailOutput(detail Detail) (string, err
 func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (string, error) {
 	var output bytes.Buffer
 
-	switch detail.To.(type) {
+	switch obj := detail.To.(type) {
 	case []interface{}:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, text.Plural(len(detail.To.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
+		output.WriteString(yellow("%c %s added:\n",
+			ADDITION,
+			text.Plural(len(obj), "list entry", "list entries"),
+		))
 
 	case yaml.MapSlice:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s added:\n", ADDITION, text.Plural(len(detail.To.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
+		output.WriteString(yellow("%c %s added:\n",
+			ADDITION,
+			text.Plural(len(obj), "map entry", "map entries"),
+		))
 	}
 
 	yamlOutput, err := yamlStringInGreenishColors(ytbx.RestructureObject(detail.To))
@@ -166,12 +174,14 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (string, error) {
 	var output bytes.Buffer
 
-	switch detail.From.(type) {
+	switch obj := detail.From.(type) {
 	case []interface{}:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, text.Plural(len(detail.From.([]interface{})), "list entry", "list entries")), bunt.ModificationYellow))
+		text := text.Plural(len(obj), "list entry", "list entries")
+		output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
 
 	case yaml.MapSlice:
-		output.WriteString(bunt.Colorize(fmt.Sprintf("%c %s removed:\n", REMOVAL, text.Plural(len(detail.From.(yaml.MapSlice)), "map entry", "map entries")), bunt.ModificationYellow))
+		text := text.Plural(len(obj), "map entry", "map entries")
+		output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
 	}
 
 	yamlOutput, err := yamlStringInRedishColors(ytbx.RestructureObject(detail.From))
@@ -196,14 +206,20 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 	} else {
 		// default output
 		if fromType != toType {
-			output.WriteString(yellow(fmt.Sprintf("%c type change from %s to %s\n", MODIFICATION, italic(reflectKindToString(fromType)), italic(reflectKindToString(toType)))))
+			output.WriteString(yellow("%c type change from %s to %s\n",
+				MODIFICATION,
+				italic(reflectKindToString(fromType)),
+				italic(reflectKindToString(toType)),
+			))
 
 		} else {
-			output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+			output.WriteString(yellow("%c value change\n",
+				MODIFICATION,
+			))
 		}
 
-		output.WriteString(red(fmt.Sprintf("  - %v\n", detail.From)))
-		output.WriteString(green(fmt.Sprintf("  + %v\n", detail.To)))
+		output.WriteString(red("  - %v\n", detail.From))
+		output.WriteString(green("  + %v\n", detail.To))
 	}
 
 	return output.String(), nil
@@ -223,8 +239,8 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
 		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
 		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
-			output.WriteString(red(fmt.Sprintf("  - %s\n", strings.Join(from, singleLineSeparator))))
-			output.WriteString(green(fmt.Sprintf("  + %s\n", strings.Join(to, singleLineSeparator))))
+			output.WriteString(red("  - %s\n", strings.Join(from, singleLineSeparator)))
+			output.WriteString(green("  + %s\n", strings.Join(to, singleLineSeparator)))
 
 		} else {
 			output.WriteString(CreateTableStyleString(" ", 2,
@@ -243,7 +259,12 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 			return "", err
 		}
 
-		output.WriteString(CreateTableStyleString(" ", 2, red(fromOutput), green(toOutput)))
+		output.WriteString(CreateTableStyleString(
+			" ",
+			2,
+			red(fromOutput),
+			green(toOutput),
+		))
 	}
 
 	return output.String(), nil
@@ -253,37 +274,37 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 	// TODO Simplify code by only writing the output code once and set-up the respective strings in each if block.
 
 	if fromCertText, toCertText, err := report.LoadX509Certs(from, to); err == nil {
-		output.WriteString(yellow(fmt.Sprintf("%c certificate change\n", MODIFICATION)))
+		output.WriteString(yellow("%c certificate change\n", MODIFICATION))
 		output.WriteString(report.highlightByLine(fromCertText, toCertText))
 
 	} else if !isValidUTF8String(from, to) {
-		output.WriteString(yellow(fmt.Sprintf("%c content change\n", MODIFICATION)))
+		output.WriteString(yellow("%c content change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
-			createStringWithPrefix("  - ", hex.Dump([]byte(from)), bunt.RemovalRed),
-			createStringWithPrefix("  + ", hex.Dump([]byte(to)), bunt.AdditionGreen))
-
+			red("%s", createStringWithPrefix("  - ", hex.Dump([]byte(from)))),
+			green("%s", createStringWithPrefix("  + ", hex.Dump([]byte(to)))),
+		)
 	} else if isWhitespaceOnlyChange(from, to) {
-		output.WriteString(yellow(fmt.Sprintf("%c whitespace only change\n", MODIFICATION)))
+		output.WriteString(yellow("%c whitespace only change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
-			createStringWithPrefix("  - ", showWhitespaceCharacters(from), bunt.RemovalRed),
-			createStringWithPrefix("  + ", showWhitespaceCharacters(to), bunt.AdditionGreen))
-
+			red("%s", createStringWithPrefix("  - ", showWhitespaceCharacters(from))),
+			green("%s", createStringWithPrefix("  + ", showWhitespaceCharacters(to))),
+		)
 	} else if isMultiLine(from, to) {
-		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+		output.WriteString(yellow("%c value change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
-			createStringWithPrefix("  - ", from, bunt.RemovalRed),
-			createStringWithPrefix("  + ", to, bunt.AdditionGreen))
-
+			red("%s", createStringWithPrefix("  - ", from)),
+			green("%s", createStringWithPrefix("  + ", to)),
+		)
 	} else if isMinorChange(from, to) {
-		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
+		output.WriteString(yellow("%c value change\n", MODIFICATION))
 		diffs := diffmatchpatch.New().DiffMain(from, to, false)
 		output.WriteString(highlightRemovals(diffs))
 		output.WriteString(highlightAdditions(diffs))
 
 	} else {
-		output.WriteString(yellow(fmt.Sprintf("%c value change\n", MODIFICATION)))
-		output.WriteString(createStringWithPrefix("  - ", from, bunt.RemovalRed))
-		output.WriteString(createStringWithPrefix("  + ", to, bunt.AdditionGreen))
+		output.WriteString(yellow("%c value change\n", MODIFICATION))
+		output.WriteString(red("%s", createStringWithPrefix("  - ", from)))
+		output.WriteString(green("%s", createStringWithPrefix("  + ", to)))
 	}
 }
 
@@ -296,23 +317,24 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 	if len(fromLines) == len(toLines) {
 		for i := range fromLines {
 			if fromLines[i] != toLines[i] {
-				fromLines[i] = bunt.Colorize(fromLines[i], bunt.RemovalRed, bunt.Bold)
-				toLines[i] = bunt.Colorize(toLines[i], bunt.AdditionGreen, bunt.Bold)
+				fromLines[i] = red(fromLines[i])
+				toLines[i] = green(toLines[i])
 
 			} else {
-				fromLines[i] = bunt.Colorize(fromLines[i], bunt.LightSalmon)
-				toLines[i] = bunt.Colorize(toLines[i], bunt.LightGreen)
+				fromLines[i] = lightred(fromLines[i])
+				toLines[i] = lightgreen(toLines[i])
 			}
 		}
 
 		report.writeTextBlocks(&buf, 0,
-			createStringWithPrefix(bunt.Colorize("  - ", bunt.RemovalRed), strings.Join(fromLines, "\n")),
-			createStringWithPrefix(bunt.Colorize("  + ", bunt.AdditionGreen), strings.Join(toLines, "\n")))
+			createStringWithPrefix(red("  - "), strings.Join(fromLines, "\n")),
+			createStringWithPrefix(green("  + "), strings.Join(toLines, "\n")))
 
 	} else {
 		report.writeTextBlocks(&buf, 0,
-			createStringWithPrefix("  - ", from, bunt.RemovalRed),
-			createStringWithPrefix("  + ", to, bunt.AdditionGreen))
+			red(createStringWithPrefix("  - ", from)),
+			green(createStringWithPrefix("  + ", to)),
+		)
 	}
 
 	return buf.String()
@@ -339,14 +361,14 @@ func reflectKindToString(kind reflect.Kind) string {
 func highlightRemovals(diffs []diffmatchpatch.Diff) string {
 	var buf bytes.Buffer
 
-	buf.WriteString(bunt.Colorize("  - ", bunt.RemovalRed))
+	buf.WriteString(red("  - "))
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
-			buf.WriteString(bunt.Colorize(part.Text, bunt.LightSalmon))
+			buf.WriteString(lightred(part.Text))
 
 		case diffmatchpatch.DiffDelete:
-			buf.WriteString(bunt.Colorize(part.Text, bunt.RemovalRed, bunt.Bold))
+			buf.WriteString(bold(red(part.Text)))
 		}
 	}
 
@@ -357,14 +379,14 @@ func highlightRemovals(diffs []diffmatchpatch.Diff) string {
 func highlightAdditions(diffs []diffmatchpatch.Diff) string {
 	var buf bytes.Buffer
 
-	buf.WriteString(bunt.Colorize("  + ", bunt.AdditionGreen))
+	buf.WriteString(green("  + "))
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
-			buf.WriteString(bunt.Colorize(part.Text, bunt.LightGreen))
+			buf.WriteString(lightgreen(part.Text))
 
 		case diffmatchpatch.DiffInsert:
-			buf.WriteString(bunt.Colorize(part.Text, bunt.AdditionGreen, bunt.Bold))
+			buf.WriteString(bold(green(part.Text)))
 		}
 	}
 
@@ -461,10 +483,9 @@ func showWhitespaceCharacters(text string) string {
 	return strings.Replace(strings.Replace(text, "\n", bold("↵\n"), -1), " ", bold("·"), -1)
 }
 
-func createStringWithPrefix(prefix string, obj interface{}, color ...colorful.Color) string {
+func createStringWithPrefix(prefix string, obj interface{}) string {
 	var buf bytes.Buffer
-	var lines = strings.Split(fmt.Sprintf("%v", obj), "\n")
-	for i, line := range lines {
+	for i, line := range strings.Split(fmt.Sprintf("%v", obj), "\n") {
 		if i == 0 {
 			buf.WriteString(prefix)
 
@@ -476,16 +497,7 @@ func createStringWithPrefix(prefix string, obj interface{}, color ...colorful.Co
 		buf.WriteString("\n")
 	}
 
-	switch len(color) {
-	case 1:
-		return bunt.Colorize(buf.String(), color[0])
-
-	case 2:
-		return bunt.ColorizeFgBg(buf.String(), color[0], color[1])
-
-	default:
-		return buf.String()
-	}
+	return buf.String()
 }
 
 func plainTextLength(text string) int {
@@ -563,7 +575,9 @@ func CreateTableStyleString(separator string, indent int, columns ...string) str
 
 	for i, col := range columns {
 		for j, line := range strings.Split(col, "\n") {
-			mtrx[j][i] = strings.Repeat(" ", indent) + line + strings.Repeat(" ", max[i]-plainTextLength(line))
+			mtrx[j][i] = strings.Repeat(" ", indent) +
+				line +
+				strings.Repeat(" ", max[i]-plainTextLength(line))
 		}
 	}
 

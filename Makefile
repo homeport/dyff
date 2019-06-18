@@ -30,6 +30,7 @@ clean:
 
 fmt: $(sources)
 	@GO111MODULE=on gofmt -s -w $(sources)
+	@GO111MODULE=on goimports -w $(sources)
 
 gobuild: $(sources)
 	@GO111MODULE=on go build ./...

@@ -31,14 +31,14 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
-	yaml "gopkg.in/yaml.v2"
-
-	. "github.com/homeport/dyff/pkg/v1/dyff"
-	. "github.com/homeport/gonvenience/pkg/v1/term"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	. "github.com/gonvenience/term"
+	. "github.com/homeport/dyff/pkg/v1/dyff"
+	"github.com/homeport/ytbx/pkg/v1/ytbx"
+	"github.com/onsi/gomega/types"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func TestCore(t *testing.T) {
@@ -50,6 +50,43 @@ var _ = BeforeSuite(func() {
 	LoggingLevel = NONE
 	FixedTerminalWidth = 80
 })
+
+func BeLike(expected interface{}) types.GomegaMatcher {
+	return &extendedStringMatcher{
+		expected: expected,
+	}
+}
+
+type extendedStringMatcher struct {
+	expected interface{}
+}
+
+func (matcher *extendedStringMatcher) Match(actual interface{}) (success bool, err error) {
+	actualString, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("BeLike matcher expected a string, not %T", actual)
+	}
+
+	expectedString, ok := matcher.expected.(string)
+	if !ok {
+		return false, fmt.Errorf("BeLike matcher expected a string, not %T", actual)
+	}
+
+	return actualString == expectedString, nil
+}
+
+func (matcher *extendedStringMatcher) FailureMessage(actual interface{}) string {
+	return fmt.Sprintf("Expected\n\t%#v\nto be like\n\t%#v",
+		actual,
+		matcher.expected)
+}
+
+func (matcher *extendedStringMatcher) NegatedFailureMessage(actual interface{}) string {
+	return fmt.Sprintf("Expected\n\t%#v\nnot to be like\n\t%#v",
+		actual,
+		matcher.expected,
+	)
+}
 
 func compareAgainstExpected(fromPath string, toPath string, expectedPath string, useGoPatch bool) {
 	tmp := UseGoPatchPaths
@@ -79,7 +116,7 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 
 	expected := fmt.Sprintf("%#v", string(rawBytes))
 	actual := fmt.Sprintf("%#v", buffer.String())
-	Expect(expected).To(BeIdenticalTo(actual))
+	Expect(expected).To(BeLike(actual))
 
 	UseGoPatchPaths = tmp
 }

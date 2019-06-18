@@ -26,8 +26,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/homeport/gonvenience/pkg/v1/bunt"
-	"github.com/homeport/gonvenience/pkg/v1/text"
+	"github.com/gonvenience/bunt"
+	"github.com/gonvenience/text"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
@@ -47,28 +47,6 @@ var MinorChangeThreshold = 0.1
 
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
-
-// bold returns the provided string in 'bold' format
-func bold(text string) string {
-	return bunt.Style(text, bunt.Bold)
-}
-
-// italic returns the provided string in 'italic' format
-func italic(text string) string {
-	return bunt.Style(text, bunt.Italic)
-}
-
-func green(text string) string {
-	return bunt.Colorize(text, bunt.AdditionGreen)
-}
-
-func red(text string) string {
-	return bunt.Colorize(text, bunt.RemovalRed)
-}
-
-func yellow(text string) string {
-	return bunt.Colorize(text, bunt.ModificationYellow)
-}
 
 // CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a report with the list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
 func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {

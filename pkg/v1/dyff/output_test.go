@@ -26,8 +26,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	. "github.com/gonvenience/bunt"
 	. "github.com/homeport/dyff/pkg/v1/dyff"
-	. "github.com/homeport/gonvenience/pkg/v1/bunt"
 )
 
 var _ = Describe("general output tests", func() {
@@ -71,7 +71,7 @@ Miss Foobar`
 %s
 %s
 %s
-`, Colorize("#1", Lime), Colorize("#2", Blue), Colorize("#3", Aqua, Underline), Colorize("#4", LemonChiffon, Bold, Italic))
+`, Sprintf("Lime{#1}"), Sprintf("Blue{#2}"), Sprintf("Aqua{~#3~}"), Sprintf("LemonChiffon{_*#4*_}"))
 
 			stringB := `
 Mr. Foobar
@@ -90,7 +90,7 @@ Miss Foobar`
 %s  Mrs. Foobar  200
 %s  Miss Foobar  3000
 %s               40000
-                 500000`, Colorize("#1", Lime), Colorize("#2", Blue), Colorize("#3", Aqua, Underline), Colorize("#4", LemonChiffon, Bold, Italic))))
+                 500000`, Sprintf("Lime{#1}"), Sprintf("Blue{#2}"), Sprintf("Aqua{~#3~}"), Sprintf("LemonChiffon{_*#4*_}"))))
 		})
 	})
 })

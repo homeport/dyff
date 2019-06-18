@@ -21,37 +21,63 @@
 package dyff
 
 import (
+	"fmt"
+
 	"github.com/gonvenience/bunt"
-	"github.com/gonvenience/neat"
 	colorful "github.com/lucasb-eyer/go-colorful"
 )
 
-func yamlStringInRedishColors(input interface{}) (string, error) {
-	return neat.NewOutputProcessor(true, true, &map[string]colorful.Color{
-		"keyColor":           bunt.FireBrick,
-		"indentLineColor":    {R: 0.2, G: 0, B: 0},
-		"scalarDefaultColor": bunt.LightCoral,
-		"boolColor":          bunt.LightCoral,
-		"floatColor":         bunt.LightCoral,
-		"intColor":           bunt.LightCoral,
-		"multiLineTextColor": bunt.DarkSalmon,
-		"nullColor":          bunt.Salmon,
-		"emptyStructures":    bunt.LightSalmon,
-		"dashColor":          bunt.FireBrick,
-	}).ToYAML(input)
+var (
+	additionGreen      = color("#58BF38")
+	modificationYellow = color("#C7C43F")
+	removalRed         = color("#B9311B")
+)
+
+func color(hex string) colorful.Color {
+	color, _ := colorful.Hex(hex)
+	return color
 }
 
-func yamlStringInGreenishColors(input interface{}) (string, error) {
-	return neat.NewOutputProcessor(true, true, &map[string]colorful.Color{
-		"keyColor":           bunt.Green,
-		"indentLineColor":    {R: 0, G: 0.2, B: 0},
-		"scalarDefaultColor": bunt.LimeGreen,
-		"boolColor":          bunt.LimeGreen,
-		"floatColor":         bunt.LimeGreen,
-		"intColor":           bunt.LimeGreen,
-		"multiLineTextColor": bunt.OliveDrab,
-		"nullColor":          bunt.Olive,
-		"emptyStructures":    bunt.DarkOliveGreen,
-		"dashColor":          bunt.Green,
-	}).ToYAML(input)
+func green(format string, a ...interface{}) string {
+	return colored(additionGreen, format, a...)
+}
+
+func red(format string, a ...interface{}) string {
+	return colored(removalRed, format, a...)
+}
+
+func yellow(format string, a ...interface{}) string {
+	return colored(modificationYellow, format, a...)
+}
+
+func lightgreen(format string, a ...interface{}) string {
+	return colored(bunt.LightGreen, format, a...)
+}
+
+func lightred(format string, a ...interface{}) string {
+	return colored(bunt.LightSalmon, format, a...)
+}
+
+func bold(format string, a ...interface{}) string {
+	return bunt.Style(
+		fmt.Sprintf(format, a...),
+		bunt.EachLine(),
+		bunt.Bold(),
+	)
+}
+
+func italic(format string, a ...interface{}) string {
+	return bunt.Style(
+		fmt.Sprintf(format, a...),
+		bunt.EachLine(),
+		bunt.Italic(),
+	)
+}
+
+func colored(color colorful.Color, format string, a ...interface{}) string {
+	return bunt.Style(
+		fmt.Sprintf(format, a...),
+		bunt.EachLine(),
+		bunt.Foreground(color),
+	)
 }
