@@ -27,11 +27,12 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
+	"github.com/gonvenience/bunt"
+	"github.com/gonvenience/neat"
+	"github.com/gonvenience/term"
 	"github.com/homeport/dyff/pkg/v1/dyff"
-	"github.com/homeport/gonvenience/pkg/v1/bunt"
-	"github.com/homeport/gonvenience/pkg/v1/neat"
-	"github.com/homeport/gonvenience/pkg/v1/term"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
@@ -98,6 +99,22 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&debugMode, "debug", "d", false, "enable debug mode")
 }
 
+func parseSetting(setting string) (bunt.SwitchState, error) {
+	switch strings.ToLower(setting) {
+	case "auto":
+		return bunt.AUTO, nil
+
+	case "off", "no", "false":
+		return bunt.OFF, nil
+
+	case "on", "yes", "true":
+		return bunt.ON, nil
+
+	default:
+		return bunt.OFF, fmt.Errorf("invalid state '%s' used, supported modes are: auto, on, or off", setting)
+	}
+}
+
 func initSettings() {
 	var err error
 
@@ -105,12 +122,12 @@ func initSettings() {
 		dyff.SetLoggingLevel(dyff.DEBUG)
 	}
 
-	bunt.ColorSetting, err = bunt.ParseSetting(colormode)
+	bunt.ColorSetting, err = parseSetting(colormode)
 	if err != nil {
 		exitWithError("Invalid color setting", err)
 	}
 
-	bunt.TrueColorSetting, err = bunt.ParseSetting(truecolormode)
+	bunt.TrueColorSetting, err = parseSetting(truecolormode)
 	if err != nil {
 		exitWithError("Invalid true color setting", err)
 	}
@@ -119,7 +136,7 @@ func initSettings() {
 // exitWithError exits program with given text and error message
 func exitWithError(text string, err error) {
 	if err != nil {
-		fmt.Printf("%s: %s\n", text, bunt.Colorize(err.Error(), bunt.Red))
+		bunt.Printf("%s: Red{%s}\n", text, err.Error())
 
 	} else {
 		fmt.Print(text)

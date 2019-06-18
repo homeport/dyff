@@ -21,11 +21,13 @@
 package dyff_test
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	. "github.com/gonvenience/bunt"
 	. "github.com/homeport/dyff/pkg/v1/dyff"
-	. "github.com/homeport/gonvenience/pkg/v1/bunt"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 )
 
@@ -161,14 +163,14 @@ input: |+
 			content := singleDiff(path.String(), MODIFICATION, 12, 12.0)
 			actual := humanDiff(content)
 
-			Expect(RemoveAllEscapeSequences(actual)).To(
-				BeEquivalentTo(`
+			Expect(fmt.Sprintf("%#v", RemoveAllEscapeSequences(actual))).To(
+				BeEquivalentTo(fmt.Sprintf("%#v", `
 variables.ROUTER_TLS_PEM.options
   ± type change from int to float64
     - 12
     + 12
 
-`))
+`)))
 		})
 	})
 })

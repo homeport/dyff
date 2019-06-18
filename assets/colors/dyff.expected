@@ -4,78 +4,78 @@
   [38;2;185;49;27m  - [0m[38;2;255;160;122mv1.[0m[1;38;2;185;49;27m19[0m[38;2;255;160;122m.0[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144mv1.[0m[1;38;2;88;191;56m20[0m[38;2;144;238;144m.0[0m
 
-[1minstance_groups[0m.[3m[1mdiego-api[0m[0m.[1mjobs[0m.[3m[1mbbs[0m[0m.[1mproperties[0m.[1mdiego[0m.[1mbbs[0m
+[1minstance_groups[0m.[1;3mdiego-api[0m.[1mjobs[0m.[1;3mbbs[0m.[1mproperties[0m.[1mdiego[0m.[1mbbs[0m
   [38;2;199;196;63m- one map entry removed:[0m
-    [38;2;178;34;34m[0m[1;38;2;178;34;34mlocket:[0m
-    [38;2;51;0;0m│ [0m[38;2;178;34;34m[0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
+    [1;38;2;178;34;34mlocket:[0m
+    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
 
-[1minstance_groups[0m.[3m[1mscheduler[0m[0m.[1mjobs[0m.[3m[1mauctioneer[0m[0m.[1mproperties[0m.[1mdiego[0m.[1mauctioneer[0m
+[1minstance_groups[0m.[1;3mscheduler[0m.[1mjobs[0m.[1;3mauctioneer[0m.[1mproperties[0m.[1mdiego[0m.[1mauctioneer[0m
   [38;2;199;196;63m- one map entry removed:[0m
-    [38;2;178;34;34m[0m[1;38;2;178;34;34mlocket:[0m
-    [38;2;51;0;0m│ [0m[38;2;178;34;34m[0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
+    [1;38;2;178;34;34mlocket:[0m
+    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
 
-[1minstance_groups[0m.[3m[1mdiego-cell[0m[0m.[1mjobs[0m.[3m[1mrep[0m[0m.[1mproperties[0m.[1mdiego[0m.[1mrep[0m
+[1minstance_groups[0m.[1;3mdiego-cell[0m.[1mjobs[0m.[1;3mrep[0m.[1mproperties[0m.[1mdiego[0m.[1mrep[0m
   [38;2;199;196;63m- two map entries removed:[0m
-    [38;2;178;34;34m[0m[1;38;2;178;34;34mrequire_tls:[0m [38;2;240;128;128mtrue[0m
-    [38;2;178;34;34m[0m[1;38;2;178;34;34mlocket:[0m
-    [38;2;51;0;0m│ [0m[38;2;178;34;34m[0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
+    [1;38;2;178;34;34mrequire_tls:[0m [38;2;240;128;128mtrue[0m
+    [1;38;2;178;34;34mlocket:[0m
+    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
 
-[1mreleases[0m.[3m[1mcapi[0m[0m.[1murl[0m
+[1mreleases[0m.[1;3mcapi[0m.[1murl[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122mhttps://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.5[0m[1;38;2;185;49;27m0[0m[38;2;255;160;122m.0[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144mhttps://bosh.io/d/github.com/cloudfoundry/capi-release?v=1.5[0m[1;38;2;88;191;56m1[0m[38;2;144;238;144m.0[0m
 
-[1mreleases[0m.[3m[1mcapi[0m[0m.[1mversion[0m
+[1mreleases[0m.[1;3mcapi[0m.[1mversion[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122m1.5[0m[1;38;2;185;49;27m0[0m[38;2;255;160;122m.0[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144m1.5[0m[1;38;2;88;191;56m1[0m[38;2;144;238;144m.0[0m
 
-[1mreleases[0m.[3m[1mcapi[0m[0m.[1msha1[0m
+[1mreleases[0m.[1;3mcapi[0m.[1msha1[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - 77186faf9dc9606e633ef27186ae09ba8599f4cb[0m
   [38;2;88;191;56m  + c56405524d92b34af2b063e7d7ee44a7465b7697[0m
 
-[1mreleases[0m.[3m[1mcflinuxfs2[0m[0m.[1murl[0m
+[1mreleases[0m.[1;3mcflinuxfs2[0m.[1murl[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122mhttps://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.19[0m[1;38;2;185;49;27m0[0m[38;2;255;160;122m.0[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144mhttps://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-release?v=1.19[0m[1;38;2;88;191;56m1[0m[38;2;144;238;144m.0[0m
 
-[1mreleases[0m.[3m[1mcflinuxfs2[0m[0m.[1mversion[0m
+[1mreleases[0m.[1;3mcflinuxfs2[0m.[1mversion[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122m1.19[0m[1;38;2;185;49;27m0[0m[38;2;255;160;122m.0[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144m1.19[0m[1;38;2;88;191;56m1[0m[38;2;144;238;144m.0[0m
 
-[1mreleases[0m.[3m[1mcflinuxfs2[0m[0m.[1msha1[0m
+[1mreleases[0m.[1;3mcflinuxfs2[0m.[1msha1[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - ee40ea704b2283c2fbb722e30e0de77e333114a9[0m
   [38;2;88;191;56m  + 3f2c51de807ed90456b72a705172f3efb0508c36[0m
 
-[1mreleases[0m.[3m[1mgarden-runc[0m[0m.[1murl[0m
+[1mreleases[0m.[1;3mgarden-runc[0m.[1murl[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122mhttps://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.12.[0m[1;38;2;185;49;27m0[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144mhttps://bosh.io/d/github.com/cloudfoundry/garden-runc-release?v=1.12.[0m[1;38;2;88;191;56m1[0m
 
-[1mreleases[0m.[3m[1mgarden-runc[0m[0m.[1mversion[0m
+[1mreleases[0m.[1;3mgarden-runc[0m.[1mversion[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122m1.12.[0m[1;38;2;185;49;27m0[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144m1.12.[0m[1;38;2;88;191;56m1[0m
 
-[1mreleases[0m.[3m[1mgarden-runc[0m[0m.[1msha1[0m
+[1mreleases[0m.[1;3mgarden-runc[0m.[1msha1[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - 9cb3ec63f04d6cfb3047229544f261ff737f203e[0m
   [38;2;88;191;56m  + ed353e41eec34c3713d6d80c4cc890afc7291cca[0m
 
-[1mreleases[0m.[3m[1mloggregator[0m[0m.[1murl[0m
+[1mreleases[0m.[1;3mloggregator[0m.[1murl[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122mhttps://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=102[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144mhttps://bosh.io/d/github.com/cloudfoundry/loggregator-release?v=102[0m[1;38;2;88;191;56m.1[0m
 
-[1mreleases[0m.[3m[1mloggregator[0m[0m.[1mversion[0m
+[1mreleases[0m.[1;3mloggregator[0m.[1mversion[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - [0m[38;2;255;160;122m102[0m
   [38;2;88;191;56m  + [0m[38;2;144;238;144m102[0m[1;38;2;88;191;56m.1[0m
 
-[1mreleases[0m.[3m[1mloggregator[0m[0m.[1msha1[0m
+[1mreleases[0m.[1;3mloggregator[0m.[1msha1[0m
   [38;2;199;196;63m± value change[0m
   [38;2;185;49;27m  - 92a9f4cb584316e093fb9735b5709e6259fa826d[0m
   [38;2;88;191;56m  + 61949aff688e368a11d03daa18855800517666d3[0m
