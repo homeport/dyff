@@ -58,7 +58,7 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 	from, to, err := ytbx.LoadFiles(fromPath, toPath)
 	Expect(err).To(BeNil())
 
-	expected, err := ioutil.ReadFile(expectedPath)
+	rawBytes, err := ioutil.ReadFile(expectedPath)
 	Expect(err).To(BeNil())
 
 	report, err := CompareInputFiles(from, to)
@@ -77,7 +77,9 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 	reportWriter.WriteReport(writer)
 	writer.Flush()
 
-	Expect(string(expected)).To(BeIdenticalTo(buffer.String()))
+	expected := fmt.Sprintf("%#v", string(rawBytes))
+	actual := fmt.Sprintf("%#v", buffer.String())
+	Expect(expected).To(BeIdenticalTo(actual))
 
 	UseGoPatchPaths = tmp
 }
