@@ -122,6 +122,26 @@ input: |+
 		})
 	})
 
+	Context("nicely colored human readable differences", func() {
+		BeforeEach(func() {
+			ColorSetting = ON
+			TrueColorSetting = ON
+		})
+
+		AfterEach(func() {
+			ColorSetting = AUTO
+			TrueColorSetting = AUTO
+		})
+
+		It("should show nicely colored difference output", func() {
+			compareAgainstExpected(
+				"../../../assets/colors/from.yml",
+				"../../../assets/colors/to.yml",
+				"../../../assets/colors/dyff.expected",
+				false)
+		})
+	})
+
 	Context("human path rendering", func() {
 		BeforeEach(func() {
 			ColorSetting = ON
