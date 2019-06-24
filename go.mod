@@ -6,7 +6,7 @@ require (
 	github.com/gonvenience/bunt v1.0.6
 	github.com/gonvenience/neat v1.0.3
 	github.com/gonvenience/term v1.0.0
-	github.com/gonvenience/text v1.0.1
+	github.com/gonvenience/text v1.0.2
 	github.com/homeport/ytbx v1.1.1
 	github.com/lucasb-eyer/go-colorful v1.0.2
 	github.com/mitchellh/hashstructure v1.0.0
