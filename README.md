@@ -7,9 +7,9 @@
 [![GoDoc](https://godoc.org/github.com/homeport/dyff/pkg?status.svg)](https://godoc.org/github.com/homeport/dyff/pkg)
 [![Release](https://img.shields.io/github/release/homeport/dyff.svg)](https://github.com/homeport/dyff/releases/latest)
 
-A diff tool for YAML files, and sometimes JSON
+![dyff](.docs/logo.png?raw=true "dyff logo - the letters d, y, and f in the colors green, yellow and red")
 
-![dyff between example](docs/images/dyff-between-example.png?raw=true "dyff between example of two cf-deployment versions")
+A diff tool for YAML files, and sometimes JSON
 
 ## Description
 
@@ -22,6 +22,8 @@ Similar to the standard `diff` tool, it follows the principle of describing the 
 Input files can be local files (filesystem path), remote files (URI), or the standard input stream (using `-`).
 
 All orders of keys in hashes are preserved during processing and output to the terminal, most notably in the sub-commands to convert YAML to JSON and vice versa.
+
+![dyff between example](.docs/dyff-between-example.png?raw=true "dyff between example of two cf-deployment versions")
 
 ## Installation
 
