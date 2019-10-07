@@ -25,6 +25,8 @@ github.com/gonvenience/neat v1.0.1 h1:zeuWGRLEBhB0STVMEy4I0tvsrcEGYjViB/30CWYdZN
 github.com/gonvenience/neat v1.0.1/go.mod h1:hlI131c6A3Cg7SSajncxL9pJFuAnG5kqKUpIwWEnD04=
 github.com/gonvenience/neat v1.0.3 h1:1ksHRuOGuUQEiHjXKwlsNoFGpZaxE8e9Gvc+6ktU7c8=
 github.com/gonvenience/neat v1.0.3/go.mod h1:QBRLwRxib88dGjs/1ncOjPxDsCUch/0CGJUvg2iOYXY=
+github.com/gonvenience/neat v1.0.5 h1:O1UDzL5iy6o1qVWY3oIhhqbpl2uD9ZF7dTER72h/hkg=
+github.com/gonvenience/neat v1.0.5/go.mod h1:Fqf64U87rL4m0BGk4cAwCWl8UkqKUpbuY5JJsZGZbLo=
 github.com/gonvenience/term v1.0.0 h1:joCB/j0Ngmdakd3muuLgAGPMf7DNKdoe708c1I6RiBs=
 github.com/gonvenience/term v1.0.0/go.mod h1:wohD4Iqso9Eol7qc2VnNhSFFhZxok5PvO7pZhdrAn4E=
 github.com/gonvenience/text v1.0.1 h1:CXZNWliZp7tgt346V9vEuxxDpx+TSJAkLq2l5OINu/I=
@@ -33,6 +35,8 @@ github.com/gonvenience/text v1.0.2 h1:rjfc70ouuOak6h9yPyTN3VKh9hNwO+r+1coDsJIeTj
 github.com/gonvenience/text v1.0.2/go.mod h1:0duUTsGjuLgfqqYRxrpDgeTQlQtuSYTpzq9UZEXeUOA=
 github.com/gonvenience/wrap v1.0.0 h1:N1zDI7z/uPd5ZQa8jII/ye/VENy3wgLXG962vw3ytMM=
 github.com/gonvenience/wrap v1.0.0/go.mod h1:L47Cm1sK1G8QmFAYQfkHcF/sQ1IBJUa0u4sjqiLqPdM=
+github.com/gonvenience/wrap v1.1.0 h1:d8gEZrXS/zg4BC1q0U4nHpPIh5k6muKpQ1+rQFBwpYc=
+github.com/gonvenience/wrap v1.1.0/go.mod h1:L47Cm1sK1G8QmFAYQfkHcF/sQ1IBJUa0u4sjqiLqPdM=
 github.com/gorilla/mux v1.7.2 h1:zoNxOV7WjqXptQOVngLmcSQgXmgk4NMz1HibBchjl/I=
 github.com/gorilla/mux v1.7.2/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
