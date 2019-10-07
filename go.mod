@@ -16,5 +16,5 @@ require (
 	github.com/sergi/go-diff v1.0.0
 	github.com/spf13/cobra v0.0.5
 	github.com/texttheater/golang-levenshtein v0.0.0-20180516184445-d188e65d659e
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.2.4
 )
