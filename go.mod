@@ -10,7 +10,7 @@ require (
 	github.com/homeport/ytbx v1.1.2
 	github.com/lucasb-eyer/go-colorful v1.0.2
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/onsi/ginkgo v1.10.1
+	github.com/onsi/ginkgo v1.10.2
 	github.com/onsi/gomega v1.7.0
 	github.com/pkg/errors v0.8.1
 	github.com/sergi/go-diff v1.0.0
