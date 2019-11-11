@@ -33,6 +33,8 @@ github.com/gonvenience/text v1.0.1 h1:CXZNWliZp7tgt346V9vEuxxDpx+TSJAkLq2l5OINu/
 github.com/gonvenience/text v1.0.1/go.mod h1:cZzDRGyE/D+8vmAxZ+9qzKYHT4AIzWZWLP2VKbLMgdE=
 github.com/gonvenience/text v1.0.2 h1:rjfc70ouuOak6h9yPyTN3VKh9hNwO+r+1coDsJIeTjs=
 github.com/gonvenience/text v1.0.2/go.mod h1:0duUTsGjuLgfqqYRxrpDgeTQlQtuSYTpzq9UZEXeUOA=
+github.com/gonvenience/text v1.0.5 h1:Tfy+SHG3dSnUhxwxaiXJci++Ix0YNumoRu0v7yR4w2Q=
+github.com/gonvenience/text v1.0.5/go.mod h1:sV1+6AWdrMESmsIERyHyIUbnWaFKY9eyWat1gvF5OOE=
 github.com/gonvenience/wrap v1.0.0 h1:N1zDI7z/uPd5ZQa8jII/ye/VENy3wgLXG962vw3ytMM=
 github.com/gonvenience/wrap v1.0.0/go.mod h1:L47Cm1sK1G8QmFAYQfkHcF/sQ1IBJUa0u4sjqiLqPdM=
 github.com/gonvenience/wrap v1.1.0 h1:d8gEZrXS/zg4BC1q0U4nHpPIh5k6muKpQ1+rQFBwpYc=
