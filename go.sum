@@ -27,6 +27,8 @@ github.com/gonvenience/neat v1.0.3 h1:1ksHRuOGuUQEiHjXKwlsNoFGpZaxE8e9Gvc+6ktU7c
 github.com/gonvenience/neat v1.0.3/go.mod h1:QBRLwRxib88dGjs/1ncOjPxDsCUch/0CGJUvg2iOYXY=
 github.com/gonvenience/neat v1.0.5 h1:O1UDzL5iy6o1qVWY3oIhhqbpl2uD9ZF7dTER72h/hkg=
 github.com/gonvenience/neat v1.0.5/go.mod h1:Fqf64U87rL4m0BGk4cAwCWl8UkqKUpbuY5JJsZGZbLo=
+github.com/gonvenience/neat v1.0.6 h1:KDWhOuKu3E90CA8fCBWyd/uoKNyJahab7xmq6ROxnM8=
+github.com/gonvenience/neat v1.0.6/go.mod h1:5bz7jLkpqN/wMYrPREHplaKRCUI9pmM1cTOHC8GWC1g=
 github.com/gonvenience/term v1.0.0 h1:joCB/j0Ngmdakd3muuLgAGPMf7DNKdoe708c1I6RiBs=
 github.com/gonvenience/term v1.0.0/go.mod h1:wohD4Iqso9Eol7qc2VnNhSFFhZxok5PvO7pZhdrAn4E=
 github.com/gonvenience/text v1.0.1 h1:CXZNWliZp7tgt346V9vEuxxDpx+TSJAkLq2l5OINu/I=
