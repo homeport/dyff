@@ -23,9 +23,17 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/gonvenience/wrap"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 )
+
+var jsonCmdSettings struct {
+	plainMode        bool
+	restructure      bool
+	omitIndentHelper bool
+	inplace          bool
+}
 
 // jsonCmd represents the json command
 var jsonCmd = &cobra.Command{
@@ -36,26 +44,39 @@ var jsonCmd = &cobra.Command{
 Converts input document into JSON format while preserving the order of all keys.
 `,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		writer := &OutputWriter{
-			PlainMode:        plainMode,
-			Restructure:      restructure,
-			OmitIndentHelper: omitIndentHelper,
 			OutputStyle:      "json",
+			PlainMode:        jsonCmdSettings.plainMode,
+			Restructure:      jsonCmdSettings.restructure,
+			OmitIndentHelper: jsonCmdSettings.omitIndentHelper,
 		}
 
+		var errors []error
 		for _, filename := range args {
-			if ytbx.IsStdin(filename) && inplace {
-				exitWithError("incompatible flag", fmt.Errorf("cannot use in-place flag in combination with input from STDIN"))
+			if ytbx.IsStdin(filename) && jsonCmdSettings.inplace {
+				return wrap.Error(
+					fmt.Errorf("cannot use in-place flag in combination with input from STDIN"),
+					"incompatible flags",
+				)
 			}
 
-			if inplace {
-				writer.WriteInplace(filename)
-
+			if jsonCmdSettings.inplace {
+				if err := writer.WriteInplace(filename); err != nil {
+					errors = append(errors, err)
+				}
 			} else {
-				writer.WriteToStdout(filename)
+				if err := writer.WriteToStdout(filename); err != nil {
+					errors = append(errors, err)
+				}
 			}
 		}
+
+		if len(errors) > 0 {
+			return wrap.Errors(errors, "failed to process input files")
+		}
+
+		return nil
 	},
 }
 
@@ -65,8 +86,8 @@ func init() {
 	jsonCmd.Flags().SortFlags = false
 	jsonCmd.PersistentFlags().SortFlags = false
 
-	jsonCmd.PersistentFlags().BoolVarP(&plainMode, "plain", "p", false, "output in plain style without any highlighting")
-	jsonCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "restructure map keys in reasonable order")
-	jsonCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
-	jsonCmd.PersistentFlags().BoolVarP(&inplace, "in-place", "i", false, "overwrite input file with output of this command")
+	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
+	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
+	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
+	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
 }

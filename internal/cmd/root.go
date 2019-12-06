@@ -32,6 +32,7 @@ import (
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/term"
+	"github.com/gonvenience/wrap"
 	"github.com/homeport/dyff/pkg/v1/dyff"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
@@ -46,18 +47,6 @@ var truecolormode string
 
 // debugMode set to true will set-up the logging package to use the debug logger
 var debugMode bool
-
-// plainMode is used by YAML and JSON output to define whether highlighting should be disabled
-var plainMode bool
-
-// restructure is used by YAML and JSON output to define whether map key orders are supposed to be reorganized
-var restructure bool
-
-// omitIndentHelper is used by YAML and JSON output to define whether indent vertical helper guide lines should be displayed or not
-var omitIndentHelper bool
-
-// inplace is used by YAML and JSON output to define whether the output should overwrite the input file
-var inplace bool
 
 // OutputWriter encapsulates the required fields to define the look and feel of
 // the output
@@ -76,19 +65,60 @@ var rootCmd = &cobra.Command{
 can transform YAML to JSON, and vice versa. The order of keys in hashes
 is preserved during the conversion.
 `,
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+		if bunt.ColorSetting, err = parseSetting(colormode); err != nil {
+			return wrap.Errorf(err, "invalid color setting '%s'", colormode)
+		}
+
+		if bunt.TrueColorSetting, err = parseSetting(truecolormode); err != nil {
+			return wrap.Errorf(err, "invalid true color setting '%s'", truecolormode)
+		}
+
+		return nil
+	},
+}
+
+// ResetSettings resets command settings to default. This is only required by
+// the test suite to make sure that the flag parsing works correctly.
+func ResetSettings() {
+	betweenCmdSettings = struct {
+		style                    string
+		swap                     bool
+		noTableStyle             bool
+		doNotInspectCerts        bool
+		exitWithCount            bool
+		translateListToDocuments bool
+		chroot                   string
+		chrootFrom               string
+		chrootTo                 string
+	}{}
+
+	yamlCmdSettings = struct {
+		plainMode        bool
+		restructure      bool
+		omitIndentHelper bool
+		inplace          bool
+	}{}
+
+	jsonCmdSettings = struct {
+		plainMode        bool
+		restructure      bool
+		omitIndentHelper bool
+		inplace          bool
+	}{}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		exitWithError("Unable to execute root command", err)
-	}
+func Execute() error {
+	return rootCmd.Execute()
 }
 
 func init() {
 	cobra.OnInitialize(initSettings)
 
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
 	rootCmd.Flags().SortFlags = false
 	rootCmd.PersistentFlags().SortFlags = false
 
@@ -116,66 +146,46 @@ func parseSetting(setting string) (bunt.SwitchState, error) {
 }
 
 func initSettings() {
-	var err error
-
 	if debugMode {
 		dyff.SetLoggingLevel(dyff.DEBUG)
 	}
-
-	bunt.ColorSetting, err = parseSetting(colormode)
-	if err != nil {
-		exitWithError("Invalid color setting", err)
-	}
-
-	bunt.TrueColorSetting, err = parseSetting(truecolormode)
-	if err != nil {
-		exitWithError("Invalid true color setting", err)
-	}
-}
-
-// exitWithError exits program with given text and error message
-func exitWithError(text string, err error) {
-	if err != nil {
-		bunt.Printf("%s: Red{%s}\n", text, err.Error())
-
-	} else {
-		fmt.Print(text)
-	}
-
-	os.Exit(1)
 }
 
 // WriteToStdout is a convenience function to write the content of the documents
 // stored in the provided input file to the standard output
-func (w *OutputWriter) WriteToStdout(filename string) {
+func (w *OutputWriter) WriteToStdout(filename string) error {
 	if err := w.write(os.Stdout, filename); err != nil {
-		exitWithError("Failed to write output", err)
+		return wrap.Errorf(err, "failed to write output _%s_", filename)
 	}
+
+	return nil
 }
 
 // WriteInplace writes the content of the documents stored in the provided input
 // file to the file itself overwriting the conent in place.
-func (w *OutputWriter) WriteInplace(filename string) {
+func (w *OutputWriter) WriteInplace(filename string) error {
 	var buf bytes.Buffer
 	bufWriter := bufio.NewWriter(&buf)
 
 	// Force plain mode to make sure there are no ANSI sequences
 	w.PlainMode = true
 	if err := w.write(bufWriter, filename); err != nil {
-		exitWithError("Failed to write output", err)
+		return wrap.Errorf(err, "failed to write output _%s_", filename)
 	}
 
 	// Write the buffered output to the provided input file (override in place)
 	bufWriter.Flush()
 	if err := ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-		exitWithError("Failed to overwrite file in place", err)
+		return wrap.Errorf(err, "failed to overwrite file _%s_ in place", filename)
 	}
+
+	return nil
 }
 
 func (w *OutputWriter) write(writer io.Writer, filename string) error {
 	inputFile, err := ytbx.LoadFile(filename)
 	if err != nil {
-		exitWithError("Failed to load input file", err)
+		return wrap.Errorf(err, "failed to load input file _%s_", filename)
 	}
 
 	for _, document := range inputFile.Documents {
@@ -199,7 +209,7 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			fmt.Fprintf(writer, "---\n%s\n", string(output))
 
 		case w.OutputStyle == "json":
-			output, err := neat.NewOutputProcessor(!omitIndentHelper, true, &neat.DefaultColorSchema).ToJSON(document)
+			output, err := neat.NewOutputProcessor(!w.OmitIndentHelper, true, &neat.DefaultColorSchema).ToJSON(document)
 			if err != nil {
 				return err
 			}
