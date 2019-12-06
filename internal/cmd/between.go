@@ -68,7 +68,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		from, to, err := ytbx.LoadFiles(fromLocation, toLocation)
 		if err != nil {
-			wrap.Errorf(err, "failed to load input files")
+			return wrap.Errorf(err, "failed to load input files")
 		}
 
 		// If the main change root flag is set, this (re-)sets the individual change roots of the two input files
@@ -119,8 +119,10 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			}
 
 		default:
-			fmt.Printf("Unknown output style %s\n", betweenCmdSettings.style)
-			cmd.Usage()
+			return wrap.Errorf(
+				fmt.Errorf(cmd.UsageString()),
+				"unknown output style %s", betweenCmdSettings.style,
+			)
 		}
 
 		return reportWriter.WriteReport(os.Stdout)
@@ -134,7 +136,7 @@ func init() {
 	betweenCmd.PersistentFlags().SortFlags = false
 
 	// Main output preferences
-	betweenCmd.PersistentFlags().StringVarP(&betweenCmdSettings.style, "output", "o", defaultOutputStyle, "specify the output style, supported style: human")
+	betweenCmd.PersistentFlags().StringVarP(&betweenCmdSettings.style, "output", "o", defaultOutputStyle, "specify the output style, supported styles: human, or brief")
 	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
 
 	// Human/BOSH output related flags
