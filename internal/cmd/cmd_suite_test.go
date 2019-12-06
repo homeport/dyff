@@ -21,6 +21,8 @@
 package cmd_test
 
 import (
+	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -32,7 +34,7 @@ import (
 
 func TestCmd(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "cmds suite")
+	RunSpecs(t, "dyff commands package suite")
 }
 
 func createTestFile(input string) string {
@@ -48,40 +50,29 @@ func createTestFile(input string) string {
 	return file.Name()
 }
 
-var _ = Describe("flag tests", func() {
-	Context("in place feature", func() {
-		It("should write a YAML file in place using restructure feature", func() {
-			filename := createTestFile(`---
-list:
-- foo: bar
-  name: one
-`)
-			defer os.Remove(filename)
+func captureStdout(f func() error) (string, error) {
+	r, w, err := os.Pipe()
+	Expect(err).ToNot(HaveOccurred())
 
-			writer := &OutputWriter{Restructure: true, OutputStyle: "yaml"}
-			writer.WriteInplace(filename)
+	tmp := os.Stdout
+	defer func() {
+		os.Stdout = tmp
+	}()
 
-			data, err := ioutil.ReadFile(filename)
-			Expect(err).To(BeNil())
-			Expect(string(data)).To(BeEquivalentTo(`---
-list:
-- name: one
-  foo: bar
+	os.Stdout = w
+	err = f()
+	w.Close()
 
-`))
-		})
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
 
-		It("should write a JSON file in place using restructure feature", func() {
-			filename := createTestFile(`{"list":[{"foo":"bar","name":"one"}]}`)
-			defer os.Remove(filename)
+	return buf.String(), err
+}
 
-			writer := &OutputWriter{Restructure: true, OutputStyle: "json"}
-			writer.WriteInplace(filename)
-
-			data, err := ioutil.ReadFile(filename)
-			Expect(err).To(BeNil())
-			Expect(string(data)).To(BeEquivalentTo(`{"list": [{"name": "one", "foo": "bar"}]}
-`))
-		})
+func dyff(args ...string) (out string, err error) {
+	return captureStdout(func() error {
+		ResetSettings()
+		os.Args = append([]string{"dyff"}, args...)
+		return Execute()
 	})
-})
+}
