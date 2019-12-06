@@ -66,7 +66,7 @@ go get github.com/homeport/dyff
 - Sometimes you end up with YAML or JSON files, where the order of the keys in maps was sorted alphabetically. With `dyff` you can restructure keys in maps to a more human appealing order:
 
     ```bash
-    sometool --export --json | dyff - yaml --restructure
+    sometool --export --json | dyff yaml --restructure -
     ```
 
     Or, rewrite a file _in place_ with the restructured order of keys.
