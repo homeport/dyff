@@ -195,6 +195,18 @@ list
 			Expect(out).To(BeEquivalentTo(fmt.Sprintf("one change detected between %s and %s\n\n", from, to)))
 		})
 
+		It("should return an exit code with the number of differences if respective flag is used", func() {
+			from := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"aaa":"bbb","name":"two"}]}`)
+			defer os.Remove(to)
+
+			out, err := dyff("between", "--output=brief", "--set-exit-status", from, to)
+			Expect(err).To(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(fmt.Sprintf("one change detected between %s and %s\n\n", from, to)))
+		})
+
 		It("should fail when input files cannot be read", func() {
 			_, err := dyff("between", "/does/not/exist/from.yml", "/does/not/exist/to.yml")
 			Expect(err).To(HaveOccurred())
