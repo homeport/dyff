@@ -26,20 +26,23 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gonvenience/wrap"
 	"github.com/homeport/dyff/pkg/v1/dyff"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 )
 
-var style string
-var swap bool
-var noTableStyle bool
-var doNotInspectCerts bool
-var exitWithCount bool
-var translateListToDocuments bool
-var chroot string
-var chrootFrom string
-var chrootTo string
+var betweenCmdSettings struct {
+	style                    string
+	swap                     bool
+	noTableStyle             bool
+	doNotInspectCerts        bool
+	exitWithCount            bool
+	translateListToDocuments bool
+	chroot                   string
+	chrootFrom               string
+	chrootTo                 string
+}
 
 // betweenCmd represents the between command
 var betweenCmd = &cobra.Command{
@@ -51,9 +54,9 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 `,
 	Args:    cobra.ExactArgs(2),
 	Aliases: []string{"bw"},
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var fromLocation, toLocation string
-		if swap {
+		if betweenCmdSettings.swap {
 			fromLocation = args[1]
 			toLocation = args[0]
 		} else {
@@ -63,53 +66,48 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		from, to, err := ytbx.LoadFiles(fromLocation, toLocation)
 		if err != nil {
-			exitWithError("Failed to load input files", err)
+			wrap.Errorf(err, "failed to load input files")
 		}
 
 		// If the main change root flag is set, this (re-)sets the individual change roots of the two input files
-		if chroot != "" {
-			chrootFrom = chroot
-			chrootTo = chroot
+		if betweenCmdSettings.chroot != "" {
+			betweenCmdSettings.chrootFrom = betweenCmdSettings.chroot
+			betweenCmdSettings.chrootTo = betweenCmdSettings.chroot
 		}
 
 		// Change root of from input file if change root flag for form is set
-		if chrootFrom != "" {
-			if err = dyff.ChangeRoot(&from, chrootFrom, translateListToDocuments); err != nil {
-				exitWithError(fmt.Sprintf("Failed to change root of %s to path %s", from.Location, chrootFrom), err)
+		if betweenCmdSettings.chrootFrom != "" {
+			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, betweenCmdSettings.translateListToDocuments); err != nil {
+				return wrap.Errorf(err, "Failed to change root of %s to path %s", from.Location, betweenCmdSettings.chrootFrom)
 			}
 		}
 
 		// Change root of to input file if change root flag for to is set
-		if chrootTo != "" {
-			if err = dyff.ChangeRoot(&to, chrootTo, translateListToDocuments); err != nil {
-				exitWithError(fmt.Sprintf("Failed to change root of %s to path %s", to.Location, chrootTo), err)
+		if betweenCmdSettings.chrootTo != "" {
+			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, betweenCmdSettings.translateListToDocuments); err != nil {
+				return wrap.Errorf(err, "failed to change root of %s to path %s", to.Location, betweenCmdSettings.chrootTo)
 			}
 		}
 
 		report, err := dyff.CompareInputFiles(from, to)
 		if err != nil {
-			exitWithError("Failed to compare input files", err)
+			return wrap.Errorf(err, "failed to compare input files")
 		}
 
 		// If configured, make sure `dyff` exists with an exit status
-		if exitWithCount {
+		if betweenCmdSettings.exitWithCount {
 			defer os.Exit(int(math.Min(
 				float64(len(report.Diffs)),
 				255.0)))
 		}
 
-		// TODO Add style Go-Patch
-		// TODO Add style Spruce
-		// TODO Add style JSON report
-		// TODO Add style YAML report
-
 		var reportWriter dyff.ReportWriter
-		switch strings.ToLower(style) {
+		switch strings.ToLower(betweenCmdSettings.style) {
 		case "human", "bosh":
 			reportWriter = &dyff.HumanReport{
 				Report:            report,
-				DoNotInspectCerts: doNotInspectCerts,
-				NoTableStyle:      noTableStyle,
+				DoNotInspectCerts: betweenCmdSettings.doNotInspectCerts,
+				NoTableStyle:      betweenCmdSettings.noTableStyle,
 				ShowBanner:        true,
 			}
 
@@ -119,11 +117,11 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			}
 
 		default:
-			fmt.Printf("Unknown output style %s\n", style)
+			fmt.Printf("Unknown output style %s\n", betweenCmdSettings.style)
 			cmd.Usage()
 		}
 
-		reportWriter.WriteReport(os.Stdout)
+		return reportWriter.WriteReport(os.Stdout)
 	},
 }
 
@@ -134,20 +132,20 @@ func init() {
 	betweenCmd.PersistentFlags().SortFlags = false
 
 	// Main output preferences
-	betweenCmd.PersistentFlags().StringVarP(&style, "output", "o", "human", "specify the output style, supported style: human")
-	betweenCmd.PersistentFlags().BoolVarP(&exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
+	betweenCmd.PersistentFlags().StringVarP(&betweenCmdSettings.style, "output", "o", "human", "specify the output style, supported style: human")
+	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
 
 	// Human/BOSH output related flags
-	betweenCmd.PersistentFlags().BoolVarP(&noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
-	betweenCmd.PersistentFlags().BoolVarP(&doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
+	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
+	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
 
 	// General `dyff` package related preferences
 	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
 
 	// Input documents modification flags
-	betweenCmd.PersistentFlags().BoolVar(&swap, "swap", false, "Swap 'from' and 'to' for comparison")
-	betweenCmd.PersistentFlags().StringVar(&chroot, "chroot", "", "change the root level of the input file to another point in the document")
-	betweenCmd.PersistentFlags().StringVar(&chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
-	betweenCmd.PersistentFlags().StringVar(&chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
-	betweenCmd.PersistentFlags().BoolVar(&translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
+	betweenCmd.PersistentFlags().BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
+	betweenCmd.PersistentFlags().StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
+	betweenCmd.PersistentFlags().StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
+	betweenCmd.PersistentFlags().StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
+	betweenCmd.PersistentFlags().BoolVar(&betweenCmdSettings.translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
 }

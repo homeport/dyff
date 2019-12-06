@@ -43,7 +43,7 @@ import (
 
 func TestCore(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "dyff suite")
+	RunSpecs(t, "dyff core package suite")
 }
 
 var _ = BeforeSuite(func() {

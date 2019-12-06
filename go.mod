@@ -7,7 +7,8 @@ require (
 	github.com/gonvenience/neat v1.0.6
 	github.com/gonvenience/term v1.0.0
 	github.com/gonvenience/text v1.0.5
-	github.com/homeport/ytbx v1.1.2
+	github.com/gonvenience/wrap v1.1.0
+	github.com/homeport/ytbx v1.1.3
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/onsi/ginkgo v1.10.3

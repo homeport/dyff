@@ -20,8 +20,44 @@
 
 package main
 
-import "github.com/homeport/dyff/internal/cmd"
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/gonvenience/bunt"
+	"github.com/gonvenience/neat"
+	"github.com/gonvenience/wrap"
+	"github.com/homeport/dyff/internal/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		var (
+			headline string
+			content  string
+		)
+
+		switch typed := err.(type) {
+		case wrap.ContextError:
+			headline = bunt.Sprintf("*Error:* _%s_", typed.Context())
+			content = typed.Cause().Error()
+
+		case error:
+			headline = "Error occurred"
+			content = err.Error()
+
+		default:
+			headline = "Error occurred"
+			content = fmt.Sprint(err)
+		}
+
+		neat.Box(os.Stderr,
+			headline, strings.NewReader(content),
+			neat.HeadlineColor(bunt.Coral),
+			neat.ContentColor(bunt.DimGray),
+		)
+
+		os.Exit(1)
+	}
 }

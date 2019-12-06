@@ -23,9 +23,17 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/gonvenience/wrap"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 )
+
+var yamlCmdSettings struct {
+	plainMode        bool
+	restructure      bool
+	omitIndentHelper bool
+	inplace          bool
+}
 
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{
@@ -37,26 +45,39 @@ var yamlCmd = &cobra.Command{
 Converts input document into YAML format while preserving the order of all keys.
 `,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		writer := &OutputWriter{
-			PlainMode:        plainMode,
-			Restructure:      restructure,
-			OmitIndentHelper: omitIndentHelper,
 			OutputStyle:      "yaml",
+			PlainMode:        yamlCmdSettings.plainMode,
+			Restructure:      yamlCmdSettings.restructure,
+			OmitIndentHelper: yamlCmdSettings.omitIndentHelper,
 		}
 
+		var errors []error
 		for _, filename := range args {
-			if ytbx.IsStdin(filename) && inplace {
-				exitWithError("incompatible flag", fmt.Errorf("cannot use in-place flag in combination with input from STDIN"))
+			if ytbx.IsStdin(filename) && yamlCmdSettings.inplace {
+				return wrap.Error(
+					fmt.Errorf("cannot use in-place flag in combination with input from STDIN"),
+					"incompatible flags",
+				)
 			}
 
-			if inplace {
-				writer.WriteInplace(filename)
-
+			if yamlCmdSettings.inplace {
+				if err := writer.WriteInplace(filename); err != nil {
+					errors = append(errors, err)
+				}
 			} else {
-				writer.WriteToStdout(filename)
+				if err := writer.WriteToStdout(filename); err != nil {
+					errors = append(errors, err)
+				}
 			}
 		}
+
+		if len(errors) > 0 {
+			return wrap.Errors(errors, "failed to process input files")
+		}
+
+		return nil
 	},
 }
 
@@ -66,8 +87,8 @@ func init() {
 	yamlCmd.Flags().SortFlags = false
 	yamlCmd.PersistentFlags().SortFlags = false
 
-	yamlCmd.PersistentFlags().BoolVarP(&plainMode, "plain", "p", false, "output in plain style without any highlighting")
-	yamlCmd.PersistentFlags().BoolVarP(&restructure, "restructure", "r", false, "restructure map keys in reasonable order")
-	yamlCmd.PersistentFlags().BoolVarP(&omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
-	yamlCmd.PersistentFlags().BoolVarP(&inplace, "in-place", "i", false, "overwrite input file with output of this command")
+	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
+	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
+	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
+	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
 }
