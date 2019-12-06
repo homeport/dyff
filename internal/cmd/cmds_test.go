@@ -94,6 +94,12 @@ list:
 
 `))
 		})
+
+		It("should fail to write a YAML when in place and STDIN are used at the same time", func() {
+			_, err := dyff("yaml", "--in-place", "-")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from STDIN"))
+		})
 	})
 
 	Context("json command", func() {
@@ -119,6 +125,12 @@ list:
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(`{"list": [{"name": "one", "aaa": "bbb"}]}
 `))
+		})
+
+		It("should fail to write a JSON when in place and STDIN are used at the same time", func() {
+			_, err := dyff("json", "--in-place", "-")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from STDIN"))
 		})
 	})
 
@@ -181,6 +193,18 @@ list
 			out, err := dyff("between", "--output=brief", from, to)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(fmt.Sprintf("one change detected between %s and %s\n\n", from, to)))
+		})
+
+		It("should fail when input files cannot be read", func() {
+			_, err := dyff("between", "/does/not/exist/from.yml", "/does/not/exist/to.yml")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("failed to load input files: unable to load data from /does/not/exist/from.yml"))
+		})
+
+		It("should fail when an unsupported output style is defined", func() {
+			_, err := dyff("between", "--output", "unknown", "/dev/null", "/dev/null")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("unknown output style unknown"))
 		})
 	})
 })
