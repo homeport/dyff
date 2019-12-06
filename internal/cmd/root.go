@@ -91,7 +91,9 @@ func ResetSettings() {
 		chroot                   string
 		chrootFrom               string
 		chrootTo                 string
-	}{}
+	}{
+		style: defaultOutputStyle,
+	}
 
 	yamlCmdSettings = struct {
 		plainMode        bool

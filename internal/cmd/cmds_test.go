@@ -21,14 +21,31 @@
 package cmd_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
+	"github.com/gonvenience/bunt"
+	"github.com/gonvenience/term"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("command line tool flags", func() {
+	BeforeEach(func() {
+		bunt.ColorSetting = bunt.OFF
+		bunt.TrueColorSetting = bunt.OFF
+		term.FixedTerminalWidth = 250
+		term.FixedTerminalHeight = 40
+	})
+
+	AfterEach(func() {
+		bunt.ColorSetting = bunt.AUTO
+		bunt.TrueColorSetting = bunt.AUTO
+		term.FixedTerminalWidth = -1
+		term.FixedTerminalHeight = -1
+	})
+
 	Context("version command", func() {
 		It("should print the version", func() {
 			out, err := dyff("version")
@@ -102,6 +119,68 @@ list:
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(`{"list": [{"name": "one", "aaa": "bbb"}]}
 `))
+		})
+	})
+
+	Context("between command", func() {
+		It("should create the default report when there are no flags specified", func() {
+			from := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"aaa":"bbb","name":"two"}]}`)
+			defer os.Remove(to)
+
+			out, err := dyff("between", from, to)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(fmt.Sprintf(`     _        __  __
+   _| |_   _ / _|/ _|  between %s
+ / _' | | | | |_| |_       and %s
+| (_| | |_| |  _|  _|
+ \__,_|\__, |_| |_|   returned one difference
+        |___/
+
+list
+  - one list entry removed:     + one list entry added:
+    - name: one                   - name: two
+      aaa: bbb                      aaa: bbb
+
+`, from, to)))
+		})
+
+		It("should create the same default report when swap flag is used", func() {
+			from := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"aaa":"bbb","name":"two"}]}`)
+			defer os.Remove(to)
+
+			out, err := dyff("between", "--swap", to, from)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(fmt.Sprintf(`     _        __  __
+   _| |_   _ / _|/ _|  between %s
+ / _' | | | | |_| |_       and %s
+| (_| | |_| |  _|  _|
+ \__,_|\__, |_| |_|   returned one difference
+        |___/
+
+list
+  - one list entry removed:     + one list entry added:
+    - name: one                   - name: two
+      aaa: bbb                      aaa: bbb
+
+`, from, to)))
+		})
+
+		It("should create the oneline report", func() {
+			from := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"aaa":"bbb","name":"two"}]}`)
+			defer os.Remove(to)
+
+			out, err := dyff("between", "--output=brief", from, to)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(fmt.Sprintf("one change detected between %s and %s\n\n", from, to)))
 		})
 	})
 })

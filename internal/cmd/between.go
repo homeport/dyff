@@ -32,6 +32,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defaultOutputStyle = "human"
+
 var betweenCmdSettings struct {
 	style                    string
 	swap                     bool
@@ -132,7 +134,7 @@ func init() {
 	betweenCmd.PersistentFlags().SortFlags = false
 
 	// Main output preferences
-	betweenCmd.PersistentFlags().StringVarP(&betweenCmdSettings.style, "output", "o", "human", "specify the output style, supported style: human")
+	betweenCmd.PersistentFlags().StringVarP(&betweenCmdSettings.style, "output", "o", defaultOutputStyle, "specify the output style, supported style: human")
 	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
 
 	// Human/BOSH output related flags
