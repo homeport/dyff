@@ -36,28 +36,37 @@ func main() {
 		var (
 			headline string
 			content  string
+			code     int
 		)
 
 		switch typed := err.(type) {
 		case wrap.ContextError:
 			headline = bunt.Sprintf("*Error:* _%s_", typed.Context())
 			content = typed.Cause().Error()
+			code = 1
+
+		case cmd.ExitCode:
+			code = typed.Value
 
 		case error:
 			headline = "Error occurred"
 			content = err.Error()
+			code = 1
 
 		default:
 			headline = "Error occurred"
 			content = fmt.Sprint(err)
+			code = 1
 		}
 
-		neat.Box(os.Stderr,
-			headline, strings.NewReader(content),
-			neat.HeadlineColor(bunt.Coral),
-			neat.ContentColor(bunt.DimGray),
-		)
+		if len(headline) > 0 {
+			neat.Box(os.Stderr,
+				headline, strings.NewReader(content),
+				neat.HeadlineColor(bunt.Coral),
+				neat.ContentColor(bunt.DimGray),
+			)
+		}
 
-		os.Exit(1)
+		os.Exit(code)
 	}
 }

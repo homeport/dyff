@@ -57,6 +57,15 @@ type OutputWriter struct {
 	OutputStyle      string
 }
 
+// ExitCode is just a way to transport the exit code to the main package
+type ExitCode struct {
+	Value int
+}
+
+func (e ExitCode) Error() string {
+	return ""
+}
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use: "dyff",

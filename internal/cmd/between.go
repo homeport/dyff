@@ -96,13 +96,6 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			return wrap.Errorf(err, "failed to compare input files")
 		}
 
-		// If configured, make sure `dyff` exists with an exit status
-		if betweenCmdSettings.exitWithCount {
-			defer os.Exit(int(math.Min(
-				float64(len(report.Diffs)),
-				255.0)))
-		}
-
 		var reportWriter dyff.ReportWriter
 		switch strings.ToLower(betweenCmdSettings.style) {
 		case "human", "bosh":
@@ -125,7 +118,19 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			)
 		}
 
-		return reportWriter.WriteReport(os.Stdout)
+		err = reportWriter.WriteReport(os.Stdout)
+		if err != nil {
+			return wrap.Errorf(err, "failed to print report")
+		}
+
+		// If configured, make sure `dyff` exists with an exit status
+		if betweenCmdSettings.exitWithCount {
+			return ExitCode{
+				Value: int(math.Min(float64(len(report.Diffs)), 255.0)),
+			}
+		}
+
+		return nil
 	},
 }
 
