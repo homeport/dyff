@@ -77,14 +77,14 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			betweenCmdSettings.chrootTo = betweenCmdSettings.chroot
 		}
 
-		// Change root of from input file if change root flag for form is set
+		// Change root of 'from' input file if change root flag for 'from' is set
 		if betweenCmdSettings.chrootFrom != "" {
 			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, betweenCmdSettings.translateListToDocuments); err != nil {
-				return wrap.Errorf(err, "Failed to change root of %s to path %s", from.Location, betweenCmdSettings.chrootFrom)
+				return wrap.Errorf(err, "failed to change root of %s to path %s", from.Location, betweenCmdSettings.chrootFrom)
 			}
 		}
 
-		// Change root of to input file if change root flag for to is set
+		// Change root of 'to' input file if change root flag for 'to' is set
 		if betweenCmdSettings.chrootTo != "" {
 			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, betweenCmdSettings.translateListToDocuments); err != nil {
 				return wrap.Errorf(err, "failed to change root of %s to path %s", to.Location, betweenCmdSettings.chrootTo)
