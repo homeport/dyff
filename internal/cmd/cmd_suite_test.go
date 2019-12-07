@@ -25,6 +25,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	. "github.com/homeport/dyff/internal/cmd"
@@ -48,6 +49,20 @@ func createTestFile(input string) string {
 	Expect(err).To(BeNil())
 
 	return file.Name()
+}
+
+func assets(pathElement ...string) string {
+	targetPath := filepath.Join(append(
+		[]string{"..", "..", "assets"},
+		pathElement...,
+	)...)
+
+	abs, err := filepath.Abs(targetPath)
+	if err != nil {
+		return targetPath
+	}
+
+	return abs
 }
 
 func captureStdout(f func() error) (string, error) {

@@ -195,6 +195,65 @@ list
 			Expect(out).To(BeEquivalentTo(fmt.Sprintf("one change detected between %s and %s\n\n", from, to)))
 		})
 
+		It("should create a report using a custom root in the files", func() {
+			from, to := assets("examples", "from.yml"), assets("examples", "to.yml")
+			out, err := dyff("between", from, to, "--chroot", "yaml.map")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(fmt.Sprintf(`     _        __  __
+   _| |_   _ / _|/ _|  between %s, YAML root was changed to yaml.map
+ / _' | | | | |_| |_       and %s, YAML root was changed to yaml.map
+| (_| | |_| |  _|  _|
+ \__,_|\__, |_| |_|   returned four differences
+        |___/
+
+(root level)
+- six map entries removed:   + six map entries added:
+  intB: 10                     floatY: 24
+  floatB: 2.71                 intY: 147
+  boolB: false                 boolY: true
+  stringB: fOObAr              stringY: YAML!
+  listB:                       listY:
+  - B                          - Yo
+  - B                          - Yo
+  - B                          - Yo
+  mapB:                        mapY:
+    key0: B                      key0: true
+    key1: B                      key1: true
+
+type-change-1
+  ± type change from string to int
+    - string
+    + 147
+
+type-change-2
+  ± type change from string to int
+    - 12
+    + 12
+
+whitespaces
+  ± whitespace only change
+    - Strings·can··have·whitespaces.     + Strings·can··have·whitespaces.↵
+                                           ↵
+                                           ↵
+
+
+`, from, to)))
+		})
+
+		It("should fail when change root is used with files containing multiple documents", func() {
+			from, to := assets("testbed", "from.yml"), assets("testbed", "to.yml")
+			_, err := dyff("between", from, to, "--chroot", "orderchanges")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo(fmt.Sprintf("failed to change root of %s to path orderchanges: change root for an input file is only possible if there is only one document, but %s contains two documents", from, from)))
+		})
+
+		It("should fail when change root is used with files that do not have the specified path", func() {
+			from, to := assets("examples", "from.yml"), assets("binary", "to.yml")
+			_, err := dyff("between", from, to, "--chroot", "yaml.map")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo(fmt.Sprintf("failed to change root of %s to path yaml.map: no key 'map' found in map, available keys: data", to)))
+		})
+
 		It("should return an exit code with the number of differences if respective flag is used", func() {
 			from := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
 			defer os.Remove(from)
