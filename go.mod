@@ -11,7 +11,7 @@ require (
 	github.com/homeport/ytbx v1.1.3
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/onsi/ginkgo v1.10.3
+	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.7.1
 	github.com/pkg/errors v0.8.1
 	github.com/sergi/go-diff v1.0.0
