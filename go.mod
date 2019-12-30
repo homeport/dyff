@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/gonvenience/bunt v1.1.1
-	github.com/gonvenience/neat v1.0.6
+	github.com/gonvenience/neat v1.1.0
 	github.com/gonvenience/term v1.0.0
 	github.com/gonvenience/text v1.0.5
 	github.com/gonvenience/wrap v1.1.0
