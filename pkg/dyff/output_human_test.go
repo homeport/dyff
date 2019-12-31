@@ -27,7 +27,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/gonvenience/bunt"
-	. "github.com/homeport/dyff/pkg/v1/dyff"
+	. "github.com/homeport/dyff/pkg/dyff"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 )
 
@@ -105,21 +105,21 @@ input: |+
 		})
 
 		It("should show a binary data difference in hex dump style", func() {
-			compareAgainstExpected("../../../assets/binary/from.yml",
-				"../../../assets/binary/to.yml",
-				"../../../assets/binary/dyff.expected",
+			compareAgainstExpected("../../assets/binary/from.yml",
+				"../../assets/binary/to.yml",
+				"../../assets/binary/dyff.expected",
 				false)
 		})
 
 		It("should show the testbed results as expected", func() {
-			compareAgainstExpected("../../../assets/testbed/from.yml",
-				"../../../assets/testbed/to.yml",
-				"../../../assets/testbed/expected-dyff-spruce.human",
+			compareAgainstExpected("../../assets/testbed/from.yml",
+				"../../assets/testbed/to.yml",
+				"../../assets/testbed/expected-dyff-spruce.human",
 				false)
 
-			compareAgainstExpected("../../../assets/testbed/from.yml",
-				"../../../assets/testbed/to.yml",
-				"../../../assets/testbed/expected-dyff-gopatch.human",
+			compareAgainstExpected("../../assets/testbed/from.yml",
+				"../../assets/testbed/to.yml",
+				"../../assets/testbed/expected-dyff-gopatch.human",
 				true)
 		})
 	})
@@ -137,9 +137,9 @@ input: |+
 
 		It("should show nicely colored difference output", func() {
 			compareAgainstExpected(
-				"../../../assets/colors/from.yml",
-				"../../../assets/colors/to.yml",
-				"../../../assets/colors/dyff.expected",
+				"../../assets/colors/from.yml",
+				"../../assets/colors/to.yml",
+				"../../assets/colors/dyff.expected",
 				false)
 		})
 	})

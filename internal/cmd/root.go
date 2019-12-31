@@ -33,7 +33,7 @@ import (
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/wrap"
-	"github.com/homeport/dyff/pkg/v1/dyff"
+	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"

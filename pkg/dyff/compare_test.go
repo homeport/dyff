@@ -21,7 +21,7 @@
 package dyff_test
 
 import (
-	. "github.com/homeport/dyff/pkg/v1/dyff"
+	. "github.com/homeport/dyff/pkg/dyff"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 
 	. "github.com/onsi/ginkgo"
@@ -524,8 +524,8 @@ resource_pools:
 
 		Context("Given two files", func() {
 			It("should return differences in raw texts", func() {
-				from := file("../../../assets/raw-text/from.txt")
-				to := file("../../../assets/raw-text/to.txt")
+				from := file("../../assets/raw-text/from.txt")
+				to := file("../../assets/raw-text/to.txt")
 				Expect(len(from.Documents)).To(BeIdenticalTo(1))
 				Expect(len(to.Documents)).To(BeIdenticalTo(1))
 
@@ -538,7 +538,7 @@ resource_pools:
 
 		Context("Given two YAML files", func() {
 			It("should return all differences between the files", func() {
-				results, err := compare(yml("../../../assets/examples/from.yml"), yml("../../../assets/examples/to.yml"))
+				results, err := compare(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))
 				Expect(err).To(BeNil())
 				expected := []Diff{
 					doubleDiff("/yaml/map",
@@ -621,7 +621,7 @@ listY: [ Yo, Yo, Yo ]
 			})
 
 			It("should return all differences between the files with multiple documents", func() {
-				results, err := CompareInputFiles(file("../../../assets/kubernetes-yaml/from.yml"), file("../../../assets/kubernetes-yaml/to.yml"))
+				results, err := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
 				expected := []Diff{
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", MODIFICATION, "100m", "1000m"),
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/memory", MODIFICATION, "100Mi", "10Gi"),
@@ -640,7 +640,7 @@ listY: [ Yo, Yo, Yo ]
 			})
 
 			It("should return differences in named lists even if no standard identifier is used", func() {
-				results, err := CompareInputFiles(file("../../../assets/prometheus/from.yml"), file("../../../assets/prometheus/to.yml"))
+				results, err := CompareInputFiles(file("../../assets/prometheus/from.yml"), file("../../assets/prometheus/to.yml"))
 				expected := []Diff{
 					singleDiff("/scrape_configs", ORDERCHANGE, []string{
 						"kubernetes-nodes",
@@ -713,7 +713,7 @@ b: bar
 
 		Context("checking known issues of compare", func() {
 			It("should not return order change differences in case the named-entry list does not have unique identifiers", func() {
-				from, to, err := ytbx.LoadFiles("../../../assets/issues/issue-38/from.yml", "../../../assets/issues/issue-38/to.yml")
+				from, to, err := ytbx.LoadFiles("../../assets/issues/issue-38/from.yml", "../../assets/issues/issue-38/to.yml")
 				Expect(err).To(BeNil())
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())
