@@ -21,7 +21,7 @@
 package dyff_test
 
 import (
-	. "github.com/homeport/dyff/pkg/v1/dyff"
+	. "github.com/homeport/dyff/pkg/dyff"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	yaml "gopkg.in/yaml.v2"
 
@@ -48,7 +48,7 @@ var _ = Describe("Common core functions", func() {
 
 	Context("loading input data", func() {
 		It("should load input files from disk", func() {
-			from, to, err := ytbx.LoadFiles("../../../assets/examples/from.yml", "../../../assets/examples/to.yml")
+			from, to, err := ytbx.LoadFiles("../../assets/examples/from.yml", "../../assets/examples/to.yml")
 			Expect(err).To(BeNil())
 			Expect(from).ToNot(BeNil())
 			Expect(to).ToNot(BeNil())

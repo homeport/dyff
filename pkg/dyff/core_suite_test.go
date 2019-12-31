@@ -35,7 +35,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/gonvenience/term"
-	. "github.com/homeport/dyff/pkg/v1/dyff"
+	. "github.com/homeport/dyff/pkg/dyff"
 	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/onsi/gomega/types"
 	yaml "gopkg.in/yaml.v2"

@@ -18,14 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-sources := $(wildcard cmd/dyff/*.go internal/cmd/*.go pkg/v1/dyff/*.go)
+sources := $(wildcard cmd/dyff/*.go internal/cmd/*.go pkg/dyff/*.go)
 
 .PHONY: all clean fmt gobuild vet lint gocyclo misspell ginkgo test build build-all
 
 all: clean test build
 
 clean:
-	@rm -rf binaries internal/cmd/cmd.coverprofile pkg/v1/dyff/dyff.coverprofile
+	@rm -rf binaries internal/cmd/cmd.coverprofile pkg/dyff/dyff.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
 fmt: $(sources)
