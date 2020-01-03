@@ -27,8 +27,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/gonvenience/bunt"
+	"github.com/gonvenience/ytbx"
 	. "github.com/homeport/dyff/pkg/dyff"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
 )
 
 var _ = Describe("human readable report", func() {
@@ -63,7 +63,7 @@ some.yaml.structure.int
 			content := singleDiff("/some/yaml/structure/test", MODIFICATION, 12, 12.0)
 			Expect(humanDiff(content)).To(BeEquivalentTo(`
 some.yaml.structure.test
-  ± type change from int to float64
+  ± type change from int to float
     - 12
     + 12
 
@@ -92,7 +92,7 @@ input: |+
 			Expect(err).To(BeNil())
 			Expect(result).NotTo(BeNil())
 			Expect(len(result)).To(BeEquivalentTo(1))
-			Expect(result[0]).To(BeEquivalentTo(singleDiff("/input",
+			Expect(result[0]).To(BeSameDiffAs(singleDiff("/input",
 				MODIFICATION,
 				"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n",
 				"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n\n")))
@@ -166,7 +166,7 @@ input: |+
 			Expect(fmt.Sprintf("%#v", RemoveAllEscapeSequences(actual))).To(
 				BeEquivalentTo(fmt.Sprintf("%#v", `
 variables.ROUTER_TLS_PEM.options
-  ± type change from int to float64
+  ± type change from int to float
     - 12
     + 12
 

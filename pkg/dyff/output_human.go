@@ -24,11 +24,11 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 	"unicode/utf8"
 
@@ -36,9 +36,9 @@ import (
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/text"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
+	"github.com/gonvenience/ytbx"
 	"github.com/sergi/go-diff/diffmatchpatch"
-	yaml "gopkg.in/yaml.v2"
+	yamlv3 "gopkg.in/yaml.v3"
 )
 
 const banner = `     _        __  __
@@ -147,21 +147,22 @@ func (report *HumanReport) generateHumanDetailOutput(detail Detail) (string, err
 func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (string, error) {
 	var output bytes.Buffer
 
-	switch obj := detail.To.(type) {
-	case []interface{}:
+	switch detail.To.Kind {
+	case yamlv3.SequenceNode:
 		output.WriteString(yellow("%c %s added:\n",
 			ADDITION,
-			text.Plural(len(obj), "list entry", "list entries"),
+			text.Plural(len(detail.To.Content), "list entry", "list entries"),
 		))
 
-	case yaml.MapSlice:
+	case yamlv3.MappingNode:
 		output.WriteString(yellow("%c %s added:\n",
 			ADDITION,
-			text.Plural(len(obj), "map entry", "map entries"),
+			text.Plural(len(detail.To.Content)/2, "map entry", "map entries"),
 		))
 	}
 
-	yamlOutput, err := yamlStringInGreenishColors(ytbx.RestructureObject(detail.To))
+	ytbx.RestructureObject(detail.To)
+	yamlOutput, err := yamlStringInGreenishColors(detail.To)
 	if err != nil {
 		return "", err
 	}
@@ -174,17 +175,18 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (string, error) {
 	var output bytes.Buffer
 
-	switch obj := detail.From.(type) {
-	case []interface{}:
-		text := text.Plural(len(obj), "list entry", "list entries")
+	switch detail.From.Kind {
+	case yamlv3.SequenceNode:
+		text := text.Plural(len(detail.From.Content), "list entry", "list entries")
 		output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
 
-	case yaml.MapSlice:
-		text := text.Plural(len(obj), "map entry", "map entries")
+	case yamlv3.MappingNode:
+		text := text.Plural(len(detail.From.Content)/2, "map entry", "map entries")
 		output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
 	}
 
-	yamlOutput, err := yamlStringInRedishColors(ytbx.RestructureObject(detail.From))
+	ytbx.RestructureObject(detail.From)
+	yamlOutput, err := yamlStringInRedishColors(detail.From)
 	if err != nil {
 		return "", err
 	}
@@ -196,20 +198,41 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 
 func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) (string, error) {
 	var output bytes.Buffer
+	fromType := humanReadableType(detail.From)
+	toType := humanReadableType(detail.To)
 
-	fromType := determineReflectKind(detail.From)
-	toType := determineReflectKind(detail.To)
-	if fromType == reflect.String && toType == reflect.String {
+	switch {
+	case fromType == "string" && toType == "string":
 		// delegate to special string output
-		report.writeStringDiff(&output, detail.From.(string), detail.To.(string))
+		report.writeStringDiff(
+			&output,
+			detail.From.Value,
+			detail.To.Value,
+		)
 
-	} else {
-		// default output
+	case fromType == "binary" && toType == "binary":
+		from, err := base64.StdEncoding.DecodeString(detail.From.Value)
+		if err != nil {
+			return "", err
+		}
+
+		to, err := base64.StdEncoding.DecodeString(detail.To.Value)
+		if err != nil {
+			return "", err
+		}
+
+		output.WriteString(yellow("%c content change\n", MODIFICATION))
+		report.writeTextBlocks(&output, 0,
+			red("%s", createStringWithPrefix("  - ", hex.Dump(from))),
+			green("%s", createStringWithPrefix("  + ", hex.Dump(to))),
+		)
+
+	default:
 		if fromType != toType {
 			output.WriteString(yellow("%c type change from %s to %s\n",
 				MODIFICATION,
-				italic(reflectKindToString(fromType)),
-				italic(reflectKindToString(toType)),
+				italic(fromType),
+				italic(toType),
 			))
 
 		} else {
@@ -218,8 +241,18 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 			))
 		}
 
-		output.WriteString(red("  - %v\n", detail.From))
-		output.WriteString(green("  + %v\n", detail.To))
+		from, err := yamlString(detail.From)
+		if err != nil {
+			return "", err
+		}
+
+		to, err := yamlString(detail.To)
+		if err != nil {
+			return "", err
+		}
+
+		output.WriteString(red("  - %v\n", strings.TrimRight(from, "\n")))
+		output.WriteString(green("  + %v\n", strings.TrimRight(to, "\n")))
 	}
 
 	return output.String(), nil
@@ -229,10 +262,19 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 	var output bytes.Buffer
 
 	output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
-	switch detail.From.(type) {
-	case []string:
-		from := detail.From.([]string)
-		to := detail.To.([]string)
+	switch detail.From.Kind {
+	case yamlv3.SequenceNode:
+		asStringList := func(sequenceNode *yamlv3.Node) []string {
+			result := make([]string, len(sequenceNode.Content))
+			for i, entry := range sequenceNode.Content {
+				result[i] = entry.Value
+			}
+
+			return result
+		}
+
+		from := asStringList(detail.From)
+		to := asStringList(detail.To)
 		const singleLineSeparator = ", "
 
 		threshold := term.GetTerminalWidth() / 2
@@ -247,42 +289,16 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 				red(strings.Join(from, "\n")),
 				green(strings.Join(to, "\n"))))
 		}
-
-	case []interface{}:
-		fromOutput, err := yamlString(detail.From.([]interface{}))
-		if err != nil {
-			return "", err
-		}
-
-		toOutput, err := yamlString(detail.To.([]interface{}))
-		if err != nil {
-			return "", err
-		}
-
-		output.WriteString(CreateTableStyleString(
-			" ",
-			2,
-			red(fromOutput),
-			green(toOutput),
-		))
 	}
 
 	return output.String(), nil
 }
 
 func (report *HumanReport) writeStringDiff(output stringWriter, from string, to string) {
-	// TODO Simplify code by only writing the output code once and set-up the respective strings in each if block.
-
 	if fromCertText, toCertText, err := report.LoadX509Certs(from, to); err == nil {
 		output.WriteString(yellow("%c certificate change\n", MODIFICATION))
 		output.WriteString(report.highlightByLine(fromCertText, toCertText))
 
-	} else if !isValidUTF8String(from, to) {
-		output.WriteString(yellow("%c content change\n", MODIFICATION))
-		report.writeTextBlocks(output, 0,
-			red("%s", createStringWithPrefix("  - ", hex.Dump([]byte(from)))),
-			green("%s", createStringWithPrefix("  + ", hex.Dump([]byte(to)))),
-		)
 	} else if isWhitespaceOnlyChange(from, to) {
 		output.WriteString(yellow("%c whitespace only change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
@@ -340,22 +356,46 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 	return buf.String()
 }
 
-func determineReflectKind(obj interface{}) reflect.Kind {
-	if obj == nil {
-		return reflect.Invalid
+func humanReadableType(node *yamlv3.Node) string {
+	switch node.Kind {
+	case yamlv3.DocumentNode:
+		return "document"
+
+	case yamlv3.MappingNode:
+		return "map"
+
+	case yamlv3.SequenceNode:
+		return "list"
+
+	case yamlv3.ScalarNode:
+		switch node.Tag {
+		case "!!str":
+			return "string"
+
+		case "!!int":
+			return "int"
+
+		case "!!float":
+			return "float"
+
+		case "!!bool":
+			return "bool"
+
+		case "!!binary":
+			return "binary"
+
+		case "!!null":
+			return "<nil>"
+
+		default:
+			panic(fmt.Errorf("unknown and therefore unsupported scalar tag %s", node.Tag))
+		}
+
+	case yamlv3.AliasNode:
+		return humanReadableType(node.Alias)
 	}
 
-	return reflect.TypeOf(obj).Kind()
-}
-
-func reflectKindToString(kind reflect.Kind) string {
-	switch kind {
-	case reflect.Invalid:
-		return "<nil>"
-
-	default:
-		return kind.String()
-	}
+	panic(fmt.Errorf("unknown and therefore unsupported kind %v", node.Kind))
 }
 
 func highlightRemovals(diffs []diffmatchpatch.Diff) string {
@@ -394,7 +434,9 @@ func highlightAdditions(diffs []diffmatchpatch.Diff) string {
 	return buf.String()
 }
 
-// LoadX509Certs tries to load the provided strings as a cert each and returns a textual representation of the certs, or an error if the strings are not X509 certs
+// LoadX509Certs tries to load the provided strings as a cert each and returns
+// a textual representation of the certs, or an error if the strings are not
+// X509 certs
 func (report *HumanReport) LoadX509Certs(from, to string) (string, string, error) {
 	// Back out quickly if cert inspection is disabled
 	if report.DoNotInspectCerts {
@@ -421,23 +463,13 @@ func (report *HumanReport) LoadX509Certs(from, to string) (string, string, error
 		return "", "", err
 	}
 
-	fromCertText := certificateSummaryAsYAML(fromCert)
-	toCertText := certificateSummaryAsYAML(toCert)
-
-	yamlStringFrom, err := yamlString(fromCertText)
-	if err != nil {
-		return "", "", err
-	}
-
-	yamlStringTo, err := yamlString(toCertText)
-	if err != nil {
-		return "", "", err
-	}
-
-	return yamlStringFrom, yamlStringTo, nil
+	return certificateSummaryAsYAML(fromCert),
+		certificateSummaryAsYAML(toCert),
+		nil
 }
 
-// Create a YAML (hash with key/value) from a certificate to only display a few important fields (https://www.sslshopper.com/certificate-decoder.html):
+// Create a YAML (hash with key/value) from a certificate to only display a few
+// important fields (https://www.sslshopper.com/certificate-decoder.html):
 //   Common Name: www.example.com
 //   Organization: Company Name
 //   Organization Unit: Org
@@ -448,30 +480,47 @@ func (report *HumanReport) LoadX509Certs(from, to string) (string, string, error
 //   Valid To: April 2, 2019
 //   Issuer: www.example.com, Company Name
 //   Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
-func certificateSummaryAsYAML(cert *x509.Certificate) yaml.MapSlice {
-	result := yaml.MapSlice{}
+func certificateSummaryAsYAML(cert *x509.Certificate) string {
+	const template = `Subject:
+  Common Name: %s
+  Organization: %s
+  Organization Unit: %s
+  Locality: %s
+  State: %s
+  Country: %s
+Validity Period:
+  NotBefore: %s
+  NotAfter: %s
+Issuer: %s, %s
+Serial Number: %d (%#x)
+`
 
-	result = append(result, yaml.MapItem{Key: "Subject", Value: yaml.MapSlice{
-		yaml.MapItem{Key: "Common Name", Value: cert.Subject.CommonName},
-		yaml.MapItem{Key: "Organization", Value: strings.Join(cert.Subject.Organization, " ")},
-		yaml.MapItem{Key: "Organization Unit", Value: strings.Join(cert.Subject.OrganizationalUnit, " ")},
-		yaml.MapItem{Key: "Locality", Value: strings.Join(cert.Subject.Locality, " ")},
-		yaml.MapItem{Key: "State", Value: strings.Join(cert.Subject.Province, " ")},
-		yaml.MapItem{Key: "Country", Value: strings.Join(cert.Subject.Country, " ")},
-	}})
-
-	result = append(result, yaml.MapItem{Key: "Validity Period", Value: yaml.MapSlice{
-		yaml.MapItem{Key: "NotBefore", Value: cert.NotBefore.Format("Jan 2 15:04:05 2006 MST")},
-		yaml.MapItem{Key: "NotAfter", Value: cert.NotAfter.Format("Jan 2 15:04:05 2006 MST")},
-	}})
-
-	result = append(result, yaml.MapItem{Key: "Issuer", Value: fmt.Sprintf("%s, %s", cert.Issuer.CommonName, strings.Join(cert.Issuer.Organization, " "))})
-	result = append(result, yaml.MapItem{Key: "Serial Number", Value: fmt.Sprintf("%d (%#x)", cert.SerialNumber, cert.SerialNumber)})
-
-	return result
+	return fmt.Sprintf(template,
+		cert.Subject.CommonName,
+		strings.Join(cert.Subject.Organization, " "),
+		strings.Join(cert.Subject.OrganizationalUnit, " "),
+		strings.Join(cert.Subject.Locality, " "),
+		strings.Join(cert.Subject.Province, " "),
+		strings.Join(cert.Subject.Country, " "),
+		cert.NotBefore.Format("Jan 2 15:04:05 2006 MST"),
+		cert.NotAfter.Format("Jan 2 15:04:05 2006 MST"),
+		cert.Issuer.CommonName, strings.Join(cert.Issuer.Organization, " "),
+		cert.SerialNumber, cert.SerialNumber,
+	)
 }
 
 func yamlString(input interface{}) (string, error) {
+	if input == nil {
+		return "<nil>", nil
+	}
+
+	switch node := input.(type) {
+	case *yamlv3.Node:
+		if node.Tag == "!!null" {
+			return "<nil>", nil
+		}
+	}
+
 	return neat.NewOutputProcessor(false, true, nil).ToYAML(input)
 }
 

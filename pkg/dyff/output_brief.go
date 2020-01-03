@@ -28,7 +28,7 @@ import (
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/text"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
+	"github.com/gonvenience/ytbx"
 )
 
 const (

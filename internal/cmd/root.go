@@ -33,10 +33,10 @@ import (
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/wrap"
+	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
+	yamlv3 "gopkg.in/yaml.v3"
 )
 
 // colormode is used by CLI parser to store user input for further internal processing into the proper value
@@ -201,7 +201,7 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 
 	for _, document := range inputFile.Documents {
 		if w.Restructure {
-			document = ytbx.RestructureObject(document)
+			ytbx.RestructureObject(document)
 		}
 
 		switch {
@@ -213,11 +213,10 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			fmt.Fprintf(writer, "%s\n", output)
 
 		case w.PlainMode && w.OutputStyle == "yaml":
-			output, err := yaml.Marshal(document)
-			if err != nil {
-				return err
-			}
-			fmt.Fprintf(writer, "---\n%s\n", string(output))
+			encoder := yamlv3.NewEncoder(writer)
+			encoder.SetIndent(2)
+			encoder.Encode(document)
+			encoder.Close()
 
 		case w.OutputStyle == "json":
 			output, err := neat.NewOutputProcessor(!w.OmitIndentHelper, true, &neat.DefaultColorSchema).ToJSON(document)
@@ -231,7 +230,7 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(writer, "---\n%s\n", output)
+			fmt.Fprintf(writer, "%s\n", output)
 		}
 	}
 
