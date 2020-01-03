@@ -26,19 +26,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"regexp"
 	"strconv"
 	"testing"
 
+	. "github.com/homeport/dyff/pkg/dyff"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/types"
 
-	. "github.com/gonvenience/term"
-	. "github.com/homeport/dyff/pkg/dyff"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/gonvenience/term"
+	"github.com/gonvenience/ytbx"
 	"github.com/onsi/gomega/types"
-	yaml "gopkg.in/yaml.v2"
+	yamlv3 "gopkg.in/yaml.v3"
 )
 
 func TestCore(t *testing.T) {
@@ -48,7 +49,7 @@ func TestCore(t *testing.T) {
 
 var _ = BeforeSuite(func() {
 	LoggingLevel = NONE
-	FixedTerminalWidth = 80
+	term.FixedTerminalWidth = 80
 })
 
 func BeLike(expected interface{}) types.GomegaMatcher {
@@ -121,54 +122,31 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 	UseGoPatchPaths = tmp
 }
 
-func yml(input string) yaml.MapSlice {
+func yml(input string) *yamlv3.Node {
 	// If input is a file loacation, load this as YAML
 	if _, err := os.Open(input); err == nil {
 		var content ytbx.InputFile
 		var err error
 		if content, err = ytbx.LoadFile(input); err != nil {
-			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': %s", input, err.Error()))
+			Fail(fmt.Sprintf("Failed to load YAML from '%s': %s", input, err.Error()))
 		}
 
 		if len(content.Documents) > 1 {
-			Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Provided file contains more than one document", input))
+			Fail(fmt.Sprintf("Failed to load YAML from '%s': Provided file contains more than one document", input))
 		}
 
-		switch content.Documents[0].(type) {
-		case yaml.MapSlice:
-			return content.Documents[0].(yaml.MapSlice)
-		}
-
-		Fail(fmt.Sprintf("Failed to load YAML MapSlice from '%s': Document #0 in YAML is not of type MapSlice, but is %s", input, reflect.TypeOf(content.Documents[0])))
+		return content.Documents[0].Content[0]
 	}
 
-	// Load YAML by parsing the actual string as YAML if it was not a file location
-	doc := singleDoc(input)
-	switch mapslice := doc.(type) {
-	case yaml.MapSlice:
-		return mapslice
-	}
-
-	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a YAML MapSlice:\n%s\n", input))
-	return nil
+	// Load by parsing the actual string as YAML if it was not a file location
+	return singleDoc(input)
 }
 
-func list(input string) []interface{} {
-	doc := singleDoc(input)
-
-	switch obj := doc.(type) {
-	case []interface{}:
-		return obj
-
-	case []yaml.MapSlice:
-		return ytbx.SimplifyList(obj)
-	}
-
-	Fail(fmt.Sprintf("Failed to use YAML, parsed data is not a slice of any kind:\n%s\nIt was parsed as: %#v", input, doc))
-	return nil
+func list(input string) *yamlv3.Node {
+	return singleDoc(input)
 }
 
-func singleDoc(input string) interface{} {
+func singleDoc(input string) *yamlv3.Node {
 	docs, err := ytbx.LoadYAMLDocuments([]byte(input))
 	if err != nil {
 		Fail(fmt.Sprintf("Failed to parse as YAML:\n%s\n\n%v", input, err))
@@ -178,10 +156,10 @@ func singleDoc(input string) interface{} {
 		Fail(fmt.Sprintf("Failed to use YAML, because it contains multiple documents:\n%s\n", input))
 	}
 
-	return docs[0]
+	return docs[0].Content[0]
 }
 
-func multiDoc(input string) []interface{} {
+func multiDoc(input string) []*yamlv3.Node {
 	documents, err := ytbx.LoadYAMLDocuments([]byte(input))
 	if err != nil {
 		Fail(err.Error())
@@ -238,41 +216,190 @@ func humanDiff(diff Diff) string {
 	return buf.String()
 }
 
+func nodify(obj interface{}) *yamlv3.Node {
+	if obj == nil {
+		return nil
+	}
+
+	switch tobj := obj.(type) {
+	case *yamlv3.Node:
+		return tobj
+
+	case []string:
+		return AsSequenceNode(tobj)
+
+	case string:
+		return &yamlv3.Node{
+			Kind:  yamlv3.ScalarNode,
+			Tag:   "!!str",
+			Value: tobj,
+		}
+
+	case int:
+		return &yamlv3.Node{
+			Kind:  yamlv3.ScalarNode,
+			Tag:   "!!int",
+			Value: strconv.Itoa(tobj),
+		}
+
+	case float64:
+		return &yamlv3.Node{
+			Kind:  yamlv3.ScalarNode,
+			Tag:   "!!float",
+			Value: strconv.FormatFloat(tobj, 'f', -1, 64),
+		}
+
+	case bool:
+		return &yamlv3.Node{
+			Kind:  yamlv3.ScalarNode,
+			Tag:   "!!bool",
+			Value: fmt.Sprintf("%v", tobj),
+		}
+	}
+
+	Fail(fmt.Sprintf("Unable to translate %v (%T) into a YAML v3 Node", obj, obj))
+	return nil
+}
+
 func singleDiff(p string, change rune, from, to interface{}) Diff {
 	return Diff{
 		Path: path(p),
-		Details: []Detail{{
-			Kind: change,
-			From: from,
-			To:   to,
-		}},
+		Details: []Detail{
+			{
+				Kind: change,
+				From: nodify(from),
+				To:   nodify(to),
+			},
+		},
 	}
 }
 
 func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, from2, to2 interface{}) Diff {
 	return Diff{
 		Path: path(p),
-		Details: []Detail{{
-			Kind: change1,
-			From: from1,
-			To:   to1,
-		},
+		Details: []Detail{
+			{
+				Kind: change1,
+				From: nodify(from1),
+				To:   nodify(to1),
+			},
 			{
 				Kind: change2,
-				From: from2,
-				To:   to2,
-			}},
+				From: nodify(from2),
+				To:   nodify(to2),
+			},
+		},
 	}
 }
 
-func compare(from interface{}, to interface{}) ([]Diff, error) {
+func compare(from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	report, err := CompareInputFiles(
-		ytbx.InputFile{Documents: []interface{}{from}},
-		ytbx.InputFile{Documents: []interface{}{to}})
+		ytbx.InputFile{Documents: []*yamlv3.Node{from}},
+		ytbx.InputFile{Documents: []*yamlv3.Node{to}})
 
 	if err != nil {
 		return nil, err
 	}
 
 	return report.Diffs, nil
+}
+
+func BeSameDiffAs(expected Diff) GomegaMatcher {
+	return &diffMatcher{
+		expected: expected,
+	}
+}
+
+type diffMatcher struct {
+	expected Diff
+}
+
+func (matcher *diffMatcher) Match(actual interface{}) (success bool, err error) {
+	actualDiff, ok := actual.(Diff)
+	if !ok {
+		return false, fmt.Errorf("BeSameDiffAs matcher expected a object of type Diff, not %T", actual)
+	}
+
+	return isSameDiff(actualDiff, matcher.expected)
+}
+
+func (matcher *diffMatcher) FailureMessage(actual interface{}) string {
+	return fmt.Sprintf("Expected\n\t%s\nto be same as\n\t%s",
+		spew.Sdump(actual),
+		spew.Sdump(matcher.expected))
+}
+
+func (matcher *diffMatcher) NegatedFailureMessage(actual interface{}) string {
+	return fmt.Sprintf("Expected\n\t%s\nnot to be same as\n\t%s",
+		spew.Sdump(actual),
+		spew.Sdump(matcher.expected),
+	)
+}
+
+func isSameDiff(a, b Diff) (bool, error) {
+	if a.Path.ToGoPatchStyle() != b.Path.ToGoPatchStyle() {
+		return false, nil
+	}
+
+	if len(a.Details) != len(b.Details) {
+		return false, nil
+	}
+
+	for i := range a.Details {
+		if sameDetail, err := isSameDetail(a.Details[i], b.Details[i]); !sameDetail {
+			return sameDetail, err
+		}
+	}
+
+	return true, nil
+}
+
+func isSameDetail(a, b Detail) (bool, error) {
+	if a.Kind != b.Kind {
+		return false, nil
+	}
+
+	if sameNode, err := isSameNode(a.From, b.From); !sameNode {
+		return sameNode, err
+	}
+
+	if sameNode, err := isSameNode(a.To, b.To); !sameNode {
+		return sameNode, err
+	}
+
+	return true, nil
+}
+
+func isSameNode(a, b *yamlv3.Node) (bool, error) {
+	if a == nil && b == nil {
+		return true, nil
+	}
+
+	if (a == nil && b != nil) || (a != nil && b == nil) {
+		return false, nil
+	}
+
+	if a.Kind != b.Kind {
+		return false, nil
+	}
+
+	if a.Tag != b.Tag {
+		return false, nil
+	}
+
+	if a.Value != b.Value {
+		return false, nil
+	}
+
+	if len(a.Content) != len(b.Content) {
+		return false, nil
+	}
+
+	for i := range a.Content {
+		if same, err := isSameNode(a.Content[i], b.Content[i]); !same {
+			return same, err
+		}
+	}
+
+	return true, nil
 }

@@ -69,11 +69,9 @@ list:
 
 			data, err := ioutil.ReadFile(filename)
 			Expect(err).To(BeNil())
-			Expect(string(data)).To(BeEquivalentTo(`---
-list:
+			Expect(string(data)).To(BeEquivalentTo(`list:
 - name: one
   aaa: bbb
-
 `))
 		})
 
@@ -197,9 +195,7 @@ list
 
 		It("should create a report using a custom root in the files", func() {
 			from, to := assets("examples", "from.yml"), assets("examples", "to.yml")
-			out, err := dyff("between", from, to, "--chroot", "yaml.map")
-			Expect(err).ToNot(HaveOccurred())
-			Expect(out).To(BeEquivalentTo(fmt.Sprintf(`     _        __  __
+			expected := fmt.Sprintf(`     _        __  __
    _| |_   _ / _|/ _|  between %s, YAML root was changed to yaml.map
  / _' | | | | |_| |_       and %s, YAML root was changed to yaml.map
 | (_| | |_| |  _|  _|
@@ -208,17 +204,17 @@ list
 
 (root level)
 - six map entries removed:   + six map entries added:
-  intB: 10                     floatY: 24
-  floatB: 2.71                 intY: 147
-  boolB: false                 boolY: true
   stringB: fOObAr              stringY: YAML!
+  intB: 10                     intY: 147
+  floatB: 2.71                 floatY: 24.0
+  boolB: false                 boolY: true
+  mapB:                        mapY:
+    key0: B                      key0: Y
+    key1: B                      key1: Y
   listB:                       listY:
   - B                          - Yo
   - B                          - Yo
   - B                          - Yo
-  mapB:                        mapY:
-    key0: B                      key0: true
-    key1: B                      key1: true
 
 type-change-1
   ± type change from string to int
@@ -237,7 +233,11 @@ whitespaces
                                            ↵
 
 
-`, from, to)))
+`, from, to)
+
+			out, err := dyff("between", from, to, "--chroot", "yaml.map")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(expected))
 		})
 
 		It("should fail when change root is used with files containing multiple documents", func() {

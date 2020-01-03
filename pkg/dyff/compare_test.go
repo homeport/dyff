@@ -21,8 +21,8 @@
 package dyff_test
 
 import (
+	"github.com/gonvenience/ytbx"
 	. "github.com/homeport/dyff/pkg/dyff"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -53,7 +53,7 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(len(result[0].Details)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/name", MODIFICATION, "foobar", "fOObAr")))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", MODIFICATION, "foobar", "fOObAr")))
 			})
 
 			It("should return that an integer was modified", func() {
@@ -77,7 +77,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/name", MODIFICATION, 1, 2)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", MODIFICATION, 1, 2)))
 			})
 
 			It("should return that a float was modified", func() {
@@ -101,7 +101,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/level", MODIFICATION, 3.14159265359, 2.7182818284)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/level", MODIFICATION, 3.14159265359, 2.7182818284)))
 			})
 
 			It("should return that a boolean was modified", func() {
@@ -125,7 +125,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/enabled", MODIFICATION, false, true)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/enabled", MODIFICATION, false, true)))
 			})
 
 			It("should return that one value was added", func() {
@@ -148,7 +148,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure", ADDITION, nil, yml(`version: v1`))))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", ADDITION, nil, yml(`version: v1`))))
 			})
 
 			It("should return that one value was removed", func() {
@@ -171,7 +171,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure", REMOVAL, yml(`version: v1`), nil)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", REMOVAL, yml(`version: v1`), nil)))
 			})
 
 			It("should return two diffs if one value was removed and another one added", func() {
@@ -195,7 +195,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(doubleDiff("/some/yaml/structure",
+				Expect(result[0]).To(BeSameDiffAs(doubleDiff("/some/yaml/structure",
 					REMOVAL, yml(`version: v1`), nil,
 					ADDITION, nil, yml(`release: v1`))))
 			})
@@ -226,7 +226,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ three ]`))))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ three ]`))))
 			})
 
 			It("should return that an integer list entry was added", func() {
@@ -253,7 +253,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ 3 ]`))))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ 3 ]`))))
 			})
 
 			It("should return that a string list entry was removed", func() {
@@ -280,7 +280,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ three ]`), nil)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ three ]`), nil)))
 			})
 
 			It("should return that an integer list entry was removed", func() {
@@ -307,7 +307,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ 3 ]`), nil)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ 3 ]`), nil)))
 			})
 
 			It("should not return a change if only the order in a hash was changed", func() {
@@ -408,13 +408,13 @@ instance_groups:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(7))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", MODIFICATION, "192.168.1.1", "192.168.0.1")))
-				Expect(result[1]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, list(`[ { release: custom, name: logger } ]`))))
-				Expect(result[2]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
-				Expect(result[3]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/development_mode", MODIFICATION, true, false)))
-				Expect(result[4]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/instances", MODIFICATION, 1, 2)))
-				Expect(result[5]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/networks", REMOVAL, list(`[ { name: testnet } ]`), nil)))
-				Expect(result[6]).To(BeEquivalentTo(singleDiff("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password", MODIFICATION, "supersecret", "zwX#(;P=%hTfFzM[")))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", MODIFICATION, "192.168.1.1", "192.168.0.1")))
+				Expect(result[1]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, list(`[ { release: custom, name: logger } ]`))))
+				Expect(result[2]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
+				Expect(result[3]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/development_mode", MODIFICATION, true, false)))
+				Expect(result[4]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/instances", MODIFICATION, 1, 2)))
+				Expect(result[5]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/networks", REMOVAL, list(`[ { name: testnet } ]`), nil)))
+				Expect(result[6]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password", MODIFICATION, "supersecret", "zwX#(;P=%hTfFzM[")))
 			})
 
 			It("should return even difficult ones", func() {
@@ -455,7 +455,7 @@ resource_pools:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters/0/CLS_PAAS_SFT_035/resource_pool", MODIFICATION, "other-vsphere-res-pool", "new-vsphere-res-pool")))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters/0/CLS_PAAS_SFT_035/resource_pool", MODIFICATION, "other-vsphere-res-pool", "new-vsphere-res-pool")))
 			})
 
 			It("should return even difficult ones that cannot simply be compared", func() {
@@ -483,7 +483,7 @@ resource_pools:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(doubleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters",
+				Expect(result[0]).To(BeSameDiffAs(doubleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters",
 					REMOVAL, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`), nil,
 					ADDITION, nil, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`))))
 			})
@@ -517,7 +517,7 @@ resource_pools:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeEquivalentTo(singleDiff("/name=three/version",
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/name=three/version",
 					MODIFICATION, 4, 3)))
 			})
 		})
@@ -586,7 +586,7 @@ listY: [ Yo, Yo, Yo ]
 				Expect(len(results)).To(BeEquivalentTo(len(expected)))
 
 				for i, result := range results {
-					Expect(result).To(BeEquivalentTo(expected[i]))
+					Expect(result).To(BeSameDiffAs(expected[i]))
 				}
 			})
 
@@ -600,8 +600,8 @@ listY: [ Yo, Yo, Yo ]
 				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
 				Expect(results[0].Details[0]).To(BeEquivalentTo(Detail{
 					Kind: ORDERCHANGE,
-					From: []string{"A", "C", "B", "D"},
-					To:   []string{"A", "B", "C", "D"},
+					From: AsSequenceNode([]string{"A", "C", "B", "D"}),
+					To:   AsSequenceNode([]string{"A", "B", "C", "D"}),
 				}))
 			})
 
@@ -613,11 +613,15 @@ listY: [ Yo, Yo, Yo ]
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))
 				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
-				Expect(results[0].Details[0]).To(BeEquivalentTo(Detail{
+
+				actual := results[0].Details[0]
+				expected := Detail{
 					Kind: ORDERCHANGE,
-					From: []interface{}{"A", "C", "B", "D"},
-					To:   []interface{}{"A", "B", "C", "D"},
-				}))
+					From: AsSequenceNode([]string{"A", "C", "B", "D"}),
+					To:   AsSequenceNode([]string{"A", "B", "C", "D"}),
+				}
+
+				Expect(isSameDetail(actual, expected)).To(BeTrue())
 			})
 
 			It("should return all differences between the files with multiple documents", func() {
@@ -635,7 +639,7 @@ listY: [ Yo, Yo, Yo ]
 				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
 
 				for i, result := range results.Diffs {
-					Expect(result).To(BeEquivalentTo(expected[i]))
+					Expect(result).To(BeSameDiffAs(expected[i]))
 				}
 			})
 
@@ -671,7 +675,7 @@ listY: [ Yo, Yo, Yo ]
 				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
 
 				for i, result := range results.Diffs {
-					Expect(result).To(BeEquivalentTo(expected[i]))
+					Expect(result).To(BeSameDiffAs(expected[i]))
 				}
 			})
 		})
@@ -706,7 +710,7 @@ b: bar
 
 				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
 				for i, result := range results.Diffs {
-					Expect(result).To(BeEquivalentTo(expected[i]))
+					Expect(result).To(BeSameDiffAs(expected[i]))
 				}
 			})
 		})

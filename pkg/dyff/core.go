@@ -22,17 +22,15 @@ package dyff
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/text"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
+	"github.com/gonvenience/wrap"
+	"github.com/gonvenience/ytbx"
 	"github.com/mitchellh/hashstructure"
-	"github.com/pkg/errors"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
-	yaml "gopkg.in/yaml.v2"
+	yamlv3 "gopkg.in/yaml.v3"
 )
 
 // NonStandardIdentifierGuessCountThreshold specifies how many list entries are
@@ -48,7 +46,9 @@ var MinorChangeThreshold = 0.1
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
 
-// CompareInputFiles is one of the convenience main entry points for comparing objects. In this case the representation of an input file, which might contain multiple documents. It returns a report with the list of differences. Each difference describes a change to comes from "from" to "to", hence the names.
+// CompareInputFiles is one of the convenience main entry points for comparing
+// objects. In this case the representation of an input file, which might
+// contain multiple documents. It returns a report with the list of differences.
 func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 	if len(from.Documents) != len(to.Documents) {
 		return Report{}, fmt.Errorf("comparing YAMLs with a different number of documents is currently not supported")
@@ -56,7 +56,12 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 
 	result := make([]Diff, 0)
 	for idx := range from.Documents {
-		diffs, err := compareObjects(ytbx.Path{DocumentIdx: idx}, from.Documents[idx], to.Documents[idx])
+		diffs, err := compareObjects(
+			ytbx.Path{DocumentIdx: idx},
+			from.Documents[idx],
+			to.Documents[idx],
+		)
+
 		if err != nil {
 			return Report{}, err
 		}
@@ -67,84 +72,143 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 	return Report{from, to, result}, nil
 }
 
-func compareObjects(path ytbx.Path, from interface{}, to interface{}) ([]Diff, error) {
-	// Save some time and process some simple nil and type-change use cases immediately
-	if (from == nil && to != nil) || (from != nil && to == nil) {
-		return []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}, nil
-
-	} else if from == nil && to == nil {
+func compareObjects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+	switch {
+	case from == nil && to == nil:
 		return []Diff{}, nil
 
-	} else if reflect.TypeOf(from) != reflect.TypeOf(to) {
-		return []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}, nil
+	case (from == nil && to != nil) || (from != nil && to == nil):
+		return []Diff{{
+			path,
+			[]Detail{{
+				Kind: MODIFICATION,
+				From: from,
+				To:   to,
+			}},
+		}}, nil
+
+	case (from.Kind != to.Kind) || (from.Tag != to.Tag):
+		return []Diff{{
+			path,
+			[]Detail{{
+				Kind: MODIFICATION,
+				From: from,
+				To:   to,
+			}},
+		}}, nil
 	}
 
+	return compareNonNilSameKindNodes(path, from, to)
+}
+
+func compareNonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	var diffs []Diff
 	var err error
 
-	switch from.(type) {
-	case yaml.MapSlice:
-		diffs, err = compareMapSlices(path, from.(yaml.MapSlice), to.(yaml.MapSlice))
+	switch from.Kind {
+	case yamlv3.DocumentNode:
+		diffs, err = compareObjects(path, from.Content[0], to.Content[0])
 
-	case []interface{}:
-		diffs, err = compareLists(path, from.([]interface{}), to.([]interface{}))
+	case yamlv3.MappingNode:
+		diffs, err = compareMappingNodes(path, from, to)
 
-	case []yaml.MapSlice:
-		diffs, err = compareListOfMapSlices(path, from.([]yaml.MapSlice), to.([]yaml.MapSlice))
+	case yamlv3.SequenceNode:
+		diffs, err = compareSequenceNodes(path, from, to)
 
-	case string:
-		diffs, err = compareStrings(path, from.(string), to.(string))
+	case yamlv3.ScalarNode:
+		switch from.Tag {
+		case "!!str":
+			diffs, err = compareNodeValues(path, from, to)
 
-	case bool, float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, uintptr:
-		if from != to {
-			diffs, err = []Diff{{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}}}, nil
+		case "!!null":
+			// Ignore different ways to define a null value
+
+		default:
+			if from.Value != to.Value {
+				diffs, err = []Diff{{
+					path,
+					[]Detail{{
+						Kind: MODIFICATION,
+						From: from,
+						To:   to,
+					}},
+				}}, nil
+			}
 		}
 
+	case yamlv3.AliasNode:
+		diffs, err = compareObjects(path, from.Alias, to.Alias)
+
 	default:
-		err = fmt.Errorf("failed to compare objects due to unsupported type %s", reflect.TypeOf(from))
+		err = fmt.Errorf("failed to compare objects due to unsupported kind %v", from.Kind)
 	}
 
 	return diffs, err
 }
 
-func compareMapSlices(path ytbx.Path, from yaml.MapSlice, to yaml.MapSlice) ([]Diff, error) {
-	removals := yaml.MapSlice{}
-	additions := yaml.MapSlice{}
-
+func compareMappingNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	result := make([]Diff, 0)
+	removals := []*yamlv3.Node{}
+	additions := []*yamlv3.Node{}
 
-	for _, fromItem := range from {
-		key := fromItem.Key
-		if toItem, ok := getMapItemByKeyFromMapSlice(key, to); ok {
+	for i := 0; i < len(from.Content); i += 2 {
+		key, fromItem := from.Content[i], from.Content[i+1]
+		if toItem, ok := findValueByKey(to, key.Value); ok {
 			// `from` and `to` contain the same `key` -> require comparison
-			diffs, err := compareObjects(ytbx.NewPathWithNamedElement(path, key), fromItem.Value, toItem.Value)
+			diffs, err := compareObjects(
+				ytbx.NewPathWithNamedElement(path, key.Value),
+				followAlias(fromItem),
+				followAlias(toItem),
+			)
+
 			if err != nil {
 				return nil, err
 			}
+
 			result = append(result, diffs...)
 
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
-			removals = append(removals, fromItem)
+			removals = append(removals, key, fromItem)
 		}
 	}
 
-	for _, toItem := range to {
-		key := toItem.Key
-		if _, ok := getMapItemByKeyFromMapSlice(key, from); !ok {
+	for i := 0; i < len(to.Content); i += 2 {
+		key, toItem := to.Content[i], to.Content[i+1]
+		if _, ok := findValueByKey(from, key.Value); !ok {
 			// `to` contains a `key` that `from` does not have -> addition
-			additions = append(additions, toItem)
+			additions = append(additions, key, toItem)
 		}
 	}
 
 	diff := Diff{Path: path, Details: []Detail{}}
 
 	if len(removals) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
+		diff.Details = append(diff.Details,
+			Detail{
+				Kind: REMOVAL,
+				From: &yamlv3.Node{
+					Kind:    from.Kind,
+					Tag:     from.Tag,
+					Content: removals,
+				},
+				To: nil,
+			},
+		)
 	}
 
 	if len(additions) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+		diff.Details = append(diff.Details,
+			Detail{
+				Kind: ADDITION,
+				From: nil,
+				To: &yamlv3.Node{
+					Kind:    to.Kind,
+					Tag:     to.Tag,
+					Content: additions,
+				},
+			},
+		)
 	}
 
 	if len(diff.Details) > 0 {
@@ -154,9 +218,9 @@ func compareMapSlices(path ytbx.Path, from yaml.MapSlice, to yaml.MapSlice) ([]D
 	return result, nil
 }
 
-func compareLists(path ytbx.Path, from []interface{}, to []interface{}) ([]Diff, error) {
+func compareSequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	// Bail out quickly if there is nothing to check
-	if len(from) == 0 && len(to) == 0 {
+	if len(from.Content) == 0 && len(to.Content) == 0 {
 		return []Diff{}, nil
 	}
 
@@ -171,100 +235,98 @@ func compareLists(path ytbx.Path, from []interface{}, to []interface{}) ([]Diff,
 	return compareSimpleLists(path, from, to)
 }
 
-func compareListOfMapSlices(path ytbx.Path, from []yaml.MapSlice, to []yaml.MapSlice) ([]Diff, error) {
-	// TODO Check if there is another way to do this, or if we can save time by doing something else
-	return compareLists(path, ytbx.SimplifyList(from), ytbx.SimplifyList(to))
-}
-
-func compareSimpleLists(path ytbx.Path, from []interface{}, to []interface{}) ([]Diff, error) {
-	removals := make([]interface{}, 0)
-	additions := make([]interface{}, 0)
+func compareSimpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+	removals := make([]*yamlv3.Node, 0)
+	additions := make([]*yamlv3.Node, 0)
 
 	result := make([]Diff, 0)
 
-	fromLength := len(from)
-	toLength := len(to)
+	fromLength := len(from.Content)
+	toLength := len(to.Content)
 
-	// Special case if both lists only contain one entry: directly compare the two entries with each other
+	// Special case if both lists only contain one entry, then directly compare
+	// the two entries with each other
 	if fromLength == 1 && fromLength == toLength {
-		return compareObjects(ytbx.NewPathWithIndexedListElement(path, 0), from[0], to[0])
+		return compareObjects(
+			ytbx.NewPathWithIndexedListElement(path, 0),
+			followAlias(from.Content[0]),
+			followAlias(to.Content[0]),
+		)
 	}
 
-	fromLookup, err := createLookUpMap(from)
-	if err != nil {
-		return nil, err
-	}
+	fromLookup := createLookUpMap(from)
+	toLookup := createLookUpMap(to)
 
-	toLookup, err := createLookUpMap(to)
-	if err != nil {
-		return nil, err
-	}
-
-	// Fill two lists with the names of the entries that are common to both provided lists
+	// Fill two lists with the names of the entries that are common to both
+	// provided lists
 	fromNames := make([]uint64, 0, fromLength)
 	toNames := make([]uint64, 0, fromLength)
 
-	for idxPos, fromValue := range from {
-		hash, err := calcHash(fromValue)
-		if err != nil {
-			return nil, err
-		}
+	for idxPos, fromValue := range from.Content {
+		hash := calcNodeHash(fromValue)
 
 		if _, ok := toLookup[hash]; !ok {
 			// `from` entry does not exist in `to` list
-			removals = append(removals, from[idxPos])
+			removals = append(removals, from.Content[idxPos])
 
 		} else {
 			fromNames = append(fromNames, hash)
 		}
 	}
 
-	for idxPos, toValue := range to {
-		hash, err := calcHash(toValue)
-		if err != nil {
-			return nil, err
-		}
+	for idxPos, toValue := range to.Content {
+		hash := calcNodeHash(toValue)
 
 		if _, ok := fromLookup[hash]; !ok {
 			// `to` entry does not exist in `from` list
-			additions = append(additions, to[idxPos])
+			additions = append(additions, to.Content[idxPos])
 
 		} else {
 			toNames = append(toNames, hash)
 		}
 	}
 
-	orderchanges := findOrderChangesInSimpleList(from, to, fromNames, toNames, fromLookup, toLookup)
-
-	return packChangesAndAddToResult(result, true, path, orderchanges, additions, removals)
+	return packChangesAndAddToResult(
+		result,
+		true,
+		path,
+		findOrderChangesInSimpleList(from, to, fromNames, toNames, fromLookup, toLookup),
+		additions,
+		removals,
+	)
 }
 
-func compareNamedEntryLists(path ytbx.Path, identifier string, from []interface{}, to []interface{}) ([]Diff, error) {
-	removals := make([]interface{}, 0)
-	additions := make([]interface{}, 0)
+func compareNamedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+	removals := make([]*yamlv3.Node, 0)
+	additions := make([]*yamlv3.Node, 0)
 
 	result := make([]Diff, 0)
 
-	// Fill two lists with the names of the entries that are common to both provided lists
-	fromLength := len(from)
+	// Fill two lists with the names of the entries that are common in both lists
+	fromLength := len(from.Content)
 	fromNames := make([]string, 0, fromLength)
 	toNames := make([]string, 0, fromLength)
 
-	// Find entries that are common to both lists to compare them separately, and find entries that are only in from, but not to and are therefore removed
-	for _, fromEntry := range from {
-		name, err := getValueByKey(fromEntry.(yaml.MapSlice), identifier)
+	// Find entries that are common to both lists to compare them separately, and
+	// find entries that are only in from, but not to and are therefore removed
+	for _, fromEntry := range from.Content {
+		name, err := getValueByKey(fromEntry, identifier)
 		if err != nil {
 			return nil, err
 		}
 
-		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
+		if toEntry, ok := getEntryFromNamedList(to, identifier, name.Value); ok {
 			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
-			diffs, err := compareObjects(ytbx.NewPathWithNamedListElement(path, identifier, name), fromEntry, toEntry)
+			diffs, err := compareObjects(
+				ytbx.NewPathWithNamedListElement(path, identifier, name.Value),
+				followAlias(fromEntry),
+				followAlias(toEntry),
+			)
 			if err != nil {
 				return nil, err
 			}
 			result = append(result, diffs...)
-			fromNames = append(fromNames, name.(string))
+			fromNames = append(fromNames, name.Value)
 
 		} else {
 			// `from` has an entry (identified by identifier and name), but `to` does not -> removal
@@ -273,15 +335,15 @@ func compareNamedEntryLists(path ytbx.Path, identifier string, from []interface{
 	}
 
 	// Find entries that are only in to, but not from and are therefore added
-	for _, toEntry := range to {
-		name, err := getValueByKey(toEntry.(yaml.MapSlice), identifier)
+	for _, toEntry := range to.Content {
+		name, err := getValueByKey(toEntry, identifier)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, ok := getEntryFromNamedList(from, identifier, name); ok {
+		if _, ok := getEntryFromNamedList(from, identifier, name.Value); ok {
 			// `to` and `from` have the same entry idenfified by identifier and name (comparison already covered by previous range)
-			toNames = append(toNames, name.(string))
+			toNames = append(toNames, name.Value)
 
 		} else {
 			// `to` has an entry (identified by identifier and name), but `from` does not -> addition
@@ -294,31 +356,41 @@ func compareNamedEntryLists(path ytbx.Path, identifier string, from []interface{
 	return packChangesAndAddToResult(result, true, path, orderchanges, additions, removals)
 }
 
-func compareStrings(path ytbx.Path, from string, to string) ([]Diff, error) {
+func compareNodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	result := make([]Diff, 0)
-	if strings.Compare(from, to) != 0 {
-		result = append(result, Diff{path, []Detail{{Kind: MODIFICATION, From: from, To: to}}})
+	if strings.Compare(from.Value, to.Value) != 0 {
+		result = append(result, Diff{
+			path,
+			[]Detail{{
+				Kind: MODIFICATION,
+				From: from,
+				To:   to,
+			}},
+		})
 	}
 
 	return result, nil
 }
 
-func findOrderChangesInSimpleList(from, to []interface{}, fromNames, toNames []uint64, fromLookup, toLookup map[uint64]int) []Detail {
+func findOrderChangesInSimpleList(from, to *yamlv3.Node, fromNames, toNames []uint64, fromLookup, toLookup map[uint64]int) []Detail {
 	orderchanges := make([]Detail, 0)
+
+	cnv := func(list []uint64, lookup map[uint64]int, content *yamlv3.Node) *yamlv3.Node {
+		result := make([]*yamlv3.Node, 0, len(list))
+		for _, hash := range list {
+			result = append(result, content.Content[lookup[hash]])
+		}
+
+		return &yamlv3.Node{
+			Kind:    yamlv3.SequenceNode,
+			Content: result,
+		}
+	}
 
 	// Try to find order changes ...
 	if len(fromNames) == len(toNames) {
 		for idx, hash := range fromNames {
 			if toNames[idx] != hash {
-				cnv := func(list []uint64, lookup map[uint64]int, content []interface{}) []interface{} {
-					result := make([]interface{}, 0, len(list))
-					for _, hash := range list {
-						result = append(result, content[lookup[hash]])
-					}
-
-					return result
-				}
-
 				orderchanges = append(orderchanges,
 					Detail{
 						Kind: ORDERCHANGE,
@@ -333,18 +405,39 @@ func findOrderChangesInSimpleList(from, to []interface{}, fromNames, toNames []u
 	return orderchanges
 }
 
+// AsSequenceNode translates a string list into a SequenceNode
+func AsSequenceNode(list []string) *yamlv3.Node {
+	result := make([]*yamlv3.Node, len(list))
+	for i, entry := range list {
+		result[i] = &yamlv3.Node{
+			Kind:  yamlv3.ScalarNode,
+			Tag:   "!!str",
+			Value: entry,
+		}
+	}
+
+	return &yamlv3.Node{
+		Kind:    yamlv3.SequenceNode,
+		Content: result,
+	}
+}
+
 func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
 	orderchanges := make([]Detail, 0)
 
-	// Try to find order changes ...
 	idxLookupMap := make(map[string]int, len(toNames))
 	for idx, name := range toNames {
 		idxLookupMap[name] = idx
 	}
 
+	// Try to find order changes ...
 	for idx, name := range fromNames {
 		if idxLookupMap[name] != idx {
-			orderchanges = append(orderchanges, Detail{Kind: ORDERCHANGE, From: fromNames, To: toNames})
+			orderchanges = append(orderchanges, Detail{
+				Kind: ORDERCHANGE,
+				From: AsSequenceNode(fromNames),
+				To:   AsSequenceNode(toNames),
+			})
 			break
 		}
 	}
@@ -352,7 +445,7 @@ func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
 	return orderchanges
 }
 
-func packChangesAndAddToResult(list []Diff, prepend bool, path ytbx.Path, orderchanges []Detail, additions, removals []interface{}) ([]Diff, error) {
+func packChangesAndAddToResult(list []Diff, prepend bool, path ytbx.Path, orderchanges []Detail, additions, removals []*yamlv3.Node) ([]Diff, error) {
 	// Prepare a diff for this path to added to the result set (if there are changes)
 	diff := Diff{Path: path, Details: []Detail{}}
 
@@ -361,11 +454,27 @@ func packChangesAndAddToResult(list []Diff, prepend bool, path ytbx.Path, orderc
 	}
 
 	if len(removals) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: REMOVAL, From: removals, To: nil})
+		diff.Details = append(diff.Details, Detail{
+			Kind: REMOVAL,
+			From: &yamlv3.Node{
+				Kind:    yamlv3.SequenceNode,
+				Tag:     "!!seq",
+				Content: removals,
+			},
+			To: nil,
+		})
 	}
 
 	if len(additions) > 0 {
-		diff.Details = append(diff.Details, Detail{Kind: ADDITION, From: nil, To: additions})
+		diff.Details = append(diff.Details, Detail{
+			Kind: ADDITION,
+			From: nil,
+			To: &yamlv3.Node{
+				Kind:    yamlv3.SequenceNode,
+				Tag:     "!!seq",
+				Content: additions,
+			},
+		})
 	}
 
 	// If there were changes added to the details list,
@@ -384,40 +493,52 @@ func packChangesAndAddToResult(list []Diff, prepend bool, path ytbx.Path, orderc
 	return list, nil
 }
 
-// getMapItemByKeyFromMapSlice returns the MapItem (tuple of key/value) where the MapItem key matches the provided key. It will return an empty MapItem and bool false if the given MapSlice does not contain a suitable MapItem.
-func getMapItemByKeyFromMapSlice(key interface{}, mapslice yaml.MapSlice) (yaml.MapItem, bool) {
-	for _, mapitem := range mapslice {
-		if mapitem.Key == key {
-			return mapitem, true
-		}
+func followAlias(node *yamlv3.Node) *yamlv3.Node {
+	if node != nil && node.Alias != nil {
+		return followAlias(node.Alias)
 	}
 
-	return yaml.MapItem{}, false
+	return node
 }
 
-// getValueByKey returns the value for a given key in a provided MapSlice, or nil with an error if there is no such entry. This is comparable to getting a value from a map with `foobar[key]`.
-func getValueByKey(mapslice yaml.MapSlice, key string) (interface{}, error) {
-	for _, element := range mapslice {
-		if element.Key == key {
-			return element.Value, nil
+func findValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, bool) {
+	for i := 0; i < len(mappingNode.Content); i += 2 {
+		k, v := followAlias(mappingNode.Content[i]), followAlias(mappingNode.Content[i+1])
+		if k.Value == key {
+			return v, true
 		}
 	}
 
-	if names, err := ytbx.ListStringKeys(mapslice); err == nil {
+	return nil, false
+}
+
+// getValueByKey returns the value for a given key in a provided mapping node,
+// or nil with an error if there is no such entry. This is comparable to getting
+// a value from a map with `foobar[key]`.
+func getValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, error) {
+	for i := 0; i < len(mappingNode.Content); i += 2 {
+		k, v := followAlias(mappingNode.Content[i]), followAlias(mappingNode.Content[i+1])
+		if k.Value == key {
+			return v, nil
+		}
+	}
+
+	if names, err := ytbx.ListStringKeys(mappingNode); err == nil {
 		return nil, fmt.Errorf("no key '%s' found in map, available keys are: %s", key, strings.Join(names, ", "))
 	}
 
 	return nil, fmt.Errorf("no key '%s' found in map and also failed to get a list of key for this map", key)
 }
 
-// getEntryFromNamedList returns the entry that is identified by the identifier key and a name, for example: `name: one` where name is the identifier key and one the name. Function will return nil with bool false if there is no such entry.
-func getEntryFromNamedList(list []interface{}, identifier string, name interface{}) (interface{}, bool) {
-	for _, listEntry := range list {
-		mapslice := listEntry.(yaml.MapSlice)
-
-		for _, element := range mapslice {
-			if element.Key == identifier && element.Value == name {
-				return mapslice, true
+// getEntryFromNamedList returns the entry that is identified by the identifier
+// key and a name, for example: `name: one` where name is the identifier key and
+// one the name. Function will return nil with bool false if there is no entry.
+func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier string, name string) (*yamlv3.Node, bool) {
+	for _, mappingNode := range sequenceNode.Content {
+		for i := 0; i < len(mappingNode.Content); i += 2 {
+			k, v := followAlias(mappingNode.Content[i]), followAlias(mappingNode.Content[i+1])
+			if k.Value == identifier && v.Value == name {
+				return mappingNode, true
 			}
 		}
 	}
@@ -425,71 +546,49 @@ func getEntryFromNamedList(list []interface{}, identifier string, name interface
 	return nil, false
 }
 
-// GetIdentifierFromNamedList returns the identifier key used in the provided list, or an empty string if there is none. The identifier key is either 'name', 'key', or 'id'.
-func GetIdentifierFromNamedList(list []interface{}) string {
-	counters := map[interface{}]int{}
+func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (string, error) {
+	candidates := []string{"name", "key", "id"}
 
-	for _, sliceEntry := range list {
-		switch mapslice := sliceEntry.(type) {
-		case yaml.MapSlice:
-			for _, mapSliceEntry := range mapslice {
-				if _, ok := counters[mapSliceEntry.Key]; !ok {
-					counters[mapSliceEntry.Key] = 0
-				}
-
-				counters[mapSliceEntry.Key]++
-			}
-		}
-	}
-
-	sliceLength := len(list)
-	for _, identifier := range []string{"name", "key", "id"} {
-		if count, ok := counters[identifier]; ok && count == sliceLength {
-			return identifier
-		}
-	}
-
-	return ""
-}
-
-func getIdentifierFromNamedLists(listA, listB []interface{}) (string, error) {
-	createKeyCountMap := func(list []interface{}) (map[interface{}]map[uint64]struct{}, error) {
-		result := map[interface{}]map[uint64]struct{}{}
-		for _, entry := range list {
-			switch mapslice := entry.(type) {
-			case yaml.MapSlice:
-				for _, mapitem := range mapslice {
-					hash, err := calcHash(mapitem.Value)
-					if err != nil {
-						return nil, err
-					}
-
-					if _, found := result[mapitem.Key]; !found {
-						result[mapitem.Key] = map[uint64]struct{}{}
-					}
-
-					result[mapitem.Key][hash] = struct{}{}
+	isCandidate := func(node *yamlv3.Node) bool {
+		if node.Kind == yamlv3.ScalarNode {
+			for _, entry := range candidates {
+				if node.Value == entry {
+					return true
 				}
 			}
 		}
 
-		return result, nil
+		return false
 	}
 
-	counterA, err := createKeyCountMap(listA)
-	if err != nil {
-		return "", err
+	createKeyCountMap := func(sequenceNode *yamlv3.Node) map[string]map[string]struct{} {
+		result := map[string]map[string]struct{}{}
+		for _, entry := range sequenceNode.Content {
+			switch entry.Kind {
+			case yamlv3.MappingNode:
+				for i := 0; i < len(entry.Content); i += 2 {
+					k, v := followAlias(entry.Content[i]), followAlias(entry.Content[i+1])
+					if isCandidate(k) {
+						if _, found := result[k.Value]; !found {
+							result[k.Value] = map[string]struct{}{}
+						}
+
+						result[k.Value][v.Value] = struct{}{}
+					}
+				}
+			}
+		}
+
+		return result
 	}
 
-	counterB, err := createKeyCountMap(listB)
-	if err != nil {
-		return "", err
-	}
+	counterA := createKeyCountMap(listA)
+	counterB := createKeyCountMap(listB)
 
 	// Check for the usual suspects: name, key, and id
-	for _, identifier := range []string{"name", "key", "id"} {
-		if countA, okA := counterA[identifier]; okA && len(countA) == len(listA) {
-			if countB, okB := counterB[identifier]; okB && len(countB) == len(listB) {
+	for _, identifier := range candidates {
+		if countA, okA := counterA[identifier]; okA && len(countA) == len(listA.Content) {
+			if countB, okB := counterB[identifier]; okB && len(countB) == len(listB.Content) {
 				return identifier, nil
 			}
 		}
@@ -498,25 +597,23 @@ func getIdentifierFromNamedLists(listA, listB []interface{}) (string, error) {
 	return "", fmt.Errorf("unable to find a key that can serve as an unique identifier")
 }
 
-func getNonStandardIdentifierFromNamedLists(listA, listB []interface{}) string {
-	createKeyCountMap := func(list []interface{}) map[string]int {
+func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) string {
+	createKeyCountMap := func(list *yamlv3.Node) map[string]int {
 		tmp := map[string]map[string]struct{}{}
-		for _, entry := range list {
-			switch entry.(type) {
-			case yaml.MapSlice:
-				for _, mapitem := range entry.(yaml.MapSlice) {
-					switch mapitem.Key.(type) {
-					case string:
-						key := mapitem.Key.(string)
-						switch mapitem.Value.(type) {
-						case string:
-							if _, ok := tmp[key]; !ok {
-								tmp[key] = map[string]struct{}{}
-							}
+		for _, entry := range list.Content {
+			if entry.Kind != yamlv3.MappingNode {
+				return map[string]int{}
+			}
 
-							tmp[key][mapitem.Value.(string)] = struct{}{}
-						}
+			for i := 0; i < len(entry.Content); i += 2 {
+				k, v := followAlias(entry.Content[i]), followAlias(entry.Content[i+1])
+				if k.Kind == yamlv3.ScalarNode && k.Tag == "!!str" &&
+					v.Kind == yamlv3.ScalarNode && v.Tag == "!!str" {
+					if _, ok := tmp[k.Value]; !ok {
+						tmp[k.Value] = map[string]struct{}{}
 					}
+
+					tmp[k.Value][v.Value] = struct{}{}
 				}
 			}
 		}
@@ -529,8 +626,8 @@ func getNonStandardIdentifierFromNamedLists(listA, listB []interface{}) string {
 		return result
 	}
 
-	listALength := len(listA)
-	listBLength := len(listB)
+	listALength := len(listA.Content)
+	listBLength := len(listB.Content)
 	counterA := createKeyCountMap(listA)
 	counterB := createKeyCountMap(listB)
 
@@ -545,38 +642,69 @@ func getNonStandardIdentifierFromNamedLists(listA, listB []interface{}) string {
 	return ""
 }
 
-func createLookUpMap(list []interface{}) (map[uint64]int, error) {
-	result := make(map[uint64]int, len(list))
-	for idx, entry := range list {
-		hash, err := calcHash(entry)
-		if err != nil {
-			return nil, err
-		}
-		result[hash] = idx
+func createLookUpMap(sequenceNode *yamlv3.Node) map[uint64]int {
+	result := make(map[uint64]int, len(sequenceNode.Content))
+	for idx, entry := range sequenceNode.Content {
+		result[calcNodeHash(entry)] = idx
 	}
 
-	return result, nil
+	return result
 }
 
-func calcHash(obj interface{}) (uint64, error) {
-	var hash uint64
-	var err error
+func basicType(node *yamlv3.Node) interface{} {
+	switch node.Kind {
+	case yamlv3.DocumentNode:
+		panic("document nodes are not supported to be translated into a basic type")
 
-	// Convert YAML MapSlices to maps first so that the order of keys does not matter for the hash value of this object
-	switch mapslice := obj.(type) {
-	case yaml.MapSlice:
-		tmp := make(map[interface{}]interface{}, len(mapslice))
-		for _, entry := range mapslice {
-			tmp[entry.Key] = entry.Value
+	case yamlv3.MappingNode:
+		result := map[interface{}]interface{}{}
+		for i := 0; i < len(node.Content); i += 2 {
+			k, v := followAlias(node.Content[i]), followAlias(node.Content[i+1])
+			result[basicType(k)] = basicType(v)
 		}
-		obj = tmp
-	}
 
-	if hash, err = hashstructure.Hash(obj, nil); err != nil {
-		return 0, errors.Wrap(err, "Failed to calculate hash")
-	}
+		return result
 
-	return hash, nil
+	case yamlv3.SequenceNode:
+		result := []interface{}{}
+		for _, entry := range node.Content {
+			result = append(result, basicType(followAlias(entry)))
+		}
+
+		return result
+
+	case yamlv3.ScalarNode:
+		return node.Value
+
+	case yamlv3.AliasNode:
+		return basicType(node.Alias)
+
+	default:
+		panic("should be unreachable")
+	}
+}
+
+func calcNodeHash(node *yamlv3.Node) uint64 {
+	switch node.Kind {
+	case yamlv3.MappingNode, yamlv3.SequenceNode:
+		hash, err := hashstructure.Hash(basicType(node), nil)
+		if err != nil {
+			panic(wrap.Errorf(err, "failed to calculate hash of %#v", node))
+		}
+
+		return hash
+
+	case yamlv3.ScalarNode:
+		hash, err := hashstructure.Hash(node.Value, nil)
+		if err != nil {
+			panic(wrap.Errorf(err, "failed to calculate hash of %#v", node.Value))
+		}
+
+		return hash
+
+	default:
+		panic(fmt.Errorf("failed to calculate hash of node, kind %v is not supported", node.Kind))
+	}
 }
 
 func min(a, b int) int {
@@ -613,21 +741,18 @@ func isMultiLine(from string, to string) bool {
 	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
 }
 
-func isValidUTF8String(from string, to string) bool {
-	return utf8.Valid([]byte(from)) || utf8.Valid([]byte(to))
-}
-
-func isList(obj interface{}) bool {
-	switch obj.(type) {
-	case []interface{}:
+func isList(node *yamlv3.Node) bool {
+	switch node.Kind {
+	case yamlv3.SequenceNode:
 		return true
-
-	default:
-		return false
 	}
+
+	return false
 }
 
-// ChangeRoot changes the root of an input file to a position inside its document based on the given path. Input files with more than one document are not supported, since they could have multiple elements with that path.
+// ChangeRoot changes the root of an input file to a position inside its
+// document based on the given path. Input files with more than one document are
+// not supported, since they could have multiple elements with that path.
 func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments bool) error {
 	multipleDocuments := len(inputFile.Documents) != 1
 
@@ -646,13 +771,25 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments
 		return err
 	}
 
+	wrapInDocumentNodes := func(list []*yamlv3.Node) []*yamlv3.Node {
+		result := make([]*yamlv3.Node, len(list))
+		for i := range list {
+			result[i] = &yamlv3.Node{
+				Kind:    yamlv3.DocumentNode,
+				Content: []*yamlv3.Node{list[i]},
+			}
+		}
+
+		return result
+	}
+
 	if translateListToDocuments && isList(obj) {
 		// Change root of input file main document to a new list of documents based on the the list that was found
-		inputFile.Documents = obj.([]interface{})
+		inputFile.Documents = wrapInDocumentNodes(obj.Content)
 
 	} else {
 		// Change root of input file main document to the object that was found
-		inputFile.Documents = []interface{}{obj}
+		inputFile.Documents = wrapInDocumentNodes([]*yamlv3.Node{obj})
 	}
 
 	// Parse path string and create nicely formatted output path

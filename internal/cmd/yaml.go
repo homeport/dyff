@@ -24,7 +24,7 @@ import (
 	"fmt"
 
 	"github.com/gonvenience/wrap"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
+	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
 )
 

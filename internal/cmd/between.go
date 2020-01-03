@@ -27,8 +27,8 @@ import (
 	"strings"
 
 	"github.com/gonvenience/wrap"
+	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
-	"github.com/homeport/ytbx/pkg/v1/ytbx"
 	"github.com/spf13/cobra"
 )
 
