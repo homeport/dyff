@@ -1,0 +1,7 @@
+---
+global_defaults: &global_defaults
+- 'x1'
+- 'x5'
+
+cluster-1:
+- *global_defaults

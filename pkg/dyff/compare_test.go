@@ -728,6 +728,19 @@ b: bar
 
 				Expect(len(results.Diffs)).To(BeEquivalentTo(0))
 			})
+
+			It("should process files with YAML anchors", func() {
+				from, to, err := ytbx.LoadFiles("../../assets/issues/issue-76/from.yml", "../../assets/issues/issue-76/to.yml")
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+
+				Expect(len(results.Diffs)).To(BeEquivalentTo(2))
+			})
 		})
 	})
 })
