@@ -702,6 +702,9 @@ func calcNodeHash(node *yamlv3.Node) uint64 {
 
 		return hash
 
+	case yamlv3.AliasNode:
+		return calcNodeHash(followAlias(node))
+
 	default:
 		panic(fmt.Errorf("failed to calculate hash of node, kind %v is not supported", node.Kind))
 	}
