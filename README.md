@@ -44,7 +44,7 @@ curl --silent --location https://goo.gl/DRXDVN | bash
 And of course, you can download and build `dyff` from source using `go`:
 
 ```bash
-go get github.com/homeport/dyff
+go get github.com/homeport/dyff/cmd/dyff
 ```
 
 ## Use cases and examples
