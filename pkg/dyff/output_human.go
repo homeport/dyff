@@ -251,8 +251,8 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 			return "", err
 		}
 
-		output.WriteString(red("  - %v\n", strings.TrimRight(from, "\n")))
-		output.WriteString(green("  + %v\n", strings.TrimRight(to, "\n")))
+		output.WriteString(red("%s", createStringWithPrefix("  - ", strings.TrimRight(from, "\n"))))
+		output.WriteString(green("%s", createStringWithPrefix("  + ", strings.TrimRight(to, "\n"))))
 	}
 
 	return output.String(), nil

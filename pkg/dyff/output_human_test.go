@@ -173,4 +173,23 @@ variables.ROUTER_TLS_PEM.options
 `)))
 		})
 	})
+
+	Context("reported output issues", func() {
+		BeforeEach(func() {
+			ColorSetting = OFF
+			TrueColorSetting = OFF
+		})
+
+		AfterEach(func() {
+			ColorSetting = AUTO
+			TrueColorSetting = AUTO
+		})
+
+		It("should use correct indentions for all kind of changes", func() {
+			compareAgainstExpected("../../assets/issues/issue-89/from.yml",
+				"../../assets/issues/issue-89/to.yml",
+				"../../assets/issues/issue-89/expected-dyff-spruce.human",
+				false)
+		})
+	})
 })
