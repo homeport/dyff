@@ -75,7 +75,7 @@ go get github.com/homeport/dyff/cmd/dyff
     dyff yaml --restructure --in-place somefile.yml
     ```
 
-- Just print a YAML (or JSON) file to the terminal to look at it. By default, `dyff` will use a neat output schema which includes different colors and indent helper lines to improve readability. The colors are roughly based on the default [Atom](https://atom.io) schema and work best on dark terminal backgrounds. The neat output is disabled the output of `dyff` is redirected into a pipe, or you can disable it explicitly using the `--plain` flag.
+- Just print a YAML (or JSON) file to the terminal to look at it. By default, `dyff` will use a neat output schema which includes different colors and indent helper lines to improve readability. The colors are roughly based on the default [Atom](https://atom.io) schema and work best on dark terminal backgrounds. The neat output is disabled if the output of `dyff` is redirected into a pipe, or you can disable it explicitly using the `--plain` flag.
 
     ```bash
     dyff yaml somefile.yml
