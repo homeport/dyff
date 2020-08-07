@@ -57,6 +57,18 @@ go get github.com/homeport/dyff/cmd/dyff
       https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.20.0/cf-deployment.yml
     ```
 
+- Embed dyff into git for better undertsandable diffs
+
+    ```bash
+    # Setup...
+    git config --local diff.dyff.command 'dyff_between() { dyff --color on between "$2" "$5"; }; dyff_between'
+    echo '*.yml diff=dyff' >> .gitattributes
+    
+    # And have fun, e.g.:
+    git log --ext-diff -u
+    git show --ext-diff HEAD
+    ```
+
 - Convert a JSON stream to YAML
 
     ```bash
