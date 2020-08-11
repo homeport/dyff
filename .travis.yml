@@ -1,7 +1,7 @@
 ---
 language: go
 go:
-- 1.12.x
+- 1.14.x
 
 cache:
   directories:
@@ -33,5 +33,5 @@ deploy:
   file_glob: true
   file: binaries/*
   on:
-    condition: $TRAVIS_GO_VERSION =~ ^1\.12
+    condition: $TRAVIS_GO_VERSION =~ ^1\.14
     tags: true
