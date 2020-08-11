@@ -14,9 +14,8 @@ require (
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/onsi/ginkgo v1.14.0
 	github.com/onsi/gomega v1.10.1
-	github.com/pkg/errors v0.9.1
 	github.com/sergi/go-diff v1.1.0
-	github.com/spf13/cobra v0.0.7
-	github.com/texttheater/golang-levenshtein v0.0.0-20180516184445-d188e65d659e
-	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2
+	github.com/spf13/cobra v1.0.0
+	github.com/texttheater/golang-levenshtein v1.0.1
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

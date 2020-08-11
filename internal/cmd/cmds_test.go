@@ -70,8 +70,8 @@ list:
 			data, err := ioutil.ReadFile(filename)
 			Expect(err).To(BeNil())
 			Expect(string(data)).To(BeEquivalentTo(`list:
-- name: one
-  aaa: bbb
+  - name: one
+    aaa: bbb
 `))
 		})
 
