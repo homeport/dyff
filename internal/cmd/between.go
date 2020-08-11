@@ -34,17 +34,20 @@ import (
 
 const defaultOutputStyle = "human"
 
-var betweenCmdSettings struct {
+type betweenCmdOptions struct {
 	style                    string
 	swap                     bool
 	noTableStyle             bool
 	doNotInspectCerts        bool
 	exitWithCount            bool
 	translateListToDocuments bool
+	omitHeader               bool
 	chroot                   string
 	chrootFrom               string
 	chrootTo                 string
 }
+
+var betweenCmdSettings betweenCmdOptions
 
 // betweenCmd represents the between command
 var betweenCmd = &cobra.Command{
@@ -103,7 +106,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 				Report:            report,
 				DoNotInspectCerts: betweenCmdSettings.doNotInspectCerts,
 				NoTableStyle:      betweenCmdSettings.noTableStyle,
-				ShowBanner:        true,
+				ShowBanner:        !betweenCmdSettings.omitHeader,
 			}
 
 		case "brief", "short", "summary":
@@ -142,6 +145,7 @@ func init() {
 
 	// Main output preferences
 	betweenCmd.PersistentFlags().StringVarP(&betweenCmdSettings.style, "output", "o", defaultOutputStyle, "specify the output style, supported styles: human, or brief")
+	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.omitHeader, "omit-header", "b", false, "omit the dyff summary header")
 	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
 
 	// Human/BOSH output related flags

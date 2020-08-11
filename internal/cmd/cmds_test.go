@@ -277,5 +277,23 @@ whitespaces
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("unknown output style unknown"))
 		})
+
+		It("should omit the dyff banner header if respective flag is set", func() {
+			from := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"aaa":"bbb","name":"two"}]}`)
+			defer os.Remove(to)
+
+			out, err := dyff("between", "--omit-header", from, to)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+list
+  - one list entry removed:     + one list entry added:
+    - name: one                   - name: two
+      aaa: bbb                      aaa: bbb
+
+`))
+		})
 	})
 })

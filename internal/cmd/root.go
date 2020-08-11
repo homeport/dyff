@@ -90,33 +90,13 @@ is preserved during the conversion.
 // ResetSettings resets command settings to default. This is only required by
 // the test suite to make sure that the flag parsing works correctly.
 func ResetSettings() {
-	betweenCmdSettings = struct {
-		style                    string
-		swap                     bool
-		noTableStyle             bool
-		doNotInspectCerts        bool
-		exitWithCount            bool
-		translateListToDocuments bool
-		chroot                   string
-		chrootFrom               string
-		chrootTo                 string
-	}{
+	betweenCmdSettings = betweenCmdOptions{
 		style: defaultOutputStyle,
 	}
 
-	yamlCmdSettings = struct {
-		plainMode        bool
-		restructure      bool
-		omitIndentHelper bool
-		inplace          bool
-	}{}
+	yamlCmdSettings = yamlCmdOptions{}
 
-	jsonCmdSettings = struct {
-		plainMode        bool
-		restructure      bool
-		omitIndentHelper bool
-		inplace          bool
-	}{}
+	jsonCmdSettings = jsonCmdOptions{}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

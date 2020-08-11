@@ -28,12 +28,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var yamlCmdSettings struct {
+type yamlCmdOptions struct {
 	plainMode        bool
 	restructure      bool
 	omitIndentHelper bool
 	inplace          bool
 }
+
+var yamlCmdSettings yamlCmdOptions
 
 // yamlCmd represents the yaml command
 var yamlCmd = &cobra.Command{

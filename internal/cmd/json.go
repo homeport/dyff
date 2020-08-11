@@ -28,12 +28,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var jsonCmdSettings struct {
+type jsonCmdOptions struct {
 	plainMode        bool
 	restructure      bool
 	omitIndentHelper bool
 	inplace          bool
 }
+
+var jsonCmdSettings jsonCmdOptions
 
 // jsonCmd represents the json command
 var jsonCmd = &cobra.Command{
