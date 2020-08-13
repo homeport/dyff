@@ -63,7 +63,7 @@ go get github.com/homeport/dyff/cmd/dyff
     # Setup...
     git config --local diff.dyff.command 'dyff_between() { dyff --color on between --omit-header "$2" "$5"; }; dyff_between'
     echo '*.yml diff=dyff' >> .gitattributes
-    
+
     # And have fun, e.g.:
     git log --ext-diff -u
     git show --ext-diff HEAD
