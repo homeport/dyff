@@ -23,8 +23,6 @@ Input files can be local files (filesystem path), remote files (URI), or the sta
 
 All orders of keys in hashes are preserved during processing and output to the terminal, most notably in the sub-commands to convert YAML to JSON and vice versa.
 
-![dyff between example](.docs/dyff-between-example.png?raw=true "dyff between example of two cf-deployment versions")
-
 ## Installation
 
 On macOS, `dyff` is available via Homebrew:
@@ -53,11 +51,13 @@ go get github.com/homeport/dyff/cmd/dyff
 
     ```bash
     dyff between \
-      https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.19.0/cf-deployment.yml \
+      https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.10.0/cf-deployment.yml \
       https://raw.githubusercontent.com/cloudfoundry/cf-deployment/v1.20.0/cf-deployment.yml
     ```
 
-- Embed `dyff` into git for better understandable differences
+    ![dyff between example](.docs/dyff-between-deployment-manifest-example.png?raw=true "dyff between example of two cf-deployment versions")
+
+- Embed `dyff` into **Git** for better understandable differences
 
     ```bash
     # Setup...
@@ -68,6 +68,8 @@ go get github.com/homeport/dyff/cmd/dyff
     git log --ext-diff -u
     git show --ext-diff HEAD
     ```
+
+    ![dyff between example of a Git commit](.docs/dyff-between-git-commits-example.png?raw=true "dyff in Git example of an example commit")
 
 - Convert a JSON stream to YAML
 
