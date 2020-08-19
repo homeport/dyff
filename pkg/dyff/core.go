@@ -46,6 +46,9 @@ var MinorChangeThreshold = 0.1
 // UseGoPatchPaths style paths instead of Spruce Dot-Style
 var UseGoPatchPaths = false
 
+// IgnoreOrderChanges disables the detection for changes of the order in lists
+var IgnoreOrderChanges = false
+
 // CompareInputFiles is one of the convenience main entry points for comparing
 // objects. In this case the representation of an input file, which might
 // contain multiple documents. It returns a report with the list of differences.
@@ -351,9 +354,14 @@ func compareNamedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node
 		}
 	}
 
-	orderchanges := findOrderChangesInNamedEntryLists(fromNames, toNames)
-
-	return packChangesAndAddToResult(result, true, path, orderchanges, additions, removals)
+	return packChangesAndAddToResult(
+		result,
+		true,
+		path,
+		findOrderChangesInNamedEntryLists(fromNames, toNames),
+		additions,
+		removals,
+	)
 }
 
 func compareNodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
@@ -373,6 +381,10 @@ func compareNodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Di
 }
 
 func findOrderChangesInSimpleList(from, to *yamlv3.Node, fromNames, toNames []uint64, fromLookup, toLookup map[uint64]int) []Detail {
+	if IgnoreOrderChanges {
+		return []Detail{}
+	}
+
 	orderchanges := make([]Detail, 0)
 
 	cnv := func(list []uint64, lookup map[uint64]int, content *yamlv3.Node) *yamlv3.Node {
@@ -423,6 +435,10 @@ func AsSequenceNode(list []string) *yamlv3.Node {
 }
 
 func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
+	if IgnoreOrderChanges {
+		return []Detail{}
+	}
+
 	orderchanges := make([]Detail, 0)
 
 	idxLookupMap := make(map[string]int, len(toNames))
