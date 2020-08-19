@@ -154,6 +154,7 @@ func init() {
 
 	// General `dyff` package related preferences
 	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
+	betweenCmd.PersistentFlags().BoolVarP(&dyff.IgnoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
 
 	// Input documents modification flags
 	betweenCmd.PersistentFlags().BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")

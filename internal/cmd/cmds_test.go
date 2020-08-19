@@ -295,5 +295,17 @@ list
 
 `))
 		})
+
+		It("should ignore order changes if respective flag is set", func() {
+			from := createTestFile(`{"list":[{"name":"one"},{"name":"two"},{"name":"three"}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"name":"one"},{"name":"three"},{"name":"two"}]}`)
+			defer os.Remove(to)
+
+			out, err := dyff("between", "--omit-header", "--ignore-order-changes", from, to)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo("\n"))
+		})
 	})
 })
