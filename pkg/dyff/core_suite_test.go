@@ -89,17 +89,14 @@ func (matcher *extendedStringMatcher) NegatedFailureMessage(actual interface{}) 
 	)
 }
 
-func compareAgainstExpected(fromPath string, toPath string, expectedPath string, useGoPatch bool) {
-	tmp := UseGoPatchPaths
-	UseGoPatchPaths = useGoPatch
-
+func compareAgainstExpected(fromPath string, toPath string, expectedPath string, useGoPatchPaths bool, compareOptions ...CompareOption) {
 	from, to, err := ytbx.LoadFiles(fromPath, toPath)
 	Expect(err).To(BeNil())
 
 	rawBytes, err := ioutil.ReadFile(expectedPath)
 	Expect(err).To(BeNil())
 
-	report, err := CompareInputFiles(from, to)
+	report, err := CompareInputFiles(from, to, compareOptions...)
 	Expect(report).ToNot(BeNil())
 	Expect(err).To(BeNil())
 
@@ -108,6 +105,7 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
 		ShowBanner:        false,
+		UseGoPatchPaths:   useGoPatchPaths,
 	}
 
 	buffer := &bytes.Buffer{}
@@ -118,8 +116,6 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 	expected := fmt.Sprintf("%#v", string(rawBytes))
 	actual := fmt.Sprintf("%#v", buffer.String())
 	Expect(expected).To(BeLike(actual))
-
-	UseGoPatchPaths = tmp
 }
 
 func yml(input string) *yamlv3.Node {
@@ -292,10 +288,12 @@ func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, fr
 	}
 }
 
-func compare(from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func compare(from *yamlv3.Node, to *yamlv3.Node, compareOptions ...CompareOption) ([]Diff, error) {
 	report, err := CompareInputFiles(
 		ytbx.InputFile{Documents: []*yamlv3.Node{from}},
-		ytbx.InputFile{Documents: []*yamlv3.Node{to}})
+		ytbx.InputFile{Documents: []*yamlv3.Node{to}},
+		compareOptions...,
+	)
 
 	if err != nil {
 		return nil, err

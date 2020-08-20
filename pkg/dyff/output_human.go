@@ -38,6 +38,7 @@ import (
 	"github.com/gonvenience/text"
 	"github.com/gonvenience/ytbx"
 	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
 	yamlv3 "gopkg.in/yaml.v3"
 )
 
@@ -56,9 +57,11 @@ type stringWriter interface {
 
 // HumanReport is a reporter with human readable output in mind
 type HumanReport struct {
-	NoTableStyle      bool
-	DoNotInspectCerts bool
-	ShowBanner        bool
+	NoTableStyle         bool
+	DoNotInspectCerts    bool
+	ShowBanner           bool
+	UseGoPatchPaths      bool
+	MinorChangeThreshold float64
 
 	Report
 }
@@ -88,7 +91,7 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 
 	// Loop over the diff and generate each report into the buffer
 	for _, diff := range report.Diffs {
-		if err := report.generateHumanDiffOutput(writer, diff, showDocumentIdx); err != nil {
+		if err := report.generateHumanDiffOutput(writer, diff, report.UseGoPatchPaths, showDocumentIdx); err != nil {
 			return err
 		}
 	}
@@ -99,9 +102,9 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 }
 
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
-func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, showDocumentIdx bool) error {
+func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, useGoPatchPaths bool, showDocumentIdx bool) error {
 	output.WriteString("\n")
-	output.WriteString(pathToString(diff.Path, showDocumentIdx))
+	output.WriteString(pathToString(diff.Path, useGoPatchPaths, showDocumentIdx))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
@@ -311,7 +314,7 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 			red("%s", createStringWithPrefix("  - ", from)),
 			green("%s", createStringWithPrefix("  + ", to)),
 		)
-	} else if isMinorChange(from, to) {
+	} else if isMinorChange(from, to, report.MinorChangeThreshold) {
 		output.WriteString(yellow("%c value change\n", MODIFICATION))
 		diffs := diffmatchpatch.New().DiffMain(from, to, false)
 		output.WriteString(highlightRemovals(diffs))
@@ -522,6 +525,24 @@ func yamlString(input interface{}) (string, error) {
 	}
 
 	return neat.NewOutputProcessor(false, true, nil).ToYAML(input)
+}
+
+func isMinorChange(from string, to string, minorChangeThreshold float64) bool {
+	levenshteinDistance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
+
+	// Special case: Consider it a minor change if only two runes/characters were
+	// changed, which results in a default distance of four, two removals and two
+	// additions each.
+	if levenshteinDistance <= 4 {
+		return true
+	}
+
+	referenceLength := min(len(from), len(to))
+	return float64(levenshteinDistance)/float64(referenceLength) < minorChangeThreshold
+}
+
+func isMultiLine(from string, to string) bool {
+	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
 }
 
 func isWhitespaceOnlyChange(from string, to string) bool {

@@ -42,6 +42,8 @@ type betweenCmdOptions struct {
 	exitWithCount            bool
 	translateListToDocuments bool
 	omitHeader               bool
+	useGoPatchPaths          bool
+	ignoreOrderChanges       bool
 	chroot                   string
 	chrootFrom               string
 	chrootTo                 string
@@ -82,19 +84,19 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		// Change root of 'from' input file if change root flag for 'from' is set
 		if betweenCmdSettings.chrootFrom != "" {
-			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, betweenCmdSettings.translateListToDocuments); err != nil {
+			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, betweenCmdSettings.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
 				return wrap.Errorf(err, "failed to change root of %s to path %s", from.Location, betweenCmdSettings.chrootFrom)
 			}
 		}
 
 		// Change root of 'to' input file if change root flag for 'to' is set
 		if betweenCmdSettings.chrootTo != "" {
-			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, betweenCmdSettings.translateListToDocuments); err != nil {
+			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, betweenCmdSettings.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
 				return wrap.Errorf(err, "failed to change root of %s to path %s", to.Location, betweenCmdSettings.chrootTo)
 			}
 		}
 
-		report, err := dyff.CompareInputFiles(from, to)
+		report, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(betweenCmdSettings.ignoreOrderChanges))
 		if err != nil {
 			return wrap.Errorf(err, "failed to compare input files")
 		}
@@ -103,10 +105,12 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		switch strings.ToLower(betweenCmdSettings.style) {
 		case "human", "bosh":
 			reportWriter = &dyff.HumanReport{
-				Report:            report,
-				DoNotInspectCerts: betweenCmdSettings.doNotInspectCerts,
-				NoTableStyle:      betweenCmdSettings.noTableStyle,
-				ShowBanner:        !betweenCmdSettings.omitHeader,
+				Report:               report,
+				DoNotInspectCerts:    betweenCmdSettings.doNotInspectCerts,
+				NoTableStyle:         betweenCmdSettings.noTableStyle,
+				ShowBanner:           !betweenCmdSettings.omitHeader,
+				UseGoPatchPaths:      betweenCmdSettings.useGoPatchPaths,
+				MinorChangeThreshold: 0.1,
 			}
 
 		case "brief", "short", "summary":
@@ -151,10 +155,10 @@ func init() {
 	// Human/BOSH output related flags
 	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
 	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
+	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.useGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
 
-	// General `dyff` package related preferences
-	betweenCmd.PersistentFlags().BoolVarP(&dyff.UseGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
-	betweenCmd.PersistentFlags().BoolVarP(&dyff.IgnoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
+	// Compare options
+	betweenCmd.PersistentFlags().BoolVarP(&betweenCmdSettings.ignoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
 
 	// Input documents modification flags
 	betweenCmd.PersistentFlags().BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
