@@ -29,37 +29,63 @@ import (
 	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
 	"github.com/mitchellh/hashstructure"
-	"github.com/texttheater/golang-levenshtein/levenshtein"
 	yamlv3 "gopkg.in/yaml.v3"
 )
+
+// CompareOption sets a specific compare setting for the object comparison
+type CompareOption func(*compareSettings)
+
+type compareSettings struct {
+	NonStandardIdentifierGuessCountThreshold int
+	IgnoreOrderChanges                       bool
+}
+
+type compare struct {
+	settings compareSettings
+}
 
 // NonStandardIdentifierGuessCountThreshold specifies how many list entries are
 // needed for the guess-the-identifier function to actually consider the key
 // name. Or in short, if the lists only contain two entries each, there are more
-// possibilities to find unique enough keys, which might no qualify as such.
-var NonStandardIdentifierGuessCountThreshold = 3
-
-// MinorChangeThreshold specifies how many percent of the text needs to be
-// changed so that it still qualifies as being a minor string change.
-var MinorChangeThreshold = 0.1
-
-// UseGoPatchPaths style paths instead of Spruce Dot-Style
-var UseGoPatchPaths = false
+// possibilities to find unique enough key, which might no qualify as such.
+func NonStandardIdentifierGuessCountThreshold(nonStandardIdentifierGuessCountThreshold int) CompareOption {
+	return func(settings *compareSettings) {
+		settings.NonStandardIdentifierGuessCountThreshold = nonStandardIdentifierGuessCountThreshold
+	}
+}
 
 // IgnoreOrderChanges disables the detection for changes of the order in lists
-var IgnoreOrderChanges = false
+func IgnoreOrderChanges(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.IgnoreOrderChanges = value
+
+	}
+}
 
 // CompareInputFiles is one of the convenience main entry points for comparing
 // objects. In this case the representation of an input file, which might
 // contain multiple documents. It returns a report with the list of differences.
-func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
+func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ...CompareOption) (Report, error) {
 	if len(from.Documents) != len(to.Documents) {
 		return Report{}, fmt.Errorf("comparing YAMLs with a different number of documents is currently not supported")
 	}
 
+	// initialise the comparator with the tool defaults
+	compare := compare{
+		settings: compareSettings{
+			NonStandardIdentifierGuessCountThreshold: 3,
+			IgnoreOrderChanges:                       false,
+		},
+	}
+
+	// apply the optional compare options provided to this function call
+	for _, compareOption := range compareOptions {
+		compareOption(&compare.settings)
+	}
+
 	result := make([]Diff, 0)
 	for idx := range from.Documents {
-		diffs, err := compareObjects(
+		diffs, err := compare.objects(
 			ytbx.Path{DocumentIdx: idx},
 			from.Documents[idx],
 			to.Documents[idx],
@@ -75,7 +101,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile) (Report, error) {
 	return Report{from, to, result}, nil
 }
 
-func compareObjects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) objects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	switch {
 	case from == nil && to == nil:
 		return []Diff{}, nil
@@ -101,27 +127,27 @@ func compareObjects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff,
 		}}, nil
 	}
 
-	return compareNonNilSameKindNodes(path, from, to)
+	return compare.nonNilSameKindNodes(path, from, to)
 }
 
-func compareNonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) nonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	var diffs []Diff
 	var err error
 
 	switch from.Kind {
 	case yamlv3.DocumentNode:
-		diffs, err = compareObjects(path, from.Content[0], to.Content[0])
+		diffs, err = compare.objects(path, from.Content[0], to.Content[0])
 
 	case yamlv3.MappingNode:
-		diffs, err = compareMappingNodes(path, from, to)
+		diffs, err = compare.mappingNodes(path, from, to)
 
 	case yamlv3.SequenceNode:
-		diffs, err = compareSequenceNodes(path, from, to)
+		diffs, err = compare.sequenceNodes(path, from, to)
 
 	case yamlv3.ScalarNode:
 		switch from.Tag {
 		case "!!str":
-			diffs, err = compareNodeValues(path, from, to)
+			diffs, err = compare.nodeValues(path, from, to)
 
 		case "!!null":
 			// Ignore different ways to define a null value
@@ -140,7 +166,7 @@ func compareNonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.No
 		}
 
 	case yamlv3.AliasNode:
-		diffs, err = compareObjects(path, from.Alias, to.Alias)
+		diffs, err = compare.objects(path, from.Alias, to.Alias)
 
 	default:
 		err = fmt.Errorf("failed to compare objects due to unsupported kind %v", from.Kind)
@@ -149,7 +175,7 @@ func compareNonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.No
 	return diffs, err
 }
 
-func compareMappingNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) mappingNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	result := make([]Diff, 0)
 	removals := []*yamlv3.Node{}
 	additions := []*yamlv3.Node{}
@@ -158,7 +184,7 @@ func compareMappingNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]
 		key, fromItem := from.Content[i], from.Content[i+1]
 		if toItem, ok := findValueByKey(to, key.Value); ok {
 			// `from` and `to` contain the same `key` -> require comparison
-			diffs, err := compareObjects(
+			diffs, err := compare.objects(
 				ytbx.NewPathWithNamedElement(path, key.Value),
 				followAlias(fromItem),
 				followAlias(toItem),
@@ -221,24 +247,24 @@ func compareMappingNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]
 	return result, nil
 }
 
-func compareSequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	// Bail out quickly if there is nothing to check
 	if len(from.Content) == 0 && len(to.Content) == 0 {
 		return []Diff{}, nil
 	}
 
 	if identifier, err := getIdentifierFromNamedLists(from, to); err == nil {
-		return compareNamedEntryLists(path, identifier, from, to)
+		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
-	if identifier := getNonStandardIdentifierFromNamedLists(from, to); identifier != "" {
-		return compareNamedEntryLists(path, identifier, from, to)
+	if identifier := getNonStandardIdentifierFromNamedLists(from, to, compare.settings.NonStandardIdentifierGuessCountThreshold); identifier != "" {
+		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
-	return compareSimpleLists(path, from, to)
+	return compare.simpleLists(path, from, to)
 }
 
-func compareSimpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	removals := make([]*yamlv3.Node, 0)
 	additions := make([]*yamlv3.Node, 0)
 
@@ -250,7 +276,7 @@ func compareSimpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]D
 	// Special case if both lists only contain one entry, then directly compare
 	// the two entries with each other
 	if fromLength == 1 && fromLength == toLength {
-		return compareObjects(
+		return compare.objects(
 			ytbx.NewPathWithIndexedListElement(path, 0),
 			followAlias(from.Content[0]),
 			followAlias(to.Content[0]),
@@ -289,16 +315,15 @@ func compareSimpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]D
 		}
 	}
 
-	return packChangesAndAddToResult(
-		result,
-		path,
-		findOrderChangesInSimpleList(from, to, fromNames, toNames, fromLookup, toLookup),
-		additions,
-		removals,
-	)
+	var orderChanges []Detail
+	if !compare.settings.IgnoreOrderChanges {
+		orderChanges = findOrderChangesInSimpleList(from, to, fromNames, toNames, fromLookup, toLookup)
+	}
+
+	return packChangesAndAddToResult(result, path, orderChanges, additions, removals)
 }
 
-func compareNamedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) namedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	removals := make([]*yamlv3.Node, 0)
 	additions := make([]*yamlv3.Node, 0)
 
@@ -319,7 +344,7 @@ func compareNamedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node
 
 		if toEntry, ok := getEntryFromNamedList(to, identifier, name.Value); ok {
 			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
-			diffs, err := compareObjects(
+			diffs, err := compare.objects(
 				ytbx.NewPathWithNamedListElement(path, identifier, name.Value),
 				followAlias(fromEntry),
 				followAlias(toEntry),
@@ -353,16 +378,15 @@ func compareNamedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node
 		}
 	}
 
-	return packChangesAndAddToResult(
-		result,
-		path,
-		findOrderChangesInNamedEntryLists(fromNames, toNames),
-		additions,
-		removals,
-	)
+	var orderChanges []Detail
+	if !compare.settings.IgnoreOrderChanges {
+		orderChanges = findOrderChangesInNamedEntryLists(fromNames, toNames)
+	}
+
+	return packChangesAndAddToResult(result, path, orderChanges, additions, removals)
 }
 
-func compareNodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	result := make([]Diff, 0)
 	if strings.Compare(from.Value, to.Value) != 0 {
 		result = append(result, Diff{
@@ -379,10 +403,6 @@ func compareNodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Di
 }
 
 func findOrderChangesInSimpleList(from, to *yamlv3.Node, fromNames, toNames []uint64, fromLookup, toLookup map[uint64]int) []Detail {
-	if IgnoreOrderChanges {
-		return []Detail{}
-	}
-
 	orderchanges := make([]Detail, 0)
 
 	cnv := func(list []uint64, lookup map[uint64]int, content *yamlv3.Node) *yamlv3.Node {
@@ -433,10 +453,6 @@ func AsSequenceNode(list []string) *yamlv3.Node {
 }
 
 func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
-	if IgnoreOrderChanges {
-		return []Detail{}
-	}
-
 	orderchanges := make([]Detail, 0)
 
 	idxLookupMap := make(map[string]int, len(toNames))
@@ -604,7 +620,7 @@ func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (string, error) {
 	return "", fmt.Errorf("unable to find a key that can serve as an unique identifier")
 }
 
-func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) string {
+func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) string {
 	createKeyCountMap := func(list *yamlv3.Node) map[string]int {
 		tmp := map[string]map[string]struct{}{}
 		for _, entry := range list.Content {
@@ -640,7 +656,7 @@ func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) string {
 
 	for keyA, countA := range counterA {
 		if countB, ok := counterB[keyA]; ok {
-			if countA == listALength && countB == listBLength && countA > NonStandardIdentifierGuessCountThreshold {
+			if countA == listALength && countB == listBLength && countA > nonStandardIdentifierGuessCountThreshold {
 				return keyA
 			}
 		}
@@ -733,24 +749,6 @@ func max(a, b int) int {
 	return b
 }
 
-func isMinorChange(from string, to string) bool {
-	levenshteinDistance := levenshtein.DistanceForStrings([]rune(from), []rune(to), levenshtein.DefaultOptions)
-
-	// Special case: Consider it a minor change if only two runes/characters were
-	// changed, which results in a default distance of four, two removals and two
-	// additions each.
-	if levenshteinDistance <= 4 {
-		return true
-	}
-
-	referenceLength := min(len(from), len(to))
-	return float64(levenshteinDistance)/float64(referenceLength) < MinorChangeThreshold
-}
-
-func isMultiLine(from string, to string) bool {
-	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
-}
-
 func isList(node *yamlv3.Node) bool {
 	switch node.Kind {
 	case yamlv3.SequenceNode:
@@ -763,7 +761,7 @@ func isList(node *yamlv3.Node) bool {
 // ChangeRoot changes the root of an input file to a position inside its
 // document based on the given path. Input files with more than one document are
 // not supported, since they could have multiple elements with that path.
-func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments bool) error {
+func ChangeRoot(inputFile *ytbx.InputFile, path string, useGoPatchPaths bool, translateListToDocuments bool) error {
 	multipleDocuments := len(inputFile.Documents) != 1
 
 	if multipleDocuments {
@@ -804,7 +802,7 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments
 
 	// Parse path string and create nicely formatted output path
 	if resolvedPath, err := ytbx.ParsePathString(path, originalRoot); err == nil {
-		path = pathToString(resolvedPath, multipleDocuments)
+		path = pathToString(resolvedPath, useGoPatchPaths, multipleDocuments)
 	}
 
 	inputFile.Note = fmt.Sprintf("YAML root was changed to %s", path)
@@ -812,10 +810,10 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, translateListToDocuments
 	return nil
 }
 
-func pathToString(path ytbx.Path, showDocumentIdx bool) string {
+func pathToString(path ytbx.Path, useGoPatchPaths bool, showDocumentIdx bool) string {
 	var result string
 
-	if UseGoPatchPaths {
+	if useGoPatchPaths {
 		result = styledGoPatchPath(path)
 
 	} else {

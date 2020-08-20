@@ -605,6 +605,18 @@ listY: [ Yo, Yo, Yo ]
 				}))
 			})
 
+			It("should not return order changes in named entry lists in case the ignore option is enabled", func() {
+				results, err := compare(
+					yml(`list: [ {name: A}, {name: C}, {name: B}, {name: D}, {name: E} ]`),
+					yml(`list: [ {name: A}, {name: B}, {name: C}, {name: D}, {name: E} ]`),
+					IgnoreOrderChanges(true),
+				)
+
+				Expect(err).To(BeNil())
+				Expect(results).NotTo(BeNil())
+				Expect(len(results)).To(BeEquivalentTo(0))
+			})
+
 			It("should return order changes in simple lists (ignoring additions and removals)", func() {
 				from := yml(`list: [ A, C, B, D, E ]`)
 				to := yml(`list: [ A, X1, B, C, D, X2 ]`)
@@ -644,39 +656,75 @@ listY: [ Yo, Yo, Yo ]
 			})
 
 			It("should return differences in named lists even if no standard identifier is used", func() {
-				results, err := CompareInputFiles(file("../../assets/prometheus/from.yml"), file("../../assets/prometheus/to.yml"))
-				expected := []Diff{
-					singleDiff("/scrape_configs", ORDERCHANGE, []string{
-						"kubernetes-nodes",
-						"kubernetes-apiservers",
-						"kubernetes-cadvisor",
-						"kubernetes-service-endpoints",
-						"kubernetes-services",
-						"kubernetes-ingresses",
-						"kubernetes-pods",
-					}, []string{
-						"kubernetes-apiservers",
-						"kubernetes-nodes",
-						"kubernetes-cadvisor",
-						"kubernetes-service-endpoints",
-						"kubernetes-services",
-						"kubernetes-ingresses",
-						"kubernetes-pods",
-					}),
-
-					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/scheme", MODIFICATION, "http", "https"),
-
-					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/relabel_configs/0/regex", MODIFICATION, "default;kubernetes;http", "default;kubernetes;https"),
-				}
+				results, err := CompareInputFiles(
+					file("../../assets/prometheus/from.yml"),
+					file("../../assets/prometheus/to.yml"),
+				)
 
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(results.Diffs).NotTo(BeNil())
-				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
 
-				for i, result := range results.Diffs {
-					Expect(result).To(BeSameDiffAs(expected[i]))
+				expected := []Diff{
+					singleDiff("/scrape_configs", ORDERCHANGE,
+						[]string{
+							"kubernetes-nodes",
+							"kubernetes-apiservers",
+							"kubernetes-cadvisor",
+							"kubernetes-service-endpoints",
+							"kubernetes-services",
+							"kubernetes-ingresses",
+							"kubernetes-pods",
+						},
+						[]string{
+							"kubernetes-apiservers",
+							"kubernetes-nodes",
+							"kubernetes-cadvisor",
+							"kubernetes-service-endpoints",
+							"kubernetes-services",
+							"kubernetes-ingresses",
+							"kubernetes-pods",
+						},
+					),
+
+					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/scheme", MODIFICATION,
+						"http",
+						"https",
+					),
+
+					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/relabel_configs/0/regex", MODIFICATION,
+						"default;kubernetes;http",
+						"default;kubernetes;https",
+					),
 				}
+
+				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
+				for i, diff := range results.Diffs {
+					Expect(diff).To(BeSameDiffAs(expected[i]))
+				}
+			})
+
+			It("should fail to find the non-standard identifier if the threshold is too high", func() {
+				report, err := CompareInputFiles(
+					file("../../assets/prometheus/from.yml"),
+					file("../../assets/prometheus/to.yml"),
+					NonStandardIdentifierGuessCountThreshold(8),
+				)
+
+				Expect(err).To(BeNil())
+				Expect(report).NotTo(BeNil())
+				Expect(report.Diffs).NotTo(BeNil())
+
+				var orderChangeDiffs = 0
+				for _, diff := range report.Diffs {
+					for _, detail := range diff.Details {
+						if detail.Kind == ORDERCHANGE {
+							orderChangeDiffs++
+						}
+					}
+				}
+
+				Expect(orderChangeDiffs).To(BeEquivalentTo(0))
 			})
 		})
 
@@ -695,7 +743,7 @@ b: bar
 ]
 }`)}
 
-				err := ChangeRoot(&to, "/items", true)
+				err := ChangeRoot(&to, "/items", false, true)
 				if err != nil {
 					Fail(err.Error())
 				}

@@ -23,12 +23,12 @@ package dyff_test
 import (
 	"fmt"
 
+	. "github.com/gonvenience/bunt"
+	. "github.com/homeport/dyff/pkg/dyff"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/gonvenience/bunt"
 	"github.com/gonvenience/ytbx"
-	. "github.com/homeport/dyff/pkg/dyff"
 )
 
 var _ = Describe("human readable report", func() {
@@ -108,19 +108,22 @@ input: |+
 			compareAgainstExpected("../../assets/binary/from.yml",
 				"../../assets/binary/to.yml",
 				"../../assets/binary/dyff.expected",
-				false)
+				false,
+			)
 		})
 
 		It("should show the testbed results as expected", func() {
 			compareAgainstExpected("../../assets/testbed/from.yml",
 				"../../assets/testbed/to.yml",
 				"../../assets/testbed/expected-dyff-spruce.human",
-				false)
+				false,
+			)
 
 			compareAgainstExpected("../../assets/testbed/from.yml",
 				"../../assets/testbed/to.yml",
 				"../../assets/testbed/expected-dyff-gopatch.human",
-				true)
+				true,
+			)
 		})
 	})
 
@@ -140,7 +143,8 @@ input: |+
 				"../../assets/colors/from.yml",
 				"../../assets/colors/to.yml",
 				"../../assets/colors/dyff.expected",
-				false)
+				false,
+			)
 		})
 	})
 
@@ -189,7 +193,8 @@ variables.ROUTER_TLS_PEM.options
 			compareAgainstExpected("../../assets/issues/issue-89/from.yml",
 				"../../assets/issues/issue-89/to.yml",
 				"../../assets/issues/issue-89/expected-dyff-spruce.human",
-				false)
+				false,
+			)
 		})
 	})
 })
