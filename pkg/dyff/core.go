@@ -291,7 +291,6 @@ func compareSimpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]D
 
 	return packChangesAndAddToResult(
 		result,
-		true,
 		path,
 		findOrderChangesInSimpleList(from, to, fromNames, toNames, fromLookup, toLookup),
 		additions,
@@ -356,7 +355,6 @@ func compareNamedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node
 
 	return packChangesAndAddToResult(
 		result,
-		true,
 		path,
 		findOrderChangesInNamedEntryLists(fromNames, toNames),
 		additions,
@@ -461,7 +459,7 @@ func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
 	return orderchanges
 }
 
-func packChangesAndAddToResult(list []Diff, prepend bool, path ytbx.Path, orderchanges []Detail, additions, removals []*yamlv3.Node) ([]Diff, error) {
+func packChangesAndAddToResult(list []Diff, path ytbx.Path, orderchanges []Detail, additions, removals []*yamlv3.Node) ([]Diff, error) {
 	// Prepare a diff for this path to added to the result set (if there are changes)
 	diff := Diff{Path: path, Details: []Detail{}}
 
@@ -493,17 +491,10 @@ func packChangesAndAddToResult(list []Diff, prepend bool, path ytbx.Path, orderc
 		})
 	}
 
-	// If there were changes added to the details list,
-	// we can safely add it to the result set.
-	// Otherwise it the result set will be returned as-is.
+	// If there were changes added to the details list, we can safely add it to
+	// the result set. Otherwise it the result set will be returned as-is.
 	if len(diff.Details) > 0 {
-		switch prepend {
-		case true:
-			list = append([]Diff{diff}, list...)
-
-		case false:
-			list = append(list, diff)
-		}
+		list = append([]Diff{diff}, list...)
 	}
 
 	return list, nil
