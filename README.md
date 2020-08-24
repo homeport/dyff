@@ -36,7 +36,7 @@ Prebuilt binaries for a lot of operating systems and architectures can be [downl
 There is a convenience script to download the latest release for Linux or macOS if you want to keep it simple (you need `curl` and `jq` installed on your machine):
 
 ```bash
-curl --silent --location https://goo.gl/DRXDVN | bash
+curl --silent --location https://tinyurl.com/y4qvdl4d | bash
 ```
 
 And of course, you can download and build `dyff` from source using `go`:
