@@ -8,7 +8,7 @@ cache:
   - $GOPATH/pkg/mod
 
 install:
-- curl --silent --location https://goo.gl/g1CpPX | bash -s v1.0.8
+- curl --silent --location https://goo.gl/g1CpPX | bash -s v1.3.0
 
 script:
 - export GO111MODULE=on
