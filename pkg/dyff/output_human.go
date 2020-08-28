@@ -375,23 +375,12 @@ func humanReadableType(node *yamlv3.Node) string {
 		case "!!str":
 			return "string"
 
-		case "!!int":
-			return "int"
-
-		case "!!float":
-			return "float"
-
-		case "!!bool":
-			return "bool"
-
-		case "!!binary":
-			return "binary"
-
 		case "!!null":
 			return "<nil>"
 
 		default:
-			panic(fmt.Errorf("unknown and therefore unsupported scalar tag %s", node.Tag))
+			// use the YAML tag name without the exclamation marks
+			return node.Tag[2:]
 		}
 
 	case yamlv3.AliasNode:

@@ -307,5 +307,17 @@ list
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo("\n"))
 		})
+
+		It("should not panic when timestamps need to reported", func() {
+			out, err := dyff("between", "--omit-header", "../../assets/issues/issue-111/from.yml", "../../assets/issues/issue-111/to.yml")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+AWSTemplateFormatVersion
+  ± type change from timestamp to string
+    - 2010-09-09
+    + 2010-09-09
+
+`))
+		})
 	})
 })
