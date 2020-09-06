@@ -9,11 +9,11 @@ require (
 	github.com/gonvenience/term v1.0.0
 	github.com/gonvenience/text v1.0.5
 	github.com/gonvenience/wrap v1.1.0
-	github.com/gonvenience/ytbx v1.2.2
+	github.com/gonvenience/ytbx v1.3.0
 	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/onsi/ginkgo v1.14.0
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/ginkgo v1.14.1
+	github.com/onsi/gomega v1.10.2
 	github.com/sergi/go-diff v1.1.0
 	github.com/spf13/cobra v1.0.0
 	github.com/texttheater/golang-levenshtein v1.0.1

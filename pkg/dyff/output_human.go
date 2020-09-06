@@ -59,7 +59,7 @@ type stringWriter interface {
 type HumanReport struct {
 	NoTableStyle         bool
 	DoNotInspectCerts    bool
-	ShowBanner           bool
+	OmitHeader           bool
 	UseGoPatchPaths      bool
 	MinorChangeThreshold float64
 
@@ -75,7 +75,7 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 	showDocumentIdx := len(report.From.Documents) > 1
 
 	// Show banner if enabled
-	if report.ShowBanner {
+	if !report.OmitHeader {
 		var stats bytes.Buffer
 		stats.WriteString("\n")
 		stats.WriteString(fmt.Sprintf(" between %s\n", ytbx.HumanReadableLocationInformation(report.From)))
