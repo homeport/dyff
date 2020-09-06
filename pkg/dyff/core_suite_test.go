@@ -104,7 +104,7 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 		Report:            report,
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
-		ShowBanner:        false,
+		OmitHeader:        true,
 		UseGoPatchPaths:   useGoPatchPaths,
 	}
 
@@ -201,7 +201,7 @@ func humanDiff(diff Diff) string {
 		Report:            Report{Diffs: []Diff{diff}},
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
-		ShowBanner:        false,
+		OmitHeader:        true,
 	}
 
 	var buf bytes.Buffer

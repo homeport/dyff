@@ -320,4 +320,48 @@ AWSTemplateFormatVersion
 `))
 		})
 	})
+
+	Context("last-applied command", func() {
+		It("should create the default report when there are no flags specified", func() {
+			kubeYAML := createTestFile(`---
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      { "metadata": { "annotations": {} }, "yaml": { "foo": "bat" } }
+yaml:
+  foo: bar
+`)
+			defer os.Remove(kubeYAML)
+
+			out, err := dyff("last-applied", "--omit-header", kubeYAML)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+yaml.foo
+  ± value change
+    - bat
+    + bar
+
+`))
+		})
+
+		It("should fail on an input file with multiple documents", func() {
+			kubeYAML := createTestFile(`---
+foo: bar
+--
+foo: bar
+`)
+			defer os.Remove(kubeYAML)
+
+			_, err := dyff("last-applied", kubeYAML)
+			Expect(err).To(HaveOccurred())
+		})
+
+		It("should fail on an input file when the last applied configuration is not set", func() {
+			kubeYAML := createTestFile(`foo: bar`)
+			defer os.Remove(kubeYAML)
+
+			_, err := dyff("last-applied", kubeYAML)
+			Expect(err).To(HaveOccurred())
+		})
+	})
 })
