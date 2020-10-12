@@ -115,13 +115,30 @@ list:
 `))
 		})
 
-		It("should write a JSON file to STDOUT using restructure feature", func() {
+		It("should write a plain JSON file to STDOUT using restructure feature", func() {
 			filename := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
 			defer os.Remove(filename)
 
 			out, err := dyff("json", "--restructure", "--plain", filename)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(`{"list": [{"name": "one", "aaa": "bbb"}]}
+`))
+		})
+
+		It("should write a JSON file to STDOUT using restructure feature", func() {
+			filename := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
+			defer os.Remove(filename)
+
+			out, err := dyff("json", "--restructure", filename)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`{
+  "list": [
+    {
+      "name": "one",
+      "aaa": "bbb"
+    }
+  ]
+}
 `))
 		})
 
