@@ -55,11 +55,11 @@ can transform YAML to JSON, and vice versa. The order of keys in hashes
 is preserved during the conversion.
 `,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-		if bunt.ColorSetting, err = parseSetting(colormode); err != nil {
+		if bunt.ColorSetting, err = bunt.ParseSetting(colormode); err != nil {
 			return wrap.Errorf(err, "invalid color setting '%s'", colormode)
 		}
 
-		if bunt.TrueColorSetting, err = parseSetting(truecolormode); err != nil {
+		if bunt.TrueColorSetting, err = bunt.ParseSetting(truecolormode); err != nil {
 			return wrap.Errorf(err, "invalid true color setting '%s'", truecolormode)
 		}
 

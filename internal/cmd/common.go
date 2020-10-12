@@ -30,7 +30,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
@@ -150,22 +149,6 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 	}
 
 	return nil
-}
-
-func parseSetting(setting string) (bunt.SwitchState, error) {
-	switch strings.ToLower(setting) {
-	case "auto":
-		return bunt.AUTO, nil
-
-	case "off", "no", "false":
-		return bunt.OFF, nil
-
-	case "on", "yes", "true":
-		return bunt.ON, nil
-
-	default:
-		return bunt.OFF, fmt.Errorf("invalid state '%s' used, supported modes are: auto, on, or off", setting)
-	}
 }
 
 func initSettings() {
