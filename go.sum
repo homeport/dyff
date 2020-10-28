@@ -72,6 +72,7 @@ github.com/gonvenience/bunt v1.1.3/go.mod h1:hZ898ZprNWgaVlq4s1ivsJu3AY+3wrlJadF
 github.com/gonvenience/neat v1.3.0 h1:DKlFjUuEOoJaYEBejxRhim3T804kXW5ppj/r0+2VvaE=
 github.com/gonvenience/neat v1.3.0/go.mod h1:8b38eXyZUqm0e+q6wP/ueDNXM8Frn0Tr2Pd9GQo9FOA=
 github.com/gonvenience/neat v1.3.1/go.mod h1:BS9YqdxIL7HScL1tSF3VBzCtXXOq18xKq3H8l96T+LI=
+github.com/gonvenience/neat v1.3.2/go.mod h1:BS9YqdxIL7HScL1tSF3VBzCtXXOq18xKq3H8l96T+LI=
 github.com/gonvenience/term v1.0.0 h1:joCB/j0Ngmdakd3muuLgAGPMf7DNKdoe708c1I6RiBs=
 github.com/gonvenience/term v1.0.0/go.mod h1:wohD4Iqso9Eol7qc2VnNhSFFhZxok5PvO7pZhdrAn4E=
 github.com/gonvenience/text v1.0.5 h1:Tfy+SHG3dSnUhxwxaiXJci++Ix0YNumoRu0v7yR4w2Q=
