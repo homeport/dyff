@@ -147,6 +147,33 @@ list:
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from STDIN"))
 		})
+
+		It("should write timestamps with proper quotes in plain mode", func() {
+			out, err := dyff("json", "--plain", assets("issues", "issue-120", "buildpack.toml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(Equal(`{"metadata": {"dependencies": [{"deprecation_date": "2021-08-21T00:00:00Z"}], "dependency_deprecation_dates": [{"date": "2021-08-21T13:37:00Z"}]}}
+`))
+		})
+
+		It("should write timestamps with proper quotes in default mode", func() {
+			out, err := dyff("json", assets("issues", "issue-120", "buildpack.toml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(Equal(`{
+  "metadata": {
+    "dependencies": [
+      {
+        "deprecation_date": "2021-08-21T00:00:00Z"
+      }
+    ],
+    "dependency_deprecation_dates": [
+      {
+        "date": "2021-08-21T13:37:00Z"
+      }
+    ]
+  }
+}
+`))
+		})
 	})
 
 	Context("between command", func() {
