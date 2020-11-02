@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gonvenience/bunt v1.1.3
-	github.com/gonvenience/neat v1.3.2
+	github.com/gonvenience/neat v1.3.3
 	github.com/gonvenience/term v1.0.0
 	github.com/gonvenience/text v1.0.6
 	github.com/gonvenience/wrap v1.1.0

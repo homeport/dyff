@@ -1,0 +1,6 @@
+[metadata]
+  [[metadata.dependencies]]
+    deprecation_date = "2021-08-21T00:00:00Z"
+
+  [[metadata.dependency_deprecation_dates]]
+    date = 2021-08-21T13:37:00Z
