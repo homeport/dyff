@@ -38,7 +38,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/ytbx"
-	"github.com/onsi/gomega/types"
 	yamlv3 "gopkg.in/yaml.v3"
 )
 
@@ -52,7 +51,7 @@ var _ = BeforeSuite(func() {
 	term.FixedTerminalWidth = 80
 })
 
-func BeLike(expected interface{}) types.GomegaMatcher {
+func BeLike(expected interface{}) GomegaMatcher {
 	return &extendedStringMatcher{
 		expected: expected,
 	}

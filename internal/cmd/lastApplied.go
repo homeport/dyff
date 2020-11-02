@@ -31,8 +31,6 @@ import (
 	yamlv3 "gopkg.in/yaml.v3"
 )
 
-const kubectlLastAppliedKey = "kubectl.kubernetes.io/last-applied-configuration"
-
 // lastAppliedCmd represents the lastApplied command
 var lastAppliedCmd = &cobra.Command{
 	Use:   "last-applied",
