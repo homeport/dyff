@@ -267,12 +267,12 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
-	if compare.settings.KubernetesEntityDetection {
-		fmt.Println("todo")
-	}
-
 	if identifier := getNonStandardIdentifierFromNamedLists(from, to, compare.settings.NonStandardIdentifierGuessCountThreshold); identifier != "" {
 		return compare.namedEntryLists(path, identifier, from, to)
+	}
+
+	if compare.settings.KubernetesEntityDetection {
+		return compare.namedEntryLists(path, ListItemIdentifierField("metadata.name"), from, to)
 	}
 
 	return compare.simpleLists(path, from, to)
@@ -337,7 +337,28 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 	return packChangesAndAddToResult(result, path, orderChanges, additions, removals)
 }
 
-func (compare *compare) namedEntryLists(path ytbx.Path, identifier string, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func nameFromField(node *yamlv3.Node, field ListItemIdentifierField) (string, error) {
+	name, err := getValueByKey(node, string(field))
+	if err != nil {
+		return "", err
+	}
+	return name.Value, nil
+}
+
+func nameFromPath(node *yamlv3.Node, field ListItemIdentifierField) (string, error) {
+	parts := strings.SplitN(string(field), ".", 2)
+	key := parts[0]
+	val, err := getValueByKey(node, key)
+	if err != nil {
+		return "", err
+	}
+	if len(parts) == 1 {
+		return val.Value, nil
+	}
+	return nameFromPath(val, ListItemIdentifierField(parts[1]))
+}
+
+func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdentifierField, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	removals := make([]*yamlv3.Node, 0)
 	additions := make([]*yamlv3.Node, 0)
 
@@ -351,15 +372,15 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier string, from 
 	// Find entries that are common to both lists to compare them separately, and
 	// find entries that are only in from, but not to and are therefore removed
 	for _, fromEntry := range from.Content {
-		name, err := getValueByKey(fromEntry, identifier)
+		name, err := nameFromPath(fromEntry, identifier)
 		if err != nil {
 			return nil, err
 		}
 
-		if toEntry, ok := getEntryFromNamedList(to, identifier, name.Value); ok {
+		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
 			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
 			diffs, err := compare.objects(
-				ytbx.NewPathWithNamedListElement(path, identifier, name.Value),
+				ytbx.NewPathWithNamedListElement(path, identifier, name),
 				followAlias(fromEntry),
 				followAlias(toEntry),
 			)
@@ -367,7 +388,7 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier string, from 
 				return nil, err
 			}
 			result = append(result, diffs...)
-			fromNames = append(fromNames, name.Value)
+			fromNames = append(fromNames, name)
 
 		} else {
 			// `from` has an entry (identified by identifier and name), but `to` does not -> removal
@@ -377,14 +398,14 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier string, from 
 
 	// Find entries that are only in to, but not from and are therefore added
 	for _, toEntry := range to.Content {
-		name, err := getValueByKey(toEntry, identifier)
+		name, err := nameFromPath(toEntry, identifier)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, ok := getEntryFromNamedList(from, identifier, name.Value); ok {
+		if _, ok := getEntryFromNamedList(from, identifier, name); ok {
 			// `to` and `from` have the same entry idenfified by identifier and name (comparison already covered by previous range)
-			toNames = append(toNames, name.Value)
+			toNames = append(toNames, name)
 
 		} else {
 			// `to` has an entry (identified by identifier and name), but `from` does not -> addition
@@ -570,26 +591,26 @@ func getValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, error) {
 // getEntryFromNamedList returns the entry that is identified by the identifier
 // key and a name, for example: `name: one` where name is the identifier key and
 // one the name. Function will return nil with bool false if there is no entry.
-func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier string, name string) (*yamlv3.Node, bool) {
+func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentifierField, name string) (*yamlv3.Node, bool) {
 	for _, mappingNode := range sequenceNode.Content {
-		for i := 0; i < len(mappingNode.Content); i += 2 {
-			k, v := followAlias(mappingNode.Content[i]), followAlias(mappingNode.Content[i+1])
-			if k.Value == identifier && v.Value == name {
-				return mappingNode, true
-			}
+		nodeName, _ := nameFromPath(mappingNode, identifier)
+		if nodeName == name {
+			return mappingNode, true
 		}
 	}
-
 	return nil, false
 }
 
-func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (string, error) {
-	candidates := []string{"name", "key", "id"}
+// ListItemIdentifierField names the field that identifies a list.
+type ListItemIdentifierField string
+
+func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
+	candidates := []ListItemIdentifierField{"name", "key", "id"}
 
 	isCandidate := func(node *yamlv3.Node) bool {
 		if node.Kind == yamlv3.ScalarNode {
 			for _, entry := range candidates {
-				if node.Value == entry {
+				if node.Value == string(entry) {
 					return true
 				}
 			}
@@ -598,19 +619,19 @@ func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (string, error) {
 		return false
 	}
 
-	createKeyCountMap := func(sequenceNode *yamlv3.Node) map[string]map[string]struct{} {
-		result := map[string]map[string]struct{}{}
+	createKeyCountMap := func(sequenceNode *yamlv3.Node) map[ListItemIdentifierField]map[string]struct{} {
+		result := map[ListItemIdentifierField]map[string]struct{}{}
 		for _, entry := range sequenceNode.Content {
 			switch entry.Kind {
 			case yamlv3.MappingNode:
 				for i := 0; i < len(entry.Content); i += 2 {
 					k, v := followAlias(entry.Content[i]), followAlias(entry.Content[i+1])
 					if isCandidate(k) {
-						if _, found := result[k.Value]; !found {
-							result[k.Value] = map[string]struct{}{}
+						if _, found := result[ListItemIdentifierField(k.Value)]; !found {
+							result[ListItemIdentifierField(k.Value)] = map[string]struct{}{}
 						}
 
-						result[k.Value][v.Value] = struct{}{}
+						result[ListItemIdentifierField(k.Value)][v.Value] = struct{}{}
 					}
 				}
 			}
@@ -634,7 +655,7 @@ func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (string, error) {
 	return "", fmt.Errorf("unable to find a key that can serve as an unique identifier")
 }
 
-func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) string {
+func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) ListItemIdentifierField {
 	createKeyCountMap := func(list *yamlv3.Node) map[string]int {
 		tmp := map[string]map[string]struct{}{}
 		for _, entry := range list.Content {
@@ -671,7 +692,7 @@ func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStanda
 	for keyA, countA := range counterA {
 		if countB, ok := counterB[keyA]; ok {
 			if countA == listALength && countB == listBLength && countA > nonStandardIdentifierGuessCountThreshold {
-				return keyA
+				return ListItemIdentifierField(keyA)
 			}
 		}
 	}
