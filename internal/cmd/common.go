@@ -41,30 +41,32 @@ import (
 const defaultOutputStyle = "human"
 
 type reportConfig struct {
-	style              string
-	ignoreOrderChanges bool
-	noTableStyle       bool
-	doNotInspectCerts  bool
-	exitWithCount      bool
-	omitHeader         bool
-	useGoPatchPaths    bool
+	style                     string
+	ignoreOrderChanges        bool
+	kubernetesEntityDetection bool
+	noTableStyle              bool
+	doNotInspectCerts         bool
+	exitWithCount             bool
+	omitHeader                bool
+	useGoPatchPaths           bool
 }
 
 var reportOptions reportConfig
 
 func applyReportOptionsFlags(cmd *cobra.Command) {
 	// Compare options
-	cmd.PersistentFlags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
+	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
+	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", false, "detect kubernetes entities")
 
 	// Main output preferences
-	cmd.PersistentFlags().StringVarP(&reportOptions.style, "output", "o", defaultOutputStyle, "specify the output style, supported styles: human, or brief")
-	cmd.PersistentFlags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", false, "omit the dyff summary header")
-	cmd.PersistentFlags().BoolVarP(&reportOptions.exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
+	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaultOutputStyle, "specify the output style, supported styles: human, or brief")
+	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", false, "omit the dyff summary header")
+	cmd.Flags().BoolVarP(&reportOptions.exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
 
 	// Human/BOSH output related flags
-	cmd.PersistentFlags().BoolVarP(&reportOptions.noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
-	cmd.PersistentFlags().BoolVarP(&reportOptions.doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
-	cmd.PersistentFlags().BoolVarP(&reportOptions.useGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
+	cmd.Flags().BoolVarP(&reportOptions.noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
+	cmd.Flags().BoolVarP(&reportOptions.doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
+	cmd.Flags().BoolVarP(&reportOptions.useGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
 }
 
 // OutputWriter encapsulates the required fields to define the look and feel of

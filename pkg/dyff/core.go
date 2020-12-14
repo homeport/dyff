@@ -38,6 +38,7 @@ type CompareOption func(*compareSettings)
 type compareSettings struct {
 	NonStandardIdentifierGuessCountThreshold int
 	IgnoreOrderChanges                       bool
+	KubernetesEntityDetection                bool
 }
 
 type compare struct {
@@ -62,6 +63,14 @@ func IgnoreOrderChanges(value bool) CompareOption {
 	}
 }
 
+// KubernetesEntityDetection enabled detecting entity identifiers from Kubernetes "kind:" and "metadata:" fields.
+func KubernetesEntityDetection(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.KubernetesEntityDetection = value
+
+	}
+}
+
 // CompareInputFiles is one of the convenience main entry points for comparing
 // objects. In this case the representation of an input file, which might
 // contain multiple documents. It returns a report with the list of differences.
@@ -75,6 +84,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		settings: compareSettings{
 			NonStandardIdentifierGuessCountThreshold: 3,
 			IgnoreOrderChanges:                       false,
+			KubernetesEntityDetection:                false,
 		},
 	}
 
@@ -255,6 +265,10 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 
 	if identifier, err := getIdentifierFromNamedLists(from, to); err == nil {
 		return compare.namedEntryLists(path, identifier, from, to)
+	}
+
+	if compare.settings.KubernetesEntityDetection {
+		fmt.Println("todo")
 	}
 
 	if identifier := getNonStandardIdentifierFromNamedLists(from, to, compare.settings.NonStandardIdentifierGuessCountThreshold); identifier != "" {
