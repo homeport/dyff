@@ -268,11 +268,14 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 	}
 
 	if identifier := getNonStandardIdentifierFromNamedLists(from, to, compare.settings.NonStandardIdentifierGuessCountThreshold); identifier != "" {
-		return compare.namedEntryLists(path, identifier, from, to)
+		d, err := compare.namedEntryLists(path, identifier, from, to)
+		return d, fmt.Errorf("sequenceNodes(nonstd): %w", err)
 	}
 
 	if compare.settings.KubernetesEntityDetection {
-		return compare.namedEntryLists(path, ListItemIdentifierField("metadata.name"), from, to)
+		if identifier, err := getIdentifierFromKubernetesEntityList(from, to); err == nil {
+			return compare.namedEntryLists(path, identifier, from, to)
+		}
 	}
 
 	return compare.simpleLists(path, from, to)
@@ -350,7 +353,7 @@ func nameFromPath(node *yamlv3.Node, field ListItemIdentifierField) (string, err
 	key := parts[0]
 	val, err := getValueByKey(node, key)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("nameFromPath issue: %w", err)
 	}
 	if len(parts) == 1 {
 		return val.Value, nil
@@ -374,7 +377,7 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 	for _, fromEntry := range from.Content {
 		name, err := nameFromPath(fromEntry, identifier)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("nameEntryList from issue: %w", err)
 		}
 
 		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
@@ -400,7 +403,7 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 	for _, toEntry := range to.Content {
 		name, err := nameFromPath(toEntry, identifier)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("nameEntryList to issue: %w", err)
 		}
 
 		if _, ok := getEntryFromNamedList(from, identifier, name); ok {
@@ -653,6 +656,31 @@ func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (ListItemIdentifierF
 	}
 
 	return "", fmt.Errorf("unable to find a key that can serve as an unique identifier")
+}
+
+// getIdentifierFromKubernetesEntityList returns 'metadata.name' as a field identifier if the provided objects all have the key.
+func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
+	key := ListItemIdentifierField("metadata.name")
+
+	allHaveMetadataName := func(sequenceNode *yamlv3.Node) bool {
+		numWithMetadata := 0
+		for _, entry := range sequenceNode.Content {
+			switch entry.Kind {
+			case yamlv3.MappingNode:
+				_, err := nameFromPath(entry, key)
+				if err == nil {
+					numWithMetadata++
+				}
+			}
+		}
+		return numWithMetadata == len(sequenceNode.Content)
+	}
+	listAHasKey := allHaveMetadataName(listA)
+	listBHasKey := allHaveMetadataName(listB)
+	if listAHasKey && listBHasKey {
+		return key, nil
+	}
+	return "", fmt.Errorf("not all entities appear to have metadata.name fields")
 }
 
 func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) ListItemIdentifierField {
