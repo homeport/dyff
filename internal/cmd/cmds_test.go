@@ -363,6 +363,23 @@ AWSTemplateFormatVersion
 
 `))
 		})
+
+		It("should not try to evalute variables in the user-provided strings", func() {
+			out, err := dyff("between", "--omit-header", assets("issues", "issue-132", "from.yml"), assets("issues", "issue-132", "to.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+example_one
+  ± value change
+    - %{one}
+    + one
+
+example_two
+  ± value change
+    - two
+    + %{two}
+
+`))
+		})
 	})
 
 	Context("last-applied command", func() {

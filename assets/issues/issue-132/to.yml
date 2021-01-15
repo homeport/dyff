@@ -1,0 +1,3 @@
+---
+example_one: "one"
+example_two: "%{two}"

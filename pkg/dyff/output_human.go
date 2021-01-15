@@ -397,10 +397,10 @@ func highlightRemovals(diffs []diffmatchpatch.Diff) string {
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
-			buf.WriteString(lightred(part.Text))
+			buf.WriteString(lightred("%s", part.Text))
 
 		case diffmatchpatch.DiffDelete:
-			buf.WriteString(bold(red(part.Text)))
+			buf.WriteString(bold("%s", red("%s", part.Text)))
 		}
 	}
 
@@ -415,10 +415,10 @@ func highlightAdditions(diffs []diffmatchpatch.Diff) string {
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
-			buf.WriteString(lightgreen(part.Text))
+			buf.WriteString(lightgreen("%s", part.Text))
 
 		case diffmatchpatch.DiffInsert:
-			buf.WriteString(bold(green(part.Text)))
+			buf.WriteString(bold("%s", green("%s", part.Text)))
 		}
 	}
 
