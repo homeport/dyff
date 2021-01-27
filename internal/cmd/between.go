@@ -82,7 +82,10 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			}
 		}
 
-		report, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges))
+		report, err := dyff.CompareInputFiles(from, to,
+			dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges),
+			dyff.KubernetesEntityDetection(reportOptions.kubernetesEntityDetection),
+		)
 		if err != nil {
 			return wrap.Errorf(err, "failed to compare input files")
 		}
