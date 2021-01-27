@@ -79,7 +79,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		return Report{}, fmt.Errorf("comparing YAMLs with a different number of documents is currently not supported")
 	}
 
-	// initialise the comparator with the tool defaults
+	// initialize the comparator with the tool defaults
 	compare := compare{
 		settings: compareSettings{
 			NonStandardIdentifierGuessCountThreshold: 3,
@@ -377,7 +377,7 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 		}
 
 		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
-			// `from` and `to` have the same entry idenfified by identifier and name -> require comparison
+			// `from` and `to` have the same entry identified by identifier and name -> require comparison
 			diffs, err := compare.objects(
 				ytbx.NewPathWithNamedListElement(path, identifier, name),
 				followAlias(fromEntry),
@@ -403,7 +403,7 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 		}
 
 		if _, ok := getEntryFromNamedList(from, identifier, name); ok {
-			// `to` and `from` have the same entry idenfified by identifier and name (comparison already covered by previous range)
+			// `to` and `from` have the same entry identified by identifier and name (comparison already covered by previous range)
 			toNames = append(toNames, name)
 
 		} else {
