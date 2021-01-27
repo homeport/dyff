@@ -269,7 +269,11 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 
 	if identifier := getNonStandardIdentifierFromNamedLists(from, to, compare.settings.NonStandardIdentifierGuessCountThreshold); identifier != "" {
 		d, err := compare.namedEntryLists(path, identifier, from, to)
-		return d, fmt.Errorf("sequenceNodes(nonstd): %w", err)
+		if err != nil {
+			return nil, fmt.Errorf("sequenceNodes(nonstd): %w", err)
+		}
+
+		return d, nil
 	}
 
 	if compare.settings.KubernetesEntityDetection {
