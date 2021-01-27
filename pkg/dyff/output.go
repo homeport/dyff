@@ -23,7 +23,7 @@ package dyff
 import (
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
-	colorful "github.com/lucasb-eyer/go-colorful"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 func yamlStringInRedishColors(input interface{}) (string, error) {

@@ -24,7 +24,7 @@ import (
 	"fmt"
 
 	"github.com/gonvenience/bunt"
-	colorful "github.com/lucasb-eyer/go-colorful"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 var (

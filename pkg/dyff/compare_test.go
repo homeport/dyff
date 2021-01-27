@@ -789,6 +789,20 @@ b: bar
 
 				Expect(len(results.Diffs)).To(BeEquivalentTo(2))
 			})
+
+			It("should treat the string content as-is with no evaluation", func() {
+				from, to, err := ytbx.LoadFiles("../../assets/issues/issue-132/from.yml", "../../assets/issues/issue-132/to.yml")
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+
+				Expect(results.Diffs[0].Details[0].From.Value).To(Equal("%{one}"))
+				Expect(results.Diffs[1].Details[0].To.Value).To(Equal("%{two}"))
+			})
 		})
 	})
 })

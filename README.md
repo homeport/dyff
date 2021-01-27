@@ -39,10 +39,10 @@ There is a convenience script to download the latest release for Linux or macOS 
 curl --silent --location https://tinyurl.com/y4qvdl4d | bash
 ```
 
-And of course, you can download and build `dyff` from source using `go`:
+And of course, you can download and build `dyff` from source using `go get`:
 
 ```bash
-go get github.com/homeport/dyff/cmd/dyff
+GO111MODULE=on go get github.com/homeport/dyff/cmd/dyff
 ```
 
 ## Use cases and examples
