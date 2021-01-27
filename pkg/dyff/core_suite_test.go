@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"testing"
@@ -50,6 +51,29 @@ var _ = BeforeSuite(func() {
 	LoggingLevel = NONE
 	term.FixedTerminalWidth = 80
 })
+
+func loadFiles(fromPath string, toPath string) (ytbx.InputFile, ytbx.InputFile) {
+	from, to, err := ytbx.LoadFiles(fromPath, toPath)
+	Expect(err).To(BeNil())
+	Expect(from).ToNot(BeNil())
+	Expect(to).ToNot(BeNil())
+
+	return from, to
+}
+
+func assets(pathElement ...string) string {
+	targetPath := filepath.Join(append(
+		[]string{"..", "..", "assets"},
+		pathElement...,
+	)...)
+
+	abs, err := filepath.Abs(targetPath)
+	if err != nil {
+		return targetPath
+	}
+
+	return abs
+}
 
 func BeLike(expected interface{}) GomegaMatcher {
 	return &extendedStringMatcher{

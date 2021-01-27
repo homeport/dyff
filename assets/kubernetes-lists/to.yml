@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      foo: bar
+    name: foo-1
+    namespace: foobar
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    labels:
+      foo: bar
+    name: foo-2
+    namespace: foobar

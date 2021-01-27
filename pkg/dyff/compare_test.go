@@ -763,6 +763,32 @@ b: bar
 			})
 		})
 
+		Context("two YAML structures with Kubernetes lists", func() {
+			It("should identify individual list entries based on the nested name field in the respective entry metadata", func() {
+				from, to := loadFiles(
+					assets("kubernetes-lists", "from.yml"),
+					assets("kubernetes-lists", "to.yml"),
+				)
+
+				results, err := CompareInputFiles(from, to, KubernetesEntityDetection(true))
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(len(results.Diffs)).To(BeEquivalentTo(2))
+				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
+					"#0/items",
+					ORDERCHANGE,
+					AsSequenceNode([]string{"foo-2", "foo-1"}),
+					AsSequenceNode([]string{"foo-1", "foo-2"}),
+				)))
+				Expect(results.Diffs[1]).To(BeSameDiffAs(singleDiff(
+					"/items/metadata.name=foo-1/metadata/labels/foo",
+					MODIFICATION,
+					"bAr",
+					"bar",
+				)))
+			})
+		})
+
 		Context("checking known issues of compare", func() {
 			It("should not return order change differences in case the named-entry list does not have unique identifiers", func() {
 				from, to, err := ytbx.LoadFiles("../../assets/issues/issue-38/from.yml", "../../assets/issues/issue-38/to.yml")
