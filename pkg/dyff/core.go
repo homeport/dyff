@@ -344,14 +344,6 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 	return packChangesAndAddToResult(result, path, orderChanges, additions, removals)
 }
 
-func nameFromField(node *yamlv3.Node, field ListItemIdentifierField) (string, error) {
-	name, err := getValueByKey(node, string(field))
-	if err != nil {
-		return "", err
-	}
-	return name.Value, nil
-}
-
 func nameFromPath(node *yamlv3.Node, field ListItemIdentifierField) (string, error) {
 	parts := strings.SplitN(string(field), ".", 2)
 	key := parts[0]
