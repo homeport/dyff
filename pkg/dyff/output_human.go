@@ -37,18 +37,11 @@ import (
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/text"
 	"github.com/gonvenience/ytbx"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 	yamlv3 "gopkg.in/yaml.v3"
 )
-
-const banner = `     _        __  __
-   _| |_   _ / _|/ _|
- / _' | | | | |_| |_
-| (_| | |_| |  _|  _|
- \__,_|\__, |_| |_|
-        |___/
-`
 
 // stringWriter is the interface that wraps the WriteString method.
 type stringWriter interface {
@@ -76,16 +69,33 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 
 	// Show banner if enabled
 	if !report.OmitHeader {
-		var stats bytes.Buffer
-		stats.WriteString("\n")
-		stats.WriteString(fmt.Sprintf(" between %s\n", ytbx.HumanReadableLocationInformation(report.From)))
-		stats.WriteString(fmt.Sprintf("     and %s\n", ytbx.HumanReadableLocationInformation(report.To)))
-		stats.WriteString("\n")
-		stats.WriteString(fmt.Sprintf("returned %s\n", bunt.Style(text.Plural(len(report.Diffs), "difference"), bunt.Bold())))
+		var header = fmt.Sprintf(`     _        __  __
+   _| |_   _ / _|/ _|  between %s
+ / _' | | | | |_| |_       and %s
+| (_| | |_| |  _|  _|
+ \__,_|\__, |_| |_|   returned %s
+        |___/
+`,
+			ytbx.HumanReadableLocationInformation(report.From),
+			ytbx.HumanReadableLocationInformation(report.To),
+			bunt.Style(text.Plural(len(report.Diffs), "difference"), bunt.Bold()))
 
-		writer.WriteString(CreateTableStyleString(" ", 0,
-			bunt.Style(banner, bunt.EachLine(), bunt.Bold()),
-			stats.String(),
+		writer.WriteString(bunt.Style(
+			header,
+			bunt.ForegroundFunc(func(x int, _ int, _ rune) *colorful.Color {
+				switch {
+				case x < 7:
+					return &colorful.Color{R: .45, G: .71, B: .30}
+
+				case x < 13:
+					return &colorful.Color{R: .79, G: .76, B: .38}
+
+				case x < 21:
+					return &colorful.Color{R: .65, G: .17, B: .17}
+				}
+
+				return nil
+			}),
 		))
 	}
 
