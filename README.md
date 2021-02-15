@@ -4,7 +4,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/homeport/dyff)](https://goreportcard.com/report/github.com/homeport/dyff)
 [![Build Status](https://travis-ci.com/homeport/dyff.svg?branch=main)](https://travis-ci.com/homeport/dyff)
 [![Codecov](https://img.shields.io/codecov/c/github/homeport/dyff/main.svg)](https://codecov.io/gh/homeport/dyff)
-[![GoDoc](https://godoc.org/github.com/homeport/dyff/pkg?status.svg)](https://godoc.org/github.com/homeport/dyff/pkg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/homeport/dyff.svg)](https://pkg.go.dev/github.com/homeport/dyff)
 [![Release](https://img.shields.io/github/release/homeport/dyff.svg)](https://github.com/homeport/dyff/releases/latest)
 
 ![dyff](.docs/logo.png?raw=true "dyff logo - the letters d, y, and f in the colors green, yellow and red")
