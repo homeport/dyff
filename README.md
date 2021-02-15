@@ -1,11 +1,4 @@
-# δyƒƒ /ˈdʏf/
-
-[![License](https://img.shields.io/github/license/homeport/dyff.svg)](https://github.com/homeport/dyff/blob/main/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/homeport/dyff)](https://goreportcard.com/report/github.com/homeport/dyff)
-[![Build and Tests](https://github.com/homeport/dyff/workflows/Build%20and%20Tests/badge.svg)](https://github.com/homeport/dyff/actions?query=workflow%3A%22Build+and+Tests%22)
-[![Codecov](https://img.shields.io/codecov/c/github/homeport/dyff/main.svg)](https://codecov.io/gh/homeport/dyff)
-[![Go Reference](https://pkg.go.dev/badge/github.com/homeport/dyff.svg)](https://pkg.go.dev/github.com/homeport/dyff)
-[![Release](https://img.shields.io/github/release/homeport/dyff.svg)](https://github.com/homeport/dyff/releases/latest)
+# δyƒƒ /ˈdʏf/ [![License](https://img.shields.io/github/license/homeport/dyff.svg)](https://github.com/homeport/dyff/blob/main/LICENSE) [![Go Report Card](https://goreportcard.com/badge/github.com/homeport/dyff)](https://goreportcard.com/report/github.com/homeport/dyff) [![Build and Tests](https://github.com/homeport/dyff/workflows/Build%20and%20Tests/badge.svg)](https://github.com/homeport/dyff/actions?query=workflow%3A%22Build+and+Tests%22) [![Codecov](https://img.shields.io/codecov/c/github/homeport/dyff/main.svg)](https://codecov.io/gh/homeport/dyff) [![Go Reference](https://pkg.go.dev/badge/github.com/homeport/dyff.svg)](https://pkg.go.dev/github.com/homeport/dyff) [![Release](https://img.shields.io/github/release/homeport/dyff.svg)](https://github.com/homeport/dyff/releases/latest)
 
 ![dyff](.docs/logo.png?raw=true "dyff logo - the letters d, y, and f in the colors green, yellow and red")
 
