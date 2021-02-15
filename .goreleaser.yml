@@ -28,6 +28,9 @@ checksum:
 snapshot:
   name_template: "{{ .Tag }}-next"
 
+release:
+  name_template: "{{.ProjectName}} release v{{.Version}}"
+
 changelog:
   skip: false
   sort: ""
