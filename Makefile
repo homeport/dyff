@@ -25,7 +25,7 @@ sources := $(wildcard cmd/dyff/*.go internal/cmd/*.go pkg/dyff/*.go)
 all: clean test build
 
 clean:
-	@rm -rf binaries internal/cmd/cmd.coverprofile pkg/dyff/dyff.coverprofile
+	@rm -rf dist internal/cmd/cmd.coverprofile pkg/dyff/dyff.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
 fmt: $(sources)
@@ -60,9 +60,3 @@ ginkgo: gobuild
 		-cover
 
 test: vet lint gocyclo misspell ginkgo
-
-build: $(sources)
-	@scripts/compile-version.sh --local
-
-build-all: $(sources)
-	@scripts/compile-version.sh --all
