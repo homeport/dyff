@@ -1,0 +1,62 @@
+---
+name: Build and Tests
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Build and Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Verify Go Modules Setup
+      run: |
+        go mod verify
+
+    - name: Build Go Code
+      run: |
+        go build ./...
+
+    - name: Sanity Check (go vet)
+      run: |
+        go vet ./...
+
+    - name: Sanity Check (ineffassign)
+      run: |
+        go get github.com/gordonklaus/ineffassign
+        ineffassign ./...
+
+    - name: Sanity Check (golint)
+      run: |
+        go get golang.org/x/lint/golint
+        golint ./...
+
+    - name: Sanity Check (misspell)
+      run: |
+        go get github.com/client9/misspell/cmd/misspell
+        find . -type f | xargs misspell -source=text -error
+
+    - name: Sanity Check (staticcheck)
+      run: |
+        go get honnef.co/go/tools/cmd/staticcheck
+        staticcheck ./...
+
+    - name: Run Go Unit Tests
+      run: |
+        go get github.com/onsi/ginkgo/ginkgo github.com/onsi/gomega/...
+        ginkgo -r -randomizeAllSpecs -randomizeSuites -failOnPending -nodes=1 -compilers=1 -race -trace -cover
+
+    - name: Upload Code Coverage Profile
+      uses: codecov/codecov-action@v1
+      with:
+        files: ./*.coverprofile
+        flags: unittests
+        fail_ci_if_error: true
+        verbose: false
