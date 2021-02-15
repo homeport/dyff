@@ -15,6 +15,7 @@ builds:
     - -trimpath
     ldflags:
     - -s -w -extldflags "-static" -X github.com/homeport/dyff/internal/cmd.version={{.Version}}
+    mod_timestamp: '{{ .CommitTimestamp }}'
 
 archives:
 - replacements:
