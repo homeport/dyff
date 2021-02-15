@@ -45,7 +45,7 @@ brews:
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     url_template: "https://github.com/homeport/dyff/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    download_strategy: CurlDownloadStrategy.
+    download_strategy: CurlDownloadStrategy
     commit_author:
       name: GoReleaser Bot
       email: goreleaser@carlosbecker.com
