@@ -1,7 +1,15 @@
 ---
 name: Build and Tests
 
-on: [push, pull_request]
+on:
+  push:
+    tags-ignore:
+      - '**'
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
