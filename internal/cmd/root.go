@@ -23,16 +23,9 @@ package cmd
 import (
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/term"
-	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
 )
-
-// colormode is used by CLI parser to store user input for further internal processing into the proper value
-var colormode string
-
-// truecolormode is used by the CLI flag processing routines to store the user preference for true color usage
-var truecolormode string
 
 // ExitCode is just a way to transport the exit code to the main package
 type ExitCode struct {
@@ -45,23 +38,14 @@ func (e ExitCode) Error() string {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use: "dyff",
+	Use:           "dyff",
+	SilenceErrors: true,
+	SilenceUsage:  true,
 	Long: `
 δyƒƒ /ˈdʏf/ - a diff tool for YAML files, and sometimes JSON. Also, It
 can transform YAML to JSON, and vice versa. The order of keys in hashes
 is preserved during the conversion.
 `,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-		if bunt.ColorSetting, err = bunt.ParseSetting(colormode); err != nil {
-			return wrap.Errorf(err, "invalid color setting '%s'", colormode)
-		}
-
-		if bunt.TrueColorSetting, err = bunt.ParseSetting(truecolormode); err != nil {
-			return wrap.Errorf(err, "invalid true color setting '%s'", truecolormode)
-		}
-
-		return nil
-	},
 }
 
 // ResetSettings resets command settings to default. This is only required by
@@ -80,13 +64,11 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.SilenceErrors = true
-	rootCmd.SilenceUsage = true
 	rootCmd.Flags().SortFlags = false
 	rootCmd.PersistentFlags().SortFlags = false
 
-	rootCmd.PersistentFlags().StringVarP(&colormode, "color", "c", "auto", "specify color usage: on, off, or auto")
-	rootCmd.PersistentFlags().StringVarP(&truecolormode, "truecolor", "t", "auto", "specify true color usage: on, off, or auto")
+	rootCmd.PersistentFlags().VarP(&bunt.ColorSetting, "color", "c", "specify color usage: on, off, or auto")
+	rootCmd.PersistentFlags().VarP(&bunt.TrueColorSetting, "truecolor", "t", "specify true color usage: on, off, or auto")
 	rootCmd.PersistentFlags().IntVarP(&term.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
 	rootCmd.PersistentFlags().BoolVarP(&ytbx.PreserveKeyOrderInJSON, "preserve-key-order-in-json", "k", false, "use ordered keys during JSON decoding (non standard behavior)")
 }
