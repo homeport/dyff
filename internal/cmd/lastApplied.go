@@ -95,5 +95,5 @@ func lookUpLastAppliedConfiguration(inputFile ytbx.InputFile) (ytbx.InputFile, e
 }
 
 func purgeWellKnownMetadataEntries(document *yamlv3.Node) {
-	ytbx.Delete(document, "/metadata/annotations/kubectl.kubernetes.io\\/last-applied-configuration")
+	_, _ = ytbx.Delete(document, "/metadata/annotations/kubectl.kubernetes.io\\/last-applied-configuration")
 }
