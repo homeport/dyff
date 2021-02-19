@@ -22,10 +22,10 @@ package dyff_test
 
 import (
 	"github.com/gonvenience/ytbx"
-	. "github.com/homeport/dyff/pkg/dyff"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	. "github.com/homeport/dyff/pkg/dyff"
 )
 
 var _ = Describe("Core/Compare", func() {

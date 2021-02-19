@@ -27,6 +27,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	. "github.com/gonvenience/bunt"
+
 	. "github.com/homeport/dyff/pkg/dyff"
 )
 

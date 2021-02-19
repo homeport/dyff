@@ -33,9 +33,10 @@ import (
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
-	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/spf13/cobra"
 	yamlv3 "gopkg.in/yaml.v3"
+
+	"github.com/homeport/dyff/pkg/dyff"
 )
 
 const defaultOutputStyle = "human"

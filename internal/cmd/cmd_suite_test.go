@@ -28,9 +28,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	. "github.com/homeport/dyff/internal/cmd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	. "github.com/homeport/dyff/internal/cmd"
 )
 
 func TestCmd(t *testing.T) {

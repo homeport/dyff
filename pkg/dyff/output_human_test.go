@@ -24,9 +24,10 @@ import (
 	"fmt"
 
 	. "github.com/gonvenience/bunt"
-	. "github.com/homeport/dyff/pkg/dyff"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	. "github.com/homeport/dyff/pkg/dyff"
 
 	"github.com/gonvenience/ytbx"
 )

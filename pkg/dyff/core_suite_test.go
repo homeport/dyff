@@ -31,10 +31,11 @@ import (
 	"strconv"
 	"testing"
 
-	. "github.com/homeport/dyff/pkg/dyff"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/types"
+
+	. "github.com/homeport/dyff/pkg/dyff"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gonvenience/term"
