@@ -55,48 +55,57 @@ var _ = Describe("command line tool flags", func() {
 	})
 
 	Context("yaml command", func() {
-		It("should write a YAML file in place using restructure feature", func() {
-			filename := createTestFile(`---
+		Context("using restructure", func() {
+			Context("to write the file to STDOUT", func() {
+				It("should write a YAML file to STDOUT using restructure feature", func() {
+					filename := createTestFile(`---
 list:
 - aaa: bbb
   name: one
 `)
-			defer os.Remove(filename)
+					defer os.Remove(filename)
 
-			out, err := dyff("yaml", "--restructure", "--in-place", filename)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(out).To(BeEmpty())
-
-			data, err := ioutil.ReadFile(filename)
-			Expect(err).To(BeNil())
-			Expect(string(data)).To(BeEquivalentTo(`list:
-  - name: one
-    aaa: bbb
-`))
-		})
-
-		It("should write a YAML file to STDOUT using restructure feature", func() {
-			filename := createTestFile(`---
-list:
-- aaa: bbb
-  name: one
-`)
-			defer os.Remove(filename)
-
-			out, err := dyff("yaml", "--restructure", filename)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(out).To(BeEquivalentTo(`---
+					out, err := dyff("yaml", "--restructure", filename)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(out).To(BeEquivalentTo(`---
 list:
 - name: one
   aaa: bbb
 
 `))
-		})
+				})
+			})
 
-		It("should fail to write a YAML when in place and STDIN are used at the same time", func() {
-			_, err := dyff("yaml", "--in-place", "-")
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from STDIN"))
+			Context("to write the file in-place", func() {
+				It("should write a YAML file in place using restructure feature", func() {
+					filename := createTestFile(`---
+list:
+- aaa: bbb
+  name: one
+`)
+					defer os.Remove(filename)
+
+					out, err := dyff("yaml", "--restructure", "--in-place", filename)
+					Expect(err).ToNot(HaveOccurred())
+					Expect(out).To(BeEmpty())
+
+					data, err := ioutil.ReadFile(filename)
+					Expect(err).To(BeNil())
+					Expect(string(data)).To(BeEquivalentTo(`list:
+  - name: one
+    aaa: bbb
+`))
+
+				})
+			})
+
+			Context("incorrect usage", func() {
+				It("should fail to write a YAML when in place and STDIN are used at the same time", func() {
+					_, err := dyff("yaml", "--in-place", "-")
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from STDIN"))
+				})
+			})
 		})
 	})
 
