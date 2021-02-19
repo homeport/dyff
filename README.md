@@ -32,7 +32,7 @@ There is a convenience script to download the latest release for Linux or macOS 
 curl --silent --location https://tinyurl.com/y4qvdl4d | bash
 ```
 
-And of course, you can download and build `dyff` from source using `go get`:
+You can download and build `dyff` from source using `go get`:
 
 ```bash
 GO111MODULE=on go get github.com/homeport/dyff/cmd/dyff
