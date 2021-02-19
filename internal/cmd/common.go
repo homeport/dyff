@@ -154,12 +154,6 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 	return nil
 }
 
-func initSettings() {
-	if debugMode {
-		dyff.SetLoggingLevel(dyff.DEBUG)
-	}
-}
-
 func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	var reportWriter dyff.ReportWriter
 	switch strings.ToLower(reportOptions.style) {

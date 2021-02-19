@@ -49,7 +49,6 @@ func TestCore(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	LoggingLevel = NONE
 	term.FixedTerminalWidth = 80
 })
 

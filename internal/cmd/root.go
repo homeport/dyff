@@ -34,9 +34,6 @@ var colormode string
 // truecolormode is used by the CLI flag processing routines to store the user preference for true color usage
 var truecolormode string
 
-// debugMode set to true will set-up the logging package to use the debug logger
-var debugMode bool
-
 // ExitCode is just a way to transport the exit code to the main package
 type ExitCode struct {
 	Value int
@@ -83,8 +80,6 @@ func Execute() error {
 }
 
 func init() {
-	cobra.OnInitialize(initSettings)
-
 	rootCmd.SilenceErrors = true
 	rootCmd.SilenceUsage = true
 	rootCmd.Flags().SortFlags = false
@@ -94,5 +89,4 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&truecolormode, "truecolor", "t", "auto", "specify true color usage: on, off, or auto")
 	rootCmd.PersistentFlags().IntVarP(&term.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
 	rootCmd.PersistentFlags().BoolVarP(&ytbx.PreserveKeyOrderInJSON, "preserve-key-order-in-json", "k", false, "use ordered keys during JSON decoding (non standard behavior)")
-	rootCmd.PersistentFlags().BoolVarP(&debugMode, "debug", "d", false, "enable debug mode")
 }
