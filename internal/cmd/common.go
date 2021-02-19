@@ -90,7 +90,7 @@ func (w *OutputWriter) WriteToStdout(filename string) error {
 }
 
 // WriteInplace writes the content of the documents stored in the provided input
-// file to the file itself overwriting the conent in place.
+// file to the file itself overwriting the content in place.
 func (w *OutputWriter) WriteInplace(filename string) error {
 	var buf bytes.Buffer
 	bufWriter := bufio.NewWriter(&buf)

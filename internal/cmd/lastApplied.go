@@ -36,7 +36,7 @@ var lastAppliedCmd = &cobra.Command{
 	Use:   "last-applied",
 	Short: "Compare differences between the current state and the one stored in Kubernetes last-applied configuration",
 	Long: `
-Kubernetes resource YAML (or JSON) contain the previsouly used configuration of
+Kubernetes resource YAML (or JSON) contain the previously used configuration of
 that resource in the metadata. For convenience, the respective metadata is used
 to compare it against the current configuration.
 `,

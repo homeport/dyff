@@ -364,7 +364,7 @@ AWSTemplateFormatVersion
 `))
 		})
 
-		It("should not try to evalute variables in the user-provided strings", func() {
+		It("should not try to evaluate variables in the user-provided strings", func() {
 			out, err := dyff("between", "--omit-header", assets("issues", "issue-132", "from.yml"), assets("issues", "issue-132", "to.yml"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(`
