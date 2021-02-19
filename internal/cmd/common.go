@@ -130,6 +130,7 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			fmt.Fprintf(writer, "%s\n", output)
 
 		case w.PlainMode && w.OutputStyle == "yaml":
+			fmt.Fprintln(writer, "---")
 			encoder := yamlv3.NewEncoder(writer)
 			encoder.SetIndent(2)
 			encoder.Encode(document)

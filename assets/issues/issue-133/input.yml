@@ -1,0 +1,13 @@
+---
+bar: foo
+foo: bar
+name: one
+
+---
+Foo: Bar
+name: two
+Bar: Foo
+
+---
+foobar: foobar
+name: three

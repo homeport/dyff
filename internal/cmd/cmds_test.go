@@ -74,6 +74,23 @@ list:
 
 `))
 				})
+
+				It("should write a YAML file with multiple documents to STDOUT using restructure feature", func() {
+					out, err := dyff("yaml", "--plain", "--restructure", assets("issues", "issue-133", "input.yml"))
+					Expect(err).ToNot(HaveOccurred())
+					Expect(out).To(BeEquivalentTo(`---
+name: one
+bar: foo
+foo: bar
+---
+name: two
+Foo: Bar
+Bar: Foo
+---
+name: three
+foobar: foobar
+`))
+				})
 			})
 
 			Context("to write the file in-place", func() {
@@ -91,7 +108,8 @@ list:
 
 					data, err := ioutil.ReadFile(filename)
 					Expect(err).To(BeNil())
-					Expect(string(data)).To(BeEquivalentTo(`list:
+					Expect(string(data)).To(BeEquivalentTo(`---
+list:
   - name: one
     aaa: bbb
 `))
