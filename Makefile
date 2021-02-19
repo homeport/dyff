@@ -20,34 +20,37 @@
 
 sources := $(wildcard cmd/dyff/*.go internal/cmd/*.go pkg/dyff/*.go)
 
-.PHONY: all clean fmt gobuild vet lint gocyclo misspell ginkgo test build build-all
+.PHONY: all
+all: clean test
 
-all: clean test build
-
+.PHONY: clean
 clean:
 	@rm -rf dist internal/cmd/cmd.coverprofile pkg/dyff/dyff.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
+.PHONY: fmt
 fmt: $(sources)
 	@GO111MODULE=on gofmt -s -w $(sources)
 	@GO111MODULE=on goimports -w $(sources)
 
-gobuild: $(sources)
-	@GO111MODULE=on go build ./...
-
-vet: gobuild
+.PHONY: vet
+vet:
 	@GO111MODULE=on go vet $(shell go list ./...)
 
-lint: gobuild
+.PHONY: lint
+lint:
 	@GO111MODULE=on golint -set_exit_status $(shell go list ./...)
 
-gocyclo: gobuild
+.PHONY: gocyclo
+gocyclo:
 	@GO111MODULE=on gocyclo -over 15 $(sources)
 
-misspell: gobuild
+.PHONY: misspell
+misspell:
 	@misspell -error README.md $(sources)
 
-ginkgo: gobuild
+.PHONY: ginkgo
+ginkgo:
 	@GO111MODULE=on ginkgo \
 		-r \
 		-randomizeAllSpecs \
@@ -59,4 +62,5 @@ ginkgo: gobuild
 		-compilers=2 \
 		-cover
 
+.PHONY: test
 test: vet lint gocyclo misspell ginkgo
