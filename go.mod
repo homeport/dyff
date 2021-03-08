@@ -6,7 +6,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gonvenience/bunt v1.3.1
 	github.com/gonvenience/neat v1.3.5
-	github.com/gonvenience/term v1.0.0
+	github.com/gonvenience/term v1.0.1
 	github.com/gonvenience/text v1.0.6
 	github.com/gonvenience/wrap v1.1.0
 	github.com/gonvenience/ytbx v1.3.0
