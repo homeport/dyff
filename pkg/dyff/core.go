@@ -289,8 +289,6 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 	removals := make([]*yamlv3.Node, 0)
 	additions := make([]*yamlv3.Node, 0)
 
-	result := make([]Diff, 0)
-
 	fromLength := len(from.Content)
 	toLength := len(to.Content)
 
@@ -307,41 +305,62 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 	fromLookup := createLookUpMap(from)
 	toLookup := createLookUpMap(to)
 
-	// Fill two lists with the names of the entries that are common to both
-	// provided lists
-	fromNames := make([]uint64, 0, fromLength)
-	toNames := make([]uint64, 0, fromLength)
+	// Fill two lists with the hashes of the entries of each list
+	fromCommon := make([]*yamlv3.Node, 0, fromLength)
+	toCommon := make([]*yamlv3.Node, 0, toLength)
 
 	for idxPos, fromValue := range from.Content {
 		hash := calcNodeHash(fromValue)
+		_, ok := toLookup[hash]
+		if ok {
+			fromCommon = append(fromCommon, fromValue)
+		}
 
-		if _, ok := toLookup[hash]; !ok {
+		switch {
+		case !ok:
 			// `from` entry does not exist in `to` list
 			removals = append(removals, from.Content[idxPos])
 
-		} else {
-			fromNames = append(fromNames, hash)
+		case len(fromLookup[hash]) > len(toLookup[hash]):
+			// `from` entry exists in `to` list, but there are duplicates and
+			// the number of duplicates is smaller
+			if !hasEntry(removals, from.Content[idxPos]) {
+				for i := 0; i < len(fromLookup[hash])-len(toLookup[hash]); i++ {
+					removals = append(removals, from.Content[idxPos])
+				}
+			}
 		}
 	}
 
 	for idxPos, toValue := range to.Content {
 		hash := calcNodeHash(toValue)
+		_, ok := fromLookup[hash]
+		if ok {
+			toCommon = append(toCommon, toValue)
+		}
 
-		if _, ok := fromLookup[hash]; !ok {
+		switch {
+		case !ok:
 			// `to` entry does not exist in `from` list
 			additions = append(additions, to.Content[idxPos])
 
-		} else {
-			toNames = append(toNames, hash)
+		case len(fromLookup[hash]) < len(toLookup[hash]):
+			// `to` entry exists in `from` list, but there are duplicates and
+			// the number of duplicates is increased
+			if !hasEntry(additions, to.Content[idxPos]) {
+				for i := 0; i < len(toLookup[hash])-len(fromLookup[hash]); i++ {
+					additions = append(additions, to.Content[idxPos])
+				}
+			}
 		}
 	}
 
 	var orderChanges []Detail
 	if !compare.settings.IgnoreOrderChanges {
-		orderChanges = findOrderChangesInSimpleList(from, to, fromNames, toNames, fromLookup, toLookup)
+		orderChanges = findOrderChangesInSimpleList(fromCommon, toCommon)
 	}
 
-	return packChangesAndAddToResult(result, path, orderChanges, additions, removals)
+	return packChangesAndAddToResult([]Diff{}, path, orderChanges, additions, removals)
 }
 
 func nameFromPath(node *yamlv3.Node, field ListItemIdentifierField) (string, error) {
@@ -436,37 +455,35 @@ func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3
 	return result, nil
 }
 
-func findOrderChangesInSimpleList(from, to *yamlv3.Node, fromNames, toNames []uint64, fromLookup, toLookup map[uint64]int) []Detail {
-	orderchanges := make([]Detail, 0)
-
-	cnv := func(list []uint64, lookup map[uint64]int, content *yamlv3.Node) *yamlv3.Node {
-		result := make([]*yamlv3.Node, 0, len(list))
-		for _, hash := range list {
-			result = append(result, content.Content[lookup[hash]])
-		}
-
-		return &yamlv3.Node{
-			Kind:    yamlv3.SequenceNode,
-			Content: result,
-		}
-	}
-
+func findOrderChangesInSimpleList(fromCommon, toCommon []*yamlv3.Node) []Detail {
 	// Try to find order changes ...
-	if len(fromNames) == len(toNames) {
-		for idx, hash := range fromNames {
-			if toNames[idx] != hash {
-				orderchanges = append(orderchanges,
-					Detail{
-						Kind: ORDERCHANGE,
-						From: cnv(fromNames, fromLookup, from),
-						To:   cnv(toNames, toLookup, to),
-					})
-				break
+	if len(fromCommon) == len(toCommon) {
+		for idx := range fromCommon {
+			if calcNodeHash(fromCommon[idx]) != calcNodeHash(toCommon[idx]) {
+				return []Detail{{
+					Kind: ORDERCHANGE,
+					From: &yamlv3.Node{Kind: yamlv3.SequenceNode, Content: fromCommon},
+					To:   &yamlv3.Node{Kind: yamlv3.SequenceNode, Content: toCommon},
+				}}
 			}
 		}
 	}
 
-	return orderchanges
+	return []Detail{}
+}
+
+// hasEntry returns whether the given node is in the provided list. Not exactly
+// a fast or efficient way to verify that a node is already in a list, but
+// given that this should rarely be used it is ok for now.
+func hasEntry(list []*yamlv3.Node, searchEntry *yamlv3.Node) bool {
+	var searchEntryHash = calcNodeHash(searchEntry)
+	for _, listEntry := range list {
+		if searchEntryHash == calcNodeHash(listEntry) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // AsSequenceNode translates a string list into a SequenceNode
@@ -724,10 +741,16 @@ func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStanda
 	return ""
 }
 
-func createLookUpMap(sequenceNode *yamlv3.Node) map[uint64]int {
-	result := make(map[uint64]int, len(sequenceNode.Content))
+func createLookUpMap(sequenceNode *yamlv3.Node) map[uint64][]int {
+	result := make(map[uint64][]int, len(sequenceNode.Content))
 	for idx, entry := range sequenceNode.Content {
-		result[calcNodeHash(entry)] = idx
+		hash := calcNodeHash(entry)
+
+		if _, ok := result[hash]; !ok {
+			result[hash] = []int{}
+		}
+
+		result[hash] = append(result[hash], idx)
 	}
 
 	return result

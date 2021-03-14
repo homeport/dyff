@@ -829,6 +829,35 @@ b: bar
 				Expect(results.Diffs[0].Details[0].From.Value).To(Equal("%{one}"))
 				Expect(results.Diffs[1].Details[0].To.Value).To(Equal("%{two}"))
 			})
+
+			It("should detect change in simple list in case a duplicate entry is introduced or removed", func() {
+				from, to, err := ytbx.LoadFiles("../../assets/issues/issue-143/from.json", "../../assets/issues/issue-143/to.json")
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(len(results.Diffs)).ToNot(BeZero())
+			})
+
+			It("should detect order changes in simple lists with duplicate entries", func() {
+				from := ytbx.InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc(`{ "keys": [ "value1", "value2", "value1", "value2" ] }`)}
+				to := ytbx.InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc(`{ "keys": [ "value1", "value1", "value2", "value2" ] }`)}
+
+				results, err := CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+
+				Expect(len(results.Diffs)).To(Equal(1))
+				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
+					"/keys",
+					ORDERCHANGE,
+					AsSequenceNode([]string{"value1", "value2", "value1", "value2"}),
+					AsSequenceNode([]string{"value1", "value1", "value2", "value2"}),
+				)))
+			})
 		})
 	})
 })
