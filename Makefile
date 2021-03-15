@@ -43,7 +43,7 @@ lint:
 
 .PHONY: gocyclo
 gocyclo:
-	@GO111MODULE=on gocyclo -over 15 $(sources)
+	@GO111MODULE=on gocyclo -over 20 $(sources)
 
 .PHONY: misspell
 misspell:
