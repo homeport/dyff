@@ -858,6 +858,23 @@ b: bar
 					AsSequenceNode([]string{"value1", "value1", "value2", "value2"}),
 				)))
 			})
+
+			It("should ignore order changes when comparing list entries that are lists itself", func() {
+				from, to, err := ytbx.LoadFiles("../../assets/issues/issue-125/from.json", "../../assets/issues/issue-125/to.json")
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := CompareInputFiles(from, to, IgnoreOrderChanges(false))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(len(results.Diffs)).ToNot(BeZero())
+
+				results, err = CompareInputFiles(from, to, IgnoreOrderChanges(true))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(len(results.Diffs)).To(BeZero())
+			})
 		})
 	})
 })

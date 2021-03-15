@@ -22,6 +22,7 @@ package dyff
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/gonvenience/bunt"
@@ -302,15 +303,15 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 		)
 	}
 
-	fromLookup := createLookUpMap(from)
-	toLookup := createLookUpMap(to)
+	fromLookup := compare.createLookUpMap(from)
+	toLookup := compare.createLookUpMap(to)
 
 	// Fill two lists with the hashes of the entries of each list
 	fromCommon := make([]*yamlv3.Node, 0, fromLength)
 	toCommon := make([]*yamlv3.Node, 0, toLength)
 
 	for idxPos, fromValue := range from.Content {
-		hash := calcNodeHash(fromValue)
+		hash := compare.calcNodeHash(fromValue)
 		_, ok := toLookup[hash]
 		if ok {
 			fromCommon = append(fromCommon, fromValue)
@@ -324,7 +325,7 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 		case len(fromLookup[hash]) > len(toLookup[hash]):
 			// `from` entry exists in `to` list, but there are duplicates and
 			// the number of duplicates is smaller
-			if !hasEntry(removals, from.Content[idxPos]) {
+			if !compare.hasEntry(removals, from.Content[idxPos]) {
 				for i := 0; i < len(fromLookup[hash])-len(toLookup[hash]); i++ {
 					removals = append(removals, from.Content[idxPos])
 				}
@@ -333,7 +334,7 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 	}
 
 	for idxPos, toValue := range to.Content {
-		hash := calcNodeHash(toValue)
+		hash := compare.calcNodeHash(toValue)
 		_, ok := fromLookup[hash]
 		if ok {
 			toCommon = append(toCommon, toValue)
@@ -347,7 +348,7 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 		case len(fromLookup[hash]) < len(toLookup[hash]):
 			// `to` entry exists in `from` list, but there are duplicates and
 			// the number of duplicates is increased
-			if !hasEntry(additions, to.Content[idxPos]) {
+			if !compare.hasEntry(additions, to.Content[idxPos]) {
 				for i := 0; i < len(toLookup[hash])-len(fromLookup[hash]); i++ {
 					additions = append(additions, to.Content[idxPos])
 				}
@@ -357,7 +358,7 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 
 	var orderChanges []Detail
 	if !compare.settings.IgnoreOrderChanges {
-		orderChanges = findOrderChangesInSimpleList(fromCommon, toCommon)
+		orderChanges = compare.findOrderChangesInSimpleList(fromCommon, toCommon)
 	}
 
 	return packChangesAndAddToResult([]Diff{}, path, orderChanges, additions, removals)
@@ -455,11 +456,11 @@ func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3
 	return result, nil
 }
 
-func findOrderChangesInSimpleList(fromCommon, toCommon []*yamlv3.Node) []Detail {
+func (compare *compare) findOrderChangesInSimpleList(fromCommon, toCommon []*yamlv3.Node) []Detail {
 	// Try to find order changes ...
 	if len(fromCommon) == len(toCommon) {
 		for idx := range fromCommon {
-			if calcNodeHash(fromCommon[idx]) != calcNodeHash(toCommon[idx]) {
+			if compare.calcNodeHash(fromCommon[idx]) != compare.calcNodeHash(toCommon[idx]) {
 				return []Detail{{
 					Kind: ORDERCHANGE,
 					From: &yamlv3.Node{Kind: yamlv3.SequenceNode, Content: fromCommon},
@@ -475,10 +476,10 @@ func findOrderChangesInSimpleList(fromCommon, toCommon []*yamlv3.Node) []Detail 
 // hasEntry returns whether the given node is in the provided list. Not exactly
 // a fast or efficient way to verify that a node is already in a list, but
 // given that this should rarely be used it is ok for now.
-func hasEntry(list []*yamlv3.Node, searchEntry *yamlv3.Node) bool {
-	var searchEntryHash = calcNodeHash(searchEntry)
+func (compare *compare) hasEntry(list []*yamlv3.Node, searchEntry *yamlv3.Node) bool {
+	var searchEntryHash = compare.calcNodeHash(searchEntry)
 	for _, listEntry := range list {
-		if searchEntryHash == calcNodeHash(listEntry) {
+		if searchEntryHash == compare.calcNodeHash(listEntry) {
 			return true
 		}
 	}
@@ -741,11 +742,10 @@ func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStanda
 	return ""
 }
 
-func createLookUpMap(sequenceNode *yamlv3.Node) map[uint64][]int {
+func (compare *compare) createLookUpMap(sequenceNode *yamlv3.Node) map[uint64][]int {
 	result := make(map[uint64][]int, len(sequenceNode.Content))
 	for idx, entry := range sequenceNode.Content {
-		hash := calcNodeHash(entry)
-
+		hash := compare.calcNodeHash(entry)
 		if _, ok := result[hash]; !ok {
 			result[hash] = []int{}
 		}
@@ -756,7 +756,7 @@ func createLookUpMap(sequenceNode *yamlv3.Node) map[uint64][]int {
 	return result
 }
 
-func basicType(node *yamlv3.Node) interface{} {
+func (compare *compare) basicType(node *yamlv3.Node) interface{} {
 	switch node.Kind {
 	case yamlv3.DocumentNode:
 		panic("document nodes are not supported to be translated into a basic type")
@@ -765,15 +765,20 @@ func basicType(node *yamlv3.Node) interface{} {
 		result := map[interface{}]interface{}{}
 		for i := 0; i < len(node.Content); i += 2 {
 			k, v := followAlias(node.Content[i]), followAlias(node.Content[i+1])
-			result[basicType(k)] = basicType(v)
+			result[compare.basicType(k)] = compare.basicType(v)
 		}
 
 		return result
 
 	case yamlv3.SequenceNode:
 		result := []interface{}{}
+
+		if compare.settings.IgnoreOrderChanges {
+			sortNode(node)
+		}
+
 		for _, entry := range node.Content {
-			result = append(result, basicType(followAlias(entry)))
+			result = append(result, compare.basicType(followAlias(entry)))
 		}
 
 		return result
@@ -782,37 +787,56 @@ func basicType(node *yamlv3.Node) interface{} {
 		return node.Value
 
 	case yamlv3.AliasNode:
-		return basicType(node.Alias)
+		return compare.basicType(node.Alias)
 
 	default:
 		panic("should be unreachable")
 	}
 }
 
-func calcNodeHash(node *yamlv3.Node) uint64 {
+func (compare *compare) calcNodeHash(node *yamlv3.Node) (hash uint64) {
+	var err error
+
 	switch node.Kind {
 	case yamlv3.MappingNode, yamlv3.SequenceNode:
-		hash, err := hashstructure.Hash(basicType(node), nil)
-		if err != nil {
-			panic(wrap.Errorf(err, "failed to calculate hash of %#v", node))
-		}
-
-		return hash
+		hash, err = hashstructure.Hash(compare.basicType(node), nil)
 
 	case yamlv3.ScalarNode:
-		hash, err := hashstructure.Hash(node.Value, nil)
-		if err != nil {
-			panic(wrap.Errorf(err, "failed to calculate hash of %#v", node.Value))
-		}
-
-		return hash
+		hash, err = hashstructure.Hash(node.Value, nil)
 
 	case yamlv3.AliasNode:
-		return calcNodeHash(followAlias(node))
+		hash = compare.calcNodeHash(followAlias(node))
 
 	default:
-		panic(fmt.Errorf("failed to calculate hash of node, kind %v is not supported", node.Kind))
+		err = fmt.Errorf("kind %v is not supported", node.Kind)
 	}
+
+	if err != nil {
+		panic(wrap.Errorf(err, "failed to calculate hash of %#v", node.Value))
+	}
+
+	return hash
+}
+
+func sortNode(node *yamlv3.Node) {
+	sort.Slice(node.Content, func(i, j int) bool {
+		a, b := node.Content[i], node.Content[j]
+
+		if a.Kind != b.Kind {
+			return a.Kind < b.Kind
+		}
+
+		if a.Tag != b.Tag {
+			return strings.Compare(a.Tag, b.Tag) < 0
+		}
+
+		switch a.Kind {
+		case yamlv3.ScalarNode:
+			return strings.Compare(a.Value, b.Value) < 0
+		}
+
+		return len(a.Content) < len(b.Content)
+	})
 }
 
 func min(a, b int) int {
