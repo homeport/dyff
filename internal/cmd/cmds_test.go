@@ -121,7 +121,7 @@ list:
 				It("should fail to write a YAML when in place and STDIN are used at the same time", func() {
 					_, err := dyff("yaml", "--in-place", "-")
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from STDIN"))
+					Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from stdin"))
 				})
 			})
 		})

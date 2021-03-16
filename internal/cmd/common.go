@@ -30,6 +30,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
@@ -79,11 +80,19 @@ type OutputWriter struct {
 	OutputStyle      string
 }
 
+func humanReadableFilename(filename string) string {
+	if ytbx.IsStdin(filename) {
+		return bunt.Sprint("_*stdin*_")
+	}
+
+	return bunt.Sprintf("_*%s*_", filename)
+}
+
 // WriteToStdout is a convenience function to write the content of the documents
 // stored in the provided input file to the standard output
 func (w *OutputWriter) WriteToStdout(filename string) error {
 	if err := w.write(os.Stdout, filename); err != nil {
-		return wrap.Errorf(err, "failed to write output _%s_", filename)
+		return wrap.Error(err, bunt.Sprint("failed to write output to _*stdout*_"))
 	}
 
 	return nil
@@ -98,13 +107,13 @@ func (w *OutputWriter) WriteInplace(filename string) error {
 	// Force plain mode to make sure there are no ANSI sequences
 	w.PlainMode = true
 	if err := w.write(bufWriter, filename); err != nil {
-		return wrap.Errorf(err, "failed to write output _%s_", filename)
+		return wrap.Errorf(err, "failed to write output to %s", humanReadableFilename(filename))
 	}
 
 	// Write the buffered output to the provided input file (override in place)
 	bufWriter.Flush()
 	if err := ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-		return wrap.Errorf(err, "failed to overwrite file _%s_ in place", filename)
+		return wrap.Errorf(err, "failed to overwrite %s in place", humanReadableFilename(filename))
 	}
 
 	return nil
@@ -113,7 +122,7 @@ func (w *OutputWriter) WriteInplace(filename string) error {
 func (w *OutputWriter) write(writer io.Writer, filename string) error {
 	inputFile, err := ytbx.LoadFile(filename)
 	if err != nil {
-		return wrap.Errorf(err, "failed to load input file _%s_", filename)
+		return wrap.Errorf(err, "failed to load input from %s", humanReadableFilename(filename))
 	}
 
 	for _, document := range inputFile.Documents {
