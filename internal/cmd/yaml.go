@@ -89,8 +89,8 @@ func init() {
 	yamlCmd.Flags().SortFlags = false
 	yamlCmd.PersistentFlags().SortFlags = false
 
-	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
-	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
-	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
-	yamlCmd.PersistentFlags().BoolVarP(&yamlCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
+	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
+	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
+	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
+	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
 }
