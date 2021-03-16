@@ -35,7 +35,11 @@ import (
 var _ = Describe("human readable report", func() {
 	Context("reporting differences", func() {
 		BeforeEach(func() {
-			ColorSetting = OFF
+			SetColorSettings(OFF, OFF)
+		})
+
+		AfterEach(func() {
+			SetColorSettings(AUTO, AUTO)
 		})
 
 		It("should show a nice string difference", func() {
@@ -130,13 +134,11 @@ input: |+
 
 	Context("nicely colored human readable differences", func() {
 		BeforeEach(func() {
-			ColorSetting = ON
-			TrueColorSetting = ON
+			SetColorSettings(ON, ON)
 		})
 
 		AfterEach(func() {
-			ColorSetting = AUTO
-			TrueColorSetting = AUTO
+			SetColorSettings(AUTO, AUTO)
 		})
 
 		It("should show nicely colored difference output", func() {
@@ -151,11 +153,11 @@ input: |+
 
 	Context("human path rendering", func() {
 		BeforeEach(func() {
-			ColorSetting = ON
+			SetColorSettings(ON, ON)
 		})
 
 		AfterEach(func() {
-			ColorSetting = OFF
+			SetColorSettings(AUTO, AUTO)
 		})
 
 		It("should render path with underscores correctly (https://github.com/homeport/dyff/issues/33)", func() {
@@ -181,13 +183,11 @@ variables.ROUTER_TLS_PEM.options
 
 	Context("reported output issues", func() {
 		BeforeEach(func() {
-			ColorSetting = OFF
-			TrueColorSetting = OFF
+			SetColorSettings(OFF, OFF)
 		})
 
 		AfterEach(func() {
-			ColorSetting = AUTO
-			TrueColorSetting = AUTO
+			SetColorSettings(AUTO, AUTO)
 		})
 
 		It("should use correct indentions for all kind of changes", func() {

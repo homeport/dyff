@@ -28,6 +28,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	. "github.com/gonvenience/bunt"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -86,6 +88,9 @@ func captureStdout(f func() error) (string, error) {
 }
 
 func dyff(args ...string) (out string, err error) {
+	SetColorSettings(OFF, OFF)
+	defer SetColorSettings(AUTO, AUTO)
+
 	return captureStdout(func() error {
 		ResetSettings()
 		os.Args = append([]string{"dyff"}, args...)

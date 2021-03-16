@@ -62,10 +62,8 @@ Miss Foobar`
 		})
 
 		It("should show a nice table output with colored text", func() {
-			ColorSetting = ON
-			defer func() {
-				ColorSetting = OFF
-			}()
+			SetColorSettings(ON, ON)
+			defer SetColorSettings(AUTO, AUTO)
 
 			stringA := fmt.Sprintf(`
 %s

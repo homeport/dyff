@@ -51,7 +51,7 @@ misspell:
 
 .PHONY: ginkgo
 ginkgo:
-	@GO111MODULE=on ginkgo \
+	@ginkgo \
 		-r \
 		-randomizeAllSpecs \
 		-randomizeSuites \
