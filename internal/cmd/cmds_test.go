@@ -25,23 +25,19 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/gonvenience/bunt"
-	"github.com/gonvenience/term"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/gonvenience/term"
 )
 
 var _ = Describe("command line tool flags", func() {
 	BeforeEach(func() {
-		bunt.ColorSetting = bunt.OFF
-		bunt.TrueColorSetting = bunt.OFF
 		term.FixedTerminalWidth = 250
 		term.FixedTerminalHeight = 40
 	})
 
 	AfterEach(func() {
-		bunt.ColorSetting = bunt.AUTO
-		bunt.TrueColorSetting = bunt.AUTO
 		term.FixedTerminalWidth = -1
 		term.FixedTerminalHeight = -1
 	})
@@ -55,6 +51,21 @@ var _ = Describe("command line tool flags", func() {
 	})
 
 	Context("yaml command", func() {
+		Context("creating yaml output", func() {
+			It("should not create YAML output that is not valid", func() {
+				filename := createTestFile(`{"foo":{"bar":"*"}}`)
+				defer os.Remove(filename)
+
+				out, err := dyff("yaml", filename)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(out).To(BeEquivalentTo(`---
+foo:
+  bar: "*"
+
+`))
+			})
+		})
+
 		Context("using restructure", func() {
 			Context("to write the file to STDOUT", func() {
 				It("should write a YAML file to STDOUT using restructure feature", func() {

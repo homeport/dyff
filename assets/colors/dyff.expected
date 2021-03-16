@@ -7,18 +7,18 @@
 [1minstance_groups[0m.[1;3mdiego-api[0m.[1mjobs[0m.[1;3mbbs[0m.[1mproperties[0m.[1mdiego[0m.[1mbbs[0m
   [38;2;199;196;63m- one map entry removed:[0m
     [1;38;2;178;34;34mlocket:[0m
-    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
+    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128m"locket.service.cf.internal:8891"[0m
 
 [1minstance_groups[0m.[1;3mscheduler[0m.[1mjobs[0m.[1;3mauctioneer[0m.[1mproperties[0m.[1mdiego[0m.[1mauctioneer[0m
   [38;2;199;196;63m- one map entry removed:[0m
     [1;38;2;178;34;34mlocket:[0m
-    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
+    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128m"locket.service.cf.internal:8891"[0m
 
 [1minstance_groups[0m.[1;3mdiego-cell[0m.[1mjobs[0m.[1;3mrep[0m.[1mproperties[0m.[1mdiego[0m.[1mrep[0m
   [38;2;199;196;63m- two map entries removed:[0m
     [1;38;2;178;34;34mrequire_tls:[0m [38;2;240;128;128mtrue[0m
     [1;38;2;178;34;34mlocket:[0m
-    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128mlocket.service.cf.internal:8891[0m
+    [38;2;51;0;0m│ [0m[1;38;2;178;34;34mapi_location:[0m [38;2;240;128;128m"locket.service.cf.internal:8891"[0m
 
 [1mreleases[0m.[1;3mcapi[0m.[1murl[0m
   [38;2;199;196;63m± value change[0m
