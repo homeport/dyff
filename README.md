@@ -40,6 +40,20 @@ GO111MODULE=on go get github.com/homeport/dyff/cmd/dyff
 
 ## Use cases and examples
 
+- Show differences between the live configuration of Kubernetes resources and what would be applied:
+
+  ```bash
+  # Setup
+  export KUBECTL_EXTERNAL_DIFF="dyff between --omit-header --set-exit-code"
+
+  # Usage
+  kubectl diff [...]
+  ```
+
+  ![dyff between example with kubectl diff](.docs/dyff-between-kubectl-diff.png?raw=true "dyff in kubectl diff example")
+
+  The `--set-exit-code` flag is required so that the `dyff` exit code matches `kubectl` expectations. An exit code `0` refers to no differences, `1` in case differences are detected. Other exit codes are treated as program issues.
+
 - Show the differences between two versions of [`cf-deployment`](https://github.com/cloudfoundry/cf-deployment/) YAMLs:
 
     ```bash

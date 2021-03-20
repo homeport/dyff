@@ -65,7 +65,7 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 	defer writer.Flush()
 
 	// Only show the document index if there is more than one document to show
-	showDocumentIdx := len(report.From.Documents) > 1
+	showPathRoot := len(report.From.Documents) > 1
 
 	// Show banner if enabled
 	if !report.OmitHeader {
@@ -101,7 +101,7 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 
 	// Loop over the diff and generate each report into the buffer
 	for _, diff := range report.Diffs {
-		if err := report.generateHumanDiffOutput(writer, diff, report.UseGoPatchPaths, showDocumentIdx); err != nil {
+		if err := report.generateHumanDiffOutput(writer, diff, report.UseGoPatchPaths, showPathRoot); err != nil {
 			return err
 		}
 	}
@@ -112,9 +112,9 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 }
 
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
-func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, useGoPatchPaths bool, showDocumentIdx bool) error {
+func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, useGoPatchPaths bool, showPathRoot bool) error {
 	output.WriteString("\n")
-	output.WriteString(pathToString(diff.Path, useGoPatchPaths, showDocumentIdx))
+	output.WriteString(pathToString(diff.Path, useGoPatchPaths, showPathRoot))
 	output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))

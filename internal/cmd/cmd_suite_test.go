@@ -29,6 +29,7 @@ import (
 	"testing"
 
 	. "github.com/gonvenience/bunt"
+	"github.com/gonvenience/text"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -42,7 +43,11 @@ func TestCmd(t *testing.T) {
 }
 
 func createTestFile(input string) string {
-	file, err := ioutil.TempFile("", "some-file-name")
+	return createTestFileInDir("", input)
+}
+
+func createTestFileInDir(dir string, input string) string {
+	file, err := ioutil.TempFile(dir, "some-file-name")
 	Expect(err).To(BeNil())
 
 	_, err = file.Write([]byte(input))
@@ -52,6 +57,15 @@ func createTestFile(input string) string {
 	Expect(err).To(BeNil())
 
 	return file.Name()
+}
+
+func createTestDirectory() string {
+	var path = filepath.Join(os.TempDir(), text.RandomString(8))
+
+	err := os.MkdirAll(path, os.FileMode(0755))
+	Expect(err).ToNot(HaveOccurred())
+
+	return path
 }
 
 func assets(pathElement ...string) string {

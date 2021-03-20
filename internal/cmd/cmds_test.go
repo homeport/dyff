@@ -28,6 +28,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	. "github.com/homeport/dyff/internal/cmd"
+
 	"github.com/gonvenience/term"
 )
 
@@ -46,7 +48,7 @@ var _ = Describe("command line tool flags", func() {
 		It("should print the version", func() {
 			out, err := dyff("version")
 			Expect(err).ToNot(HaveOccurred())
-			Expect(out).To(BeEquivalentTo("dyff version (development)\n"))
+			Expect(out).To(ContainSubstring("version (development)"))
 		})
 	})
 
@@ -343,7 +345,7 @@ whitespaces
 			to := createTestFile(`{"list":[{"aaa":"bbb","name":"two"}]}`)
 			defer os.Remove(to)
 
-			out, err := dyff("between", "--output=brief", "--set-exit-status", from, to)
+			out, err := dyff("between", "--output=brief", "--set-exit-code", from, to)
 			Expect(err).To(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(fmt.Sprintf("one change detected between %s and %s\n\n", from, to)))
 		})
@@ -417,6 +419,70 @@ example_two
     + %{two}
 
 `))
+		})
+
+		It("should be understandingly when the arguments are in an incorrect order when executed by kubectl diff", func() {
+			from := createTestDirectory()
+			defer os.RemoveAll(from)
+
+			to := createTestDirectory()
+			defer os.RemoveAll(to)
+
+			createTestFileInDir(from, `{"list":[{"name":"one", "version":"v1"}]}`)
+			createTestFileInDir(to, `{"list":[{"name":"two", "version":"v2"}]}`)
+
+			_, err := dyff(from, to, "between", "--omit-header")
+			Expect(err).To(HaveOccurred())
+
+			// Usually, the environment variable would be like `dyff between`,
+			// but the binary name during testing is `cmd.test` and therefore
+			// the variable needs to adjusted for the internal program logic to
+			// correctly accept this as the kubectl context it looks for.
+			var tmp = os.Getenv("KUBECTL_EXTERNAL_DIFF")
+			os.Setenv("KUBECTL_EXTERNAL_DIFF", "cmd.test between --omit-header")
+			defer os.Setenv("KUBECTL_EXTERNAL_DIFF", tmp)
+
+			_, err = dyff(from, to, "between", "--omit-header")
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("should create exit code zero if there are no changes", func() {
+			from := createTestFile(`{"foo": "bar"}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"foo": "bar"}`)
+			defer os.Remove(to)
+
+			_, err := dyff("between", "--set-exit-code", from, to)
+			Expect(err).To(HaveOccurred())
+
+			exitCode, ok := err.(ExitCode)
+			Expect(ok).To(BeTrue())
+			Expect(exitCode.Value).To(Equal(0))
+		})
+
+		It("should create exit code one if there are changes", func() {
+			from := createTestFile(`{"foo": "bar"}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"foo": "BAR"}`)
+			defer os.Remove(to)
+
+			_, err := dyff("between", "--set-exit-code", from, to)
+			Expect(err).To(HaveOccurred())
+
+			exitCode, ok := err.(ExitCode)
+			Expect(ok).To(BeTrue())
+			Expect(exitCode.Value).To(Equal(1))
+		})
+
+		It("should fail with an exit code other than zero or one in case of an error", func() {
+			_, err := dyff("between", "--set-exit-code", "from", "to")
+			Expect(err).To(HaveOccurred())
+
+			exitCode, ok := err.(ExitCode)
+			Expect(ok).To(BeTrue())
+			Expect(exitCode.Value).To(Equal(255))
 		})
 	})
 

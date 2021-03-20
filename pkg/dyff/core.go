@@ -46,6 +46,9 @@ type compare struct {
 	settings compareSettings
 }
 
+// ListItemIdentifierField names the field that identifies a list.
+type ListItemIdentifierField string
+
 // NonStandardIdentifierGuessCountThreshold specifies how many list entries are
 // needed for the guess-the-identifier function to actually consider the key
 // name. Or in short, if the lists only contain two entries each, there are more
@@ -97,7 +100,10 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 	result := make([]Diff, 0)
 	for idx := range from.Documents {
 		diffs, err := compare.objects(
-			ytbx.Path{DocumentIdx: idx},
+			ytbx.Path{
+				Root:        &from,
+				DocumentIdx: idx,
+			},
 			from.Documents[idx],
 			to.Documents[idx],
 		)
@@ -264,7 +270,7 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 		return []Diff{}, nil
 	}
 
-	if identifier, err := getIdentifierFromNamedLists(from, to); err == nil {
+	if identifier, err := compare.getIdentifierFromNamedLists(from, to); err == nil {
 		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
@@ -618,15 +624,21 @@ func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentif
 	return nil, false
 }
 
-// ListItemIdentifierField names the field that identifies a list.
-type ListItemIdentifierField string
+func (compare *compare) listItemIdentifierCandidates() []ListItemIdentifierField {
+	var candidates = []ListItemIdentifierField{"name", "key", "id"}
 
-func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
-	candidates := []ListItemIdentifierField{"name", "key", "id"}
+	// Add Kubernetes specific extra candidate
+	if compare.settings.KubernetesEntityDetection {
+		candidates = append(candidates, "manager")
+	}
 
+	return candidates
+}
+
+func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
 	isCandidate := func(node *yamlv3.Node) bool {
 		if node.Kind == yamlv3.ScalarNode {
-			for _, entry := range candidates {
+			for _, entry := range compare.listItemIdentifierCandidates() {
 				if node.Value == string(entry) {
 					return true
 				}
@@ -661,7 +673,7 @@ func getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (ListItemIdentifierF
 	counterB := createKeyCountMap(listB)
 
 	// Check for the usual suspects: name, key, and id
-	for _, identifier := range candidates {
+	for _, identifier := range compare.listItemIdentifierCandidates() {
 		if countA, okA := counterA[identifier]; okA && len(countA) == len(listA.Content) {
 			if countB, okB := counterB[identifier]; okB && len(countB) == len(listB.Content) {
 				return identifier, nil
@@ -916,7 +928,7 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, useGoPatchPaths bool, tr
 	return nil
 }
 
-func pathToString(path ytbx.Path, useGoPatchPaths bool, showDocumentIdx bool) string {
+func pathToString(path ytbx.Path, useGoPatchPaths bool, showPathRoot bool) string {
 	var result string
 
 	if useGoPatchPaths {
@@ -926,8 +938,8 @@ func pathToString(path ytbx.Path, useGoPatchPaths bool, showDocumentIdx bool) st
 		result = styledDotStylePath(path)
 	}
 
-	if showDocumentIdx {
-		result += bunt.Sprintf("  LightSteelBlue{(document #%d)}", path.DocumentIdx+1)
+	if showPathRoot {
+		result += bunt.Sprintf("  LightSteelBlue{(%s)}", path.RootDescription())
 	}
 
 	return result

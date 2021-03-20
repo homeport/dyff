@@ -23,7 +23,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
@@ -34,36 +33,32 @@ import (
 
 func main() {
 	if err := cmd.Execute(); err != nil {
-		var (
-			headline string
-			content  string
-			code     int
-		)
-
-		switch typed := err.(type) {
-		case wrap.ContextError:
-			headline = bunt.Sprintf("*Error:* _%s_", typed.Context())
-			content = typed.Cause().Error()
-			code = 1
-
+		switch err := err.(type) {
 		case cmd.ExitCode:
-			headline = "Error occurred"
-			content = fmt.Sprintf("failed with exit code %d", typed.Value)
-			code = typed.Value
+			if err.Cause != nil {
+				var headline, content string
+				switch typed := err.Cause.(type) {
+				case wrap.ContextError:
+					headline = bunt.Sprintf("*Error:* _%s_", typed.Context())
+					content = typed.Cause().Error()
 
-		case error:
-			headline = "Error occurred"
-			content = err.Error()
-			code = 1
+				case error:
+					headline = "Error occurred"
+					content = err.Error()
+				}
+
+				fmt.Fprint(
+					os.Stderr,
+					neat.ContentBox(
+						headline,
+						content,
+						neat.HeadlineColor(bunt.Coral),
+						neat.ContentColor(bunt.DimGray),
+					),
+				)
+			}
+
+			os.Exit(err.Value)
 		}
-
-		neat.Box(os.Stderr,
-			headline,
-			strings.NewReader(content),
-			neat.HeadlineColor(bunt.Coral),
-			neat.ContentColor(bunt.DimGray),
-		)
-
-		os.Exit(code)
 	}
 }
