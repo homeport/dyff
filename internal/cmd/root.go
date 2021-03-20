@@ -21,6 +21,10 @@
 package cmd
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/ytbx"
@@ -30,15 +34,29 @@ import (
 // ExitCode is just a way to transport the exit code to the main package
 type ExitCode struct {
 	Value int
+	Cause error
 }
 
 func (e ExitCode) Error() string {
+	if e.Cause != nil {
+		return e.Cause.Error()
+	}
+
 	return ""
 }
 
+var name = func() string {
+	ep, err := os.Executable()
+	if err != nil {
+		return "dyff"
+	}
+
+	return filepath.Base(ep)
+}()
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:           "dyff",
+	Use:           name,
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	Long: `
@@ -60,7 +78,45 @@ func ResetSettings() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
-	return rootCmd.Execute()
+	// In case `KUBECTL_EXTERNAL_DIFF` is set with `dyff`, it is very likely
+	// that `kubectl` intends to use `dyff` for its `diff` command. Therefore,
+	// enable Kubernetes specific entity detection and fix the order issue.
+	if strings.Contains(os.Getenv("KUBECTL_EXTERNAL_DIFF"), name) {
+		// Rearrange the arguments to match `dyff between --flags from to` to
+		// mitigate an issue in `kubectl`, which puts the `from` and `to` at
+		// the second and third position in the command arguments.
+		var paths, args []string
+		for _, entry := range os.Args {
+			if info, err := os.Stat(entry); err == nil && info.IsDir() {
+				paths = append(paths, entry)
+
+			} else {
+				args = append(args, entry)
+			}
+		}
+
+		os.Args = append(args, paths...)
+
+		// Enable Kubernetes specific entity detection implicitly
+		reportOptions.kubernetesEntityDetection = true
+	}
+
+	if err := rootCmd.Execute(); err != nil {
+		// Special case ExitCode, which means that we will exit immediately
+		// with the given exit code
+		switch err.(type) {
+		case ExitCode:
+			return err
+		}
+
+		// In any other case, create a default ExitCode with `error` value
+		return ExitCode{
+			Value: 255,
+			Cause: err,
+		}
+	}
+
+	return nil
 }
 
 func init() {

@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
 	"os"
 	"strings"
 
@@ -48,7 +47,7 @@ type reportConfig struct {
 	kubernetesEntityDetection bool
 	noTableStyle              bool
 	doNotInspectCerts         bool
-	exitWithCount             bool
+	exitWithCode              bool
 	omitHeader                bool
 	useGoPatchPaths           bool
 }
@@ -63,12 +62,16 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	// Main output preferences
 	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaultOutputStyle, "specify the output style, supported styles: human, or brief")
 	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", false, "omit the dyff summary header")
-	cmd.Flags().BoolVarP(&reportOptions.exitWithCount, "set-exit-status", "s", false, "set exit status to number of diff (capped at 255)")
+	cmd.Flags().BoolVarP(&reportOptions.exitWithCode, "set-exit-code", "s", false, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
 
 	// Human/BOSH output related flags
 	cmd.Flags().BoolVarP(&reportOptions.noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
 	cmd.Flags().BoolVarP(&reportOptions.doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
 	cmd.Flags().BoolVarP(&reportOptions.useGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
+
+	// Deprecated
+	cmd.Flags().BoolVar(&reportOptions.exitWithCode, "set-exit-status", false, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
+	cmd.Flags().MarkDeprecated("set-exit-status", "use --set-exit-code instead")
 }
 
 // OutputWriter encapsulates the required fields to define the look and feel of
@@ -194,9 +197,13 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	}
 
 	// If configured, make sure `dyff` exists with an exit status
-	if reportOptions.exitWithCount {
-		return ExitCode{
-			Value: int(math.Min(float64(len(report.Diffs)), 255.0)),
+	if reportOptions.exitWithCode {
+		switch len(report.Diffs) {
+		case 0:
+			return ExitCode{Value: 0}
+
+		default:
+			return ExitCode{Value: 1}
 		}
 	}
 

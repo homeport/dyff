@@ -40,7 +40,7 @@ var versionCmd = &cobra.Command{
 			version = "(development)"
 		}
 
-		fmt.Printf("dyff version %s\n", version)
+		fmt.Printf("%s version %s\n", name, version)
 	},
 }
 

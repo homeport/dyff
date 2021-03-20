@@ -89,6 +89,8 @@ github.com/gonvenience/ytbx v1.3.0 h1:ZNOPdSrSwv1QwLsN9cd6u9z2t/XA/at67w87/LrgmN
 github.com/gonvenience/ytbx v1.3.0/go.mod h1:K2ZFl0mTkniFjkDWqlpDtx2lYnt97+jPkQU3Ixf4N+Q=
 github.com/gonvenience/ytbx v1.3.1 h1:wsjYZTfxyJWXmge/udTfu8BVqM2h+mMasMn1GViC+u8=
 github.com/gonvenience/ytbx v1.3.1/go.mod h1:XPJnf1NO4LOT8CC0QTzUWiyWSvQbpm5Q2miERI1omhw=
+github.com/gonvenience/ytbx v1.4.0 h1:fckFBLCrdxb6hc1hmP3BENuzn2xVYjkA+TC2If95dPM=
+github.com/gonvenience/ytbx v1.4.0/go.mod h1:pkd4fv6u7Q4UcFOCgBBi854ZqeYuenUdTX9GIZPGU9w=
 github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
 github.com/google/btree v1.0.0/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
