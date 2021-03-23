@@ -20,6 +20,14 @@ jobs:
         with:
           go-version: 1.15
 
+      - name: Setup Snapcraft
+        run: |
+          sudo snap install snapcraft --classic
+          snapcraft login --with - <<<"${SNAP_TOKEN}"
+        env:
+          SNAP_TOKEN: ${{ secrets.SNAP_LOGIN }}
+          SNAPCRAFT_BUILD_ENVIRONMENT: host
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
