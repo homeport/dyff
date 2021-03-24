@@ -18,19 +18,35 @@ All orders of keys in hashes are preserved during processing and output to the t
 
 ## Installation
 
-On macOS, `dyff` is available via Homebrew:
+### Homebrew
+
+The `homeport/tap` has macOS and GNU/Linux pre-built binaries available:
 
 ```bash
 brew install homeport/tap/dyff
 ```
 
-Prebuilt binaries for a lot of operating systems and architectures can be [downloaded from the releases section](https://github.com/homeport/dyff/releases/latest).
+### Snap
 
-There is a convenience script to download the latest release for Linux or macOS if you want to keep it simple (you need `curl` and `jq` installed on your machine):
+It is [available in the `snapcraft` store](https://snapcraft.io/dyff) in the Productivity section.
 
 ```bash
-curl --silent --location https://tinyurl.com/y4qvdl4d | bash
+snap install dyff
 ```
+
+### Pre-built binaries in GitHub
+
+Prebuilt binaries can be [downloaded from the GitHub Releases section](https://github.com/homeport/dyff/releases/latest).
+
+### Curl To Shell Convenience Script
+
+There is a convenience script to download the latest release for Linux or macOS if you want to need it simple (you need `curl` and `jq` installed on your machine):
+
+```bash
+curl --silent --location https://git.io/JYfAY | bash
+```
+
+### Build from Source
 
 You can download and build `dyff` from source using `go get`:
 
