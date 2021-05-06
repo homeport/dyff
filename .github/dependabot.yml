@@ -1,3 +1,4 @@
+---
 version: 2
 updates:
 - package-ecosystem: gomod
@@ -6,15 +7,3 @@ updates:
     interval: weekly
   open-pull-requests-limit: 10
   target-branch: develop
-  ignore:
-  - dependency-name: github.com/onsi/ginkgo
-    versions:
-    - 1.15.0
-    - 1.15.1
-    - 1.16.0
-  - dependency-name: github.com/gonvenience/term
-    versions:
-    - 1.0.1
-  - dependency-name: github.com/onsi/gomega
-    versions:
-    - 1.10.5
