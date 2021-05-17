@@ -26,6 +26,16 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
+    - name: Install Tools
+      run: |
+        pushd "$(mktemp -d)"
+        go get github.com/gordonklaus/ineffassign
+        go get golang.org/x/lint/golint
+        go get github.com/client9/misspell/cmd/misspell
+        go get honnef.co/go/tools/cmd/staticcheck
+        go get github.com/onsi/ginkgo/ginkgo github.com/onsi/gomega/...
+        popd
+
     - name: Verify Go Modules Setup
       run: |
         go mod verify
@@ -40,27 +50,21 @@ jobs:
 
     - name: Sanity Check (ineffassign)
       run: |
-        go get github.com/gordonklaus/ineffassign
         ineffassign ./...
 
     - name: Sanity Check (golint)
       run: |
-        go get golang.org/x/lint/golint
         golint ./...
 
     - name: Sanity Check (misspell)
       run: |
-        go get github.com/client9/misspell/cmd/misspell
-        find . -type f | xargs misspell -source=text -error
 
     - name: Sanity Check (staticcheck)
       run: |
-        go get honnef.co/go/tools/cmd/staticcheck
         staticcheck ./...
 
     - name: Run Go Unit Tests
       run: |
-        go get github.com/onsi/ginkgo/ginkgo github.com/onsi/gomega/...
         ginkgo -r -randomizeAllSpecs -randomizeSuites -failOnPending -nodes=1 -compilers=1 -race -trace -cover
 
     - name: Upload Code Coverage Profile
