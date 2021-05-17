@@ -59,6 +59,27 @@ type Report struct {
 	Diffs []Diff
 }
 
+func (r Report) Filter(paths ...ytbx.Path) (result Report) {
+	if len(paths) == 0 {
+		return r
+	}
+
+	result = Report{
+		From: r.From,
+		To:   r.To,
+	}
+
+	for _, diff := range r.Diffs {
+		for _, path := range paths {
+			if diff.Path.String() == path.String() {
+				result.Diffs = append(result.Diffs, diff)
+			}
+		}
+	}
+
+	return result
+}
+
 // ReportWriter defines the interface required for types that can write reports
 type ReportWriter interface {
 	WriteReport(out io.Writer) error

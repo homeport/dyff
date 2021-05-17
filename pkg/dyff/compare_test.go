@@ -726,6 +726,23 @@ listY: [ Yo, Yo, Yo ]
 
 				Expect(orderChangeDiffs).To(BeEquivalentTo(0))
 			})
+
+			It("should filter my report based on set of paths", func() {
+				pathString := "/yaml/map/foobar"
+				p := path(pathString)
+
+				report := Report{Diffs: []Diff{
+					singleDiff(pathString, ADDITION, nil, "foobar"),
+					singleDiff("/yaml/map/barfoo", ADDITION, nil, "barfoo"),
+				}}
+
+				Expect(report.Filter()).To(BeEquivalentTo(report))
+				Expect(report.Filter(p)).To(BeEquivalentTo(Report{Diffs: []Diff{
+					singleDiff(pathString, ADDITION, nil, "foobar"),
+				}}))
+
+				Expect(report.Filter(path("/does/not/exist"))).To(BeEquivalentTo(Report{}))
+			})
 		})
 
 		Context("change root for comparison", func() {
