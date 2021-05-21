@@ -9,7 +9,7 @@ require (
 	github.com/gonvenience/term v1.0.1
 	github.com/gonvenience/text v1.0.6
 	github.com/gonvenience/wrap v1.1.0
-	github.com/gonvenience/ytbx v1.4.1
+	github.com/gonvenience/ytbx v1.4.2
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/onsi/ginkgo v1.16.2

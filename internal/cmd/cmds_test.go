@@ -486,9 +486,7 @@ example_two
 		})
 
 		It("should accept a list of paths and filter the report based on these", func() {
-			out, err := dyff("between", "--omit-header", "--filter", "/yaml/map/whitespaces,/yaml/map/type-change-1", assets("examples", "from.yml"), assets("examples", "to.yml"))
-			Expect(err).ToNot(HaveOccurred())
-			Expect(out).To(BeEquivalentTo(`
+			expected := `
 yaml.map.type-change-1
   ± type change from string to int
     - string
@@ -501,8 +499,19 @@ yaml.map.whitespaces
                                            ↵
 
 
-`,
-			))
+`
+
+			By("using GoPatch style path", func() {
+				out, err := dyff("between", "--omit-header", "--filter", "/yaml/map/whitespaces,/yaml/map/type-change-1", assets("examples", "from.yml"), assets("examples", "to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(out).To(BeEquivalentTo(expected))
+			})
+
+			By("using DotStyle paths", func() {
+				out, err := dyff("between", "--omit-header", "--filter", "yaml.map.whitespaces,yaml.map.type-change-1", assets("examples", "from.yml"), assets("examples", "to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(out).To(BeEquivalentTo(expected))
+			})
 		})
 	})
 
