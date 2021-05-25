@@ -18,10 +18,10 @@ jobs:
     name: Build and Tests
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Go 1.x
+    - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.15
+        go-version: 1.15
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
