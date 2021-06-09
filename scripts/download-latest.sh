@@ -56,7 +56,7 @@ else
 fi
 
 SYSTEM_UNAME="$(uname | tr '[:upper:]' '[:lower:]')"
-SYSTEM_ARCH="$(uname -m | sed 's/x86_64/amd64/')"
+SYSTEM_ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')"
 
 # Download and install
 DOWNLOAD_URI="$(curl --silent --location "https://api.github.com/repos/${ORG}/${REPO}/releases/tags/${SELECTED_TAG}" | jq --raw-output ".assets[] | select( (.name | contains(\"${SYSTEM_UNAME}\")) and (.name | contains(\"${SYSTEM_ARCH}\")) ) | .browser_download_url")"
