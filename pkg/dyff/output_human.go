@@ -277,17 +277,31 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 	output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
 	switch detail.From.Kind {
 	case yamlv3.SequenceNode:
-		asStringList := func(sequenceNode *yamlv3.Node) []string {
+		asStringList := func(sequenceNode *yamlv3.Node) ([]string, error) {
 			result := make([]string, len(sequenceNode.Content))
 			for i, entry := range sequenceNode.Content {
 				result[i] = entry.Value
+				if entry.Value == "" {
+					s, err := yamlString(entry)
+					if err != nil {
+						return result, err
+					}
+					result[i] = s
+				}
 			}
 
-			return result
+			return result, nil
 		}
 
-		from := asStringList(detail.From)
-		to := asStringList(detail.To)
+		from, err := asStringList(detail.From)
+		if err != nil {
+			return "", err
+		}
+		to, err := asStringList(detail.To)
+		if err != nil {
+			return "", err
+		}
+
 		const singleLineSeparator = ", "
 
 		threshold := term.GetTerminalWidth() / 2
