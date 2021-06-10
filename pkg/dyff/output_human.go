@@ -299,8 +299,8 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 
 		} else {
 			output.WriteString(CreateTableStyleString(" ", 2,
-				red(strings.Join(from, "\n")),
-				green(strings.Join(to, "\n"))))
+				red("%s", strings.Join(from, "\n")),
+				green("%s", strings.Join(to, "\n"))))
 		}
 	}
 
@@ -361,8 +361,8 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 
 	} else {
 		report.writeTextBlocks(&buf, 0,
-			red(createStringWithPrefix("  - ", from)),
-			green(createStringWithPrefix("  + ", to)),
+			red("%s", createStringWithPrefix("  - ", from)),
+			green("%s", createStringWithPrefix("  + ", to)),
 		)
 	}
 
