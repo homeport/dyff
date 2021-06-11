@@ -127,5 +127,5 @@ GO111MODULE=on go get github.com/homeport/dyff/cmd/dyff
     The `dyff` sub-command (`yaml`, or `json`) defines the output format, the tool automatically detects the input format itself.
 
     ```bash
-    dyff yaml https://raw.githubusercontent.com/homeport/dyff/develop/assets/bosh-yaml/manifest.json
+    dyff yaml https://raw.githubusercontent.com/homeport/dyff/main/assets/bosh-yaml/manifest.json
     ```
