@@ -274,7 +274,7 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (string, error) {
 	var output bytes.Buffer
 
-	output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
+	output.WriteString(yellow("%c order changed\n", ORDERCHANGE))
 	switch detail.From.Kind {
 	case yamlv3.SequenceNode:
 		asStringList := func(sequenceNode *yamlv3.Node) ([]string, error) {
