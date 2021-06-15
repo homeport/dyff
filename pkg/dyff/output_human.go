@@ -277,17 +277,31 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 	output.WriteString(yellow(fmt.Sprintf("%c order changed\n", ORDERCHANGE)))
 	switch detail.From.Kind {
 	case yamlv3.SequenceNode:
-		asStringList := func(sequenceNode *yamlv3.Node) []string {
+		asStringList := func(sequenceNode *yamlv3.Node) ([]string, error) {
 			result := make([]string, len(sequenceNode.Content))
 			for i, entry := range sequenceNode.Content {
 				result[i] = entry.Value
+				if entry.Value == "" {
+					s, err := yamlString(entry)
+					if err != nil {
+						return result, err
+					}
+					result[i] = s
+				}
 			}
 
-			return result
+			return result, nil
 		}
 
-		from := asStringList(detail.From)
-		to := asStringList(detail.To)
+		from, err := asStringList(detail.From)
+		if err != nil {
+			return "", err
+		}
+		to, err := asStringList(detail.To)
+		if err != nil {
+			return "", err
+		}
+
 		const singleLineSeparator = ", "
 
 		threshold := term.GetTerminalWidth() / 2
@@ -299,8 +313,8 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 
 		} else {
 			output.WriteString(CreateTableStyleString(" ", 2,
-				red(strings.Join(from, "\n")),
-				green(strings.Join(to, "\n"))))
+				red("%s", strings.Join(from, "\n")),
+				green("%s", strings.Join(to, "\n"))))
 		}
 	}
 
@@ -361,8 +375,8 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 
 	} else {
 		report.writeTextBlocks(&buf, 0,
-			red(createStringWithPrefix("  - ", from)),
-			green(createStringWithPrefix("  + ", to)),
+			red("%s", createStringWithPrefix("  - ", from)),
+			green("%s", createStringWithPrefix("  + ", to)),
 		)
 	}
 
