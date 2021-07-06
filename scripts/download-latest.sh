@@ -44,13 +44,15 @@ else
 fi
 
 # Find a suitable install location
-if [[ -w /usr/local/bin ]]; then
-  TARGET_DIR=/usr/local/bin
+for CANDIDATE in "$HOME/bin" "/usr/local/bin" "/usr/bin"; do
+  if [[ -w $CANDIDATE ]] && grep -q "$CANDIDATE" <<<"$PATH"; then
+    TARGET_DIR="$CANDIDATE"
+    break
+  fi
+done
 
-elif [[ -w "${HOME}/bin" ]] && grep -q -e "${HOME}/bin" -e '\~/bin' <<<"$PATH"; then
-  TARGET_DIR=${HOME}/bin
-
-else
+# Bail out in case no suitable location could be found
+if [[ -z ${TARGET_DIR:-} ]]; then
   echo -e "Unable to determine a writable install location. Make sure that you have write access to either \\033[1m/usr/local/bin\\033[0m or \\033[1m${HOME}/bin\\033[0m and that is in your PATH."
   exit 1
 fi
