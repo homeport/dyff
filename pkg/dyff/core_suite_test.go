@@ -33,7 +33,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/types"
+	"github.com/onsi/gomega/types"
 
 	. "github.com/homeport/dyff/pkg/dyff"
 
@@ -75,7 +75,7 @@ func assets(pathElement ...string) string {
 	return abs
 }
 
-func BeLike(expected interface{}) GomegaMatcher {
+func BeLike(expected interface{}) types.GomegaMatcher {
 	return &extendedStringMatcher{
 		expected: expected,
 	}
@@ -325,7 +325,7 @@ func compare(from *yamlv3.Node, to *yamlv3.Node, compareOptions ...CompareOption
 	return report.Diffs, nil
 }
 
-func BeSameDiffAs(expected Diff) GomegaMatcher {
+func BeSameDiffAs(expected Diff) types.GomegaMatcher {
 	return &diffMatcher{
 		expected: expected,
 	}
