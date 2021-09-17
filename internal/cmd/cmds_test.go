@@ -513,6 +513,33 @@ yaml.map.whitespaces
 				Expect(out).To(BeEquivalentTo(expected))
 			})
 		})
+
+		It("should properly print multi-line strings (https://github.com/homeport/dyff/issues/180)", func() {
+			out, err := dyff("between", "--omit-header", assets("issues", "issue-180", "old.yml"), assets("issues", "issue-180", "new.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+(root level)
++ four map entries added:
+  kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: atlantis-repo-config
+    namespace: default
+    labels:
+      app: atlantis
+      chart: atlantis-3.14.0
+      heritage: Tiller
+      release: default
+  data:
+    repos.yaml: |
+      repos:
+      - apply_requirements:
+        - approved
+        - mergeable
+        id: /.*/
+
+`))
+		})
 	})
 
 	Context("last-applied command", func() {
