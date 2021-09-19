@@ -86,7 +86,6 @@ func init() {
 	rootCmd.AddCommand(yamlCmd)
 
 	yamlCmd.Flags().SortFlags = false
-	yamlCmd.PersistentFlags().SortFlags = false
 
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")

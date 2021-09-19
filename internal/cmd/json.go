@@ -86,10 +86,9 @@ func init() {
 	rootCmd.AddCommand(jsonCmd)
 
 	jsonCmd.Flags().SortFlags = false
-	jsonCmd.PersistentFlags().SortFlags = false
 
-	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
-	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
-	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
-	jsonCmd.PersistentFlags().BoolVarP(&jsonCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
+	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
+	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
+	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
+	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
 }

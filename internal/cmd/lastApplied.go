@@ -72,7 +72,6 @@ func init() {
 	rootCmd.AddCommand(lastAppliedCmd)
 
 	lastAppliedCmd.Flags().SortFlags = false
-	lastAppliedCmd.PersistentFlags().SortFlags = false
 
 	applyReportOptionsFlags(lastAppliedCmd)
 }

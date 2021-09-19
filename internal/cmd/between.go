@@ -113,14 +113,13 @@ func init() {
 	rootCmd.AddCommand(betweenCmd)
 
 	betweenCmd.Flags().SortFlags = false
-	betweenCmd.PersistentFlags().SortFlags = false
 
 	applyReportOptionsFlags(betweenCmd)
 
 	// Input documents modification flags
-	betweenCmd.PersistentFlags().BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
-	betweenCmd.PersistentFlags().StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
-	betweenCmd.PersistentFlags().StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
-	betweenCmd.PersistentFlags().StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
-	betweenCmd.PersistentFlags().BoolVar(&betweenCmdSettings.translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
+	betweenCmd.Flags().BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
+	betweenCmd.Flags().StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
+	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
+	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
+	betweenCmd.Flags().BoolVar(&betweenCmdSettings.translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
 }
