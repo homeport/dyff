@@ -73,7 +73,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 
 	// Deprecated
 	cmd.Flags().BoolVar(&reportOptions.exitWithCode, "set-exit-status", false, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
-	cmd.Flags().MarkDeprecated("set-exit-status", "use --set-exit-code instead")
+	_ = cmd.Flags().MarkDeprecated("set-exit-status", "use --set-exit-code instead")
 }
 
 // OutputWriter encapsulates the required fields to define the look and feel of
@@ -147,8 +147,14 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			fmt.Fprintln(writer, "---")
 			encoder := yamlv3.NewEncoder(writer)
 			encoder.SetIndent(2)
-			encoder.Encode(document)
-			encoder.Close()
+
+			if err := encoder.Encode(document); err != nil {
+				return err
+			}
+
+			if err := encoder.Close(); err != nil {
+				return err
+			}
 
 		case w.OutputStyle == "json":
 			output, err := neat.NewOutputProcessor(!w.OmitIndentHelper, true, &neat.DefaultColorSchema).ToJSON(document)

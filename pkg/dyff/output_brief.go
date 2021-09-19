@@ -59,13 +59,13 @@ func (report *BriefReport) WriteReport(out io.Writer) error {
 		template = twoline
 	}
 
-	writer.WriteString(fmt.Sprintf(template,
+	_, _ = writer.WriteString(fmt.Sprintf(template,
 		noOfChanges,
 		niceFrom,
 		niceTo,
 	))
 
 	// Finish with one last newline so that we do not end next to the prompt
-	writer.WriteString("\n")
+	_, _ = writer.WriteString("\n")
 	return nil
 }

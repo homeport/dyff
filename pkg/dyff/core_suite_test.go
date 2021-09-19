@@ -133,8 +133,8 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 
 	buffer := &bytes.Buffer{}
 	writer := bufio.NewWriter(buffer)
-	reportWriter.WriteReport(writer)
-	writer.Flush()
+	Expect(reportWriter.WriteReport(writer)).To(BeNil())
+	Expect(writer.Flush()).To(BeNil())
 
 	expected := fmt.Sprintf("%#v", string(rawBytes))
 	actual := fmt.Sprintf("%#v", buffer.String())

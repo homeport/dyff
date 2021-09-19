@@ -80,7 +80,7 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 			ytbx.HumanReadableLocationInformation(report.To),
 			bunt.Style(text.Plural(len(report.Diffs), "difference"), bunt.Bold()))
 
-		writer.WriteString(bunt.Style(
+		_, _ = writer.WriteString(bunt.Style(
 			header,
 			bunt.ForegroundFunc(func(x int, _ int, _ rune) *colorful.Color {
 				switch {
@@ -107,15 +107,15 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 	}
 
 	// Finish with one last newline so that we do not end next to the prompt
-	writer.WriteString("\n")
+	_, _ = writer.WriteString("\n")
 	return nil
 }
 
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
 func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, useGoPatchPaths bool, showPathRoot bool) error {
-	output.WriteString("\n")
-	output.WriteString(pathToString(diff.Path, useGoPatchPaths, showPathRoot))
-	output.WriteString("\n")
+	_, _ = output.WriteString("\n")
+	_, _ = output.WriteString(pathToString(diff.Path, useGoPatchPaths, showPathRoot))
+	_, _ = output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
 	for i, detail := range diff.Details {
@@ -162,13 +162,13 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 
 	switch detail.To.Kind {
 	case yamlv3.SequenceNode:
-		output.WriteString(yellow("%c %s added:\n",
+		_, _ = output.WriteString(yellow("%c %s added:\n",
 			ADDITION,
 			text.Plural(len(detail.To.Content), "list entry", "list entries"),
 		))
 
 	case yamlv3.MappingNode:
-		output.WriteString(yellow("%c %s added:\n",
+		_, _ = output.WriteString(yellow("%c %s added:\n",
 			ADDITION,
 			text.Plural(len(detail.To.Content)/2, "map entry", "map entries"),
 		))
@@ -191,11 +191,11 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 	switch detail.From.Kind {
 	case yamlv3.SequenceNode:
 		text := text.Plural(len(detail.From.Content), "list entry", "list entries")
-		output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
+		_, _ = output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
 
 	case yamlv3.MappingNode:
 		text := text.Plural(len(detail.From.Content)/2, "map entry", "map entries")
-		output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
+		_, _ = output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
 	}
 
 	ytbx.RestructureObject(detail.From)
@@ -234,7 +234,7 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 			return "", err
 		}
 
-		output.WriteString(yellow("%c content change\n", MODIFICATION))
+		_, _ = output.WriteString(yellow("%c content change\n", MODIFICATION))
 		report.writeTextBlocks(&output, 0,
 			red("%s", createStringWithPrefix("  - ", hex.Dump(from))),
 			green("%s", createStringWithPrefix("  + ", hex.Dump(to))),
@@ -242,14 +242,14 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 
 	default:
 		if fromType != toType {
-			output.WriteString(yellow("%c type change from %s to %s\n",
+			_, _ = output.WriteString(yellow("%c type change from %s to %s\n",
 				MODIFICATION,
 				italic(fromType),
 				italic(toType),
 			))
 
 		} else {
-			output.WriteString(yellow("%c value change\n",
+			_, _ = output.WriteString(yellow("%c value change\n",
 				MODIFICATION,
 			))
 		}
@@ -264,8 +264,8 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 			return "", err
 		}
 
-		output.WriteString(red("%s", createStringWithPrefix("  - ", strings.TrimRight(from, "\n"))))
-		output.WriteString(green("%s", createStringWithPrefix("  + ", strings.TrimRight(to, "\n"))))
+		_, _ = output.WriteString(red("%s", createStringWithPrefix("  - ", strings.TrimRight(from, "\n"))))
+		_, _ = output.WriteString(green("%s", createStringWithPrefix("  + ", strings.TrimRight(to, "\n"))))
 	}
 
 	return output.String(), nil
@@ -274,7 +274,7 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (string, error) {
 	var output bytes.Buffer
 
-	output.WriteString(yellow("%c order changed\n", ORDERCHANGE))
+	_, _ = output.WriteString(yellow("%c order changed\n", ORDERCHANGE))
 	switch detail.From.Kind {
 	case yamlv3.SequenceNode:
 		asStringList := func(sequenceNode *yamlv3.Node) ([]string, error) {
@@ -308,11 +308,11 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
 		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
 		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
-			output.WriteString(red("  - %s\n", strings.Join(from, singleLineSeparator)))
-			output.WriteString(green("  + %s\n", strings.Join(to, singleLineSeparator)))
+			_, _ = output.WriteString(red("  - %s\n", strings.Join(from, singleLineSeparator)))
+			_, _ = output.WriteString(green("  + %s\n", strings.Join(to, singleLineSeparator)))
 
 		} else {
-			output.WriteString(CreateTableStyleString(" ", 2,
+			_, _ = output.WriteString(CreateTableStyleString(" ", 2,
 				red("%s", strings.Join(from, "\n")),
 				green("%s", strings.Join(to, "\n"))))
 		}
@@ -323,31 +323,31 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 
 func (report *HumanReport) writeStringDiff(output stringWriter, from string, to string) {
 	if fromCertText, toCertText, err := report.LoadX509Certs(from, to); err == nil {
-		output.WriteString(yellow("%c certificate change\n", MODIFICATION))
-		output.WriteString(report.highlightByLine(fromCertText, toCertText))
+		_, _ = output.WriteString(yellow("%c certificate change\n", MODIFICATION))
+		_, _ = output.WriteString(report.highlightByLine(fromCertText, toCertText))
 
 	} else if isWhitespaceOnlyChange(from, to) {
-		output.WriteString(yellow("%c whitespace only change\n", MODIFICATION))
+		_, _ = output.WriteString(yellow("%c whitespace only change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
 			red("%s", createStringWithPrefix("  - ", showWhitespaceCharacters(from))),
 			green("%s", createStringWithPrefix("  + ", showWhitespaceCharacters(to))),
 		)
 	} else if isMultiLine(from, to) {
-		output.WriteString(yellow("%c value change\n", MODIFICATION))
+		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
 			red("%s", createStringWithPrefix("  - ", from)),
 			green("%s", createStringWithPrefix("  + ", to)),
 		)
 	} else if isMinorChange(from, to, report.MinorChangeThreshold) {
-		output.WriteString(yellow("%c value change\n", MODIFICATION))
+		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
 		diffs := diffmatchpatch.New().DiffMain(from, to, false)
-		output.WriteString(highlightRemovals(diffs))
-		output.WriteString(highlightAdditions(diffs))
+		_, _ = output.WriteString(highlightRemovals(diffs))
+		_, _ = output.WriteString(highlightAdditions(diffs))
 
 	} else {
-		output.WriteString(yellow("%c value change\n", MODIFICATION))
-		output.WriteString(red("%s", createStringWithPrefix("  - ", from)))
-		output.WriteString(green("%s", createStringWithPrefix("  + ", to)))
+		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
+		_, _ = output.WriteString(red("%s", createStringWithPrefix("  - ", from)))
+		_, _ = output.WriteString(green("%s", createStringWithPrefix("  + ", to)))
 	}
 }
 
@@ -618,14 +618,14 @@ func (report *HumanReport) writeTextBlocks(buf stringWriter, indent int, blocks 
 		for _, block := range blocks {
 			lines := strings.Split(block, "\n")
 			for _, line := range lines {
-				buf.WriteString(strings.Repeat(" ", indent))
-				buf.WriteString(line)
-				buf.WriteString("\n")
+				_, _ = buf.WriteString(strings.Repeat(" ", indent))
+				_, _ = buf.WriteString(line)
+				_, _ = buf.WriteString("\n")
 			}
 		}
 
 	} else {
-		buf.WriteString(CreateTableStyleString(separator, indent, blocks...))
+		_, _ = buf.WriteString(CreateTableStyleString(separator, indent, blocks...))
 	}
 }
 
