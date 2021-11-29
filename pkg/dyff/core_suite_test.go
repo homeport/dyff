@@ -196,7 +196,7 @@ func file(input string) ytbx.InputFile {
 	return inputfile
 }
 
-func path(path string) ytbx.Path {
+func path(path string) *ytbx.Path {
 	re := regexp.MustCompile(`^(#(\d+))?(/.+)$`)
 
 	captures := re.FindStringSubmatch(path)
@@ -216,7 +216,7 @@ func path(path string) ytbx.Path {
 		result.DocumentIdx = num
 	}
 
-	return result
+	return &result
 }
 
 func humanDiff(diff Diff) string {

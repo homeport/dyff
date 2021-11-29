@@ -125,7 +125,7 @@ func (compare *compare) objects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.No
 
 	case (from == nil && to != nil) || (from != nil && to == nil):
 		return []Diff{{
-			path,
+			&path,
 			[]Detail{{
 				Kind: MODIFICATION,
 				From: from,
@@ -135,7 +135,7 @@ func (compare *compare) objects(path ytbx.Path, from *yamlv3.Node, to *yamlv3.No
 
 	case (from.Kind != to.Kind) || (from.Tag != to.Tag):
 		return []Diff{{
-			path,
+			&path,
 			[]Detail{{
 				Kind: MODIFICATION,
 				From: from,
@@ -172,7 +172,7 @@ func (compare *compare) nonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, t
 		default:
 			if from.Value != to.Value {
 				diffs, err = []Diff{{
-					path,
+					&path,
 					[]Detail{{
 						Kind: MODIFICATION,
 						From: from,
@@ -227,7 +227,7 @@ func (compare *compare) mappingNodes(path ytbx.Path, from *yamlv3.Node, to *yaml
 		}
 	}
 
-	diff := Diff{Path: path, Details: []Detail{}}
+	diff := Diff{Path: &path, Details: []Detail{}}
 
 	if len(removals) > 0 {
 		diff.Details = append(diff.Details,
@@ -450,7 +450,7 @@ func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3
 	result := make([]Diff, 0)
 	if strings.Compare(from.Value, to.Value) != 0 {
 		result = append(result, Diff{
-			path,
+			&path,
 			[]Detail{{
 				Kind: MODIFICATION,
 				From: from,
@@ -535,7 +535,7 @@ func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
 
 func packChangesAndAddToResult(list []Diff, path ytbx.Path, orderchanges []Detail, additions, removals []*yamlv3.Node) ([]Diff, error) {
 	// Prepare a diff for this path to added to the result set (if there are changes)
-	diff := Diff{Path: path, Details: []Detail{}}
+	diff := Diff{Path: &path, Details: []Detail{}}
 
 	if len(orderchanges) > 0 {
 		diff.Details = append(diff.Details, orderchanges...)
@@ -920,7 +920,7 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, useGoPatchPaths bool, tr
 
 	// Parse path string and create nicely formatted output path
 	if resolvedPath, err := ytbx.ParsePathString(path, originalRoot); err == nil {
-		path = pathToString(resolvedPath, useGoPatchPaths, multipleDocuments)
+		path = pathToString(&resolvedPath, useGoPatchPaths, multipleDocuments)
 	}
 
 	inputFile.Note = fmt.Sprintf("YAML root was changed to %s", path)
@@ -928,7 +928,7 @@ func ChangeRoot(inputFile *ytbx.InputFile, path string, useGoPatchPaths bool, tr
 	return nil
 }
 
-func pathToString(path ytbx.Path, useGoPatchPaths bool, showPathRoot bool) string {
+func pathToString(path *ytbx.Path, useGoPatchPaths bool, showPathRoot bool) string {
 	var result string
 
 	if useGoPatchPaths {
@@ -938,7 +938,7 @@ func pathToString(path ytbx.Path, useGoPatchPaths bool, showPathRoot bool) strin
 		result = styledDotStylePath(path)
 	}
 
-	if showPathRoot {
+	if path != nil && showPathRoot {
 		result += bunt.Sprintf("  LightSteelBlue{(%s)}", path.RootDescription())
 	}
 
