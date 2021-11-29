@@ -327,7 +327,6 @@ list:
 
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
-				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(0))
 			})
 		})
@@ -613,7 +612,6 @@ listY: [ Yo, Yo, Yo ]
 				)
 
 				Expect(err).To(BeNil())
-				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(0))
 			})
 
