@@ -58,7 +58,7 @@ var reportOptions reportConfig
 func applyReportOptionsFlags(cmd *cobra.Command) {
 	// Compare options
 	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
-	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", false, "detect kubernetes entities")
+	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", true, "detect kubernetes entities")
 	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", nil, "filter reports to a subset of differences based on supplied arguments")
 
 	// Main output preferences

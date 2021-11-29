@@ -88,7 +88,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		settings: compareSettings{
 			NonStandardIdentifierGuessCountThreshold: 3,
 			IgnoreOrderChanges:                       false,
-			KubernetesEntityDetection:                false,
+			KubernetesEntityDetection:                true,
 		},
 	}
 
