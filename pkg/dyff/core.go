@@ -687,7 +687,6 @@ func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (
 // getIdentifierFromKubernetesEntityList returns 'metadata.name' as a field identifier if the provided objects all have the key.
 func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
 	key := ListItemIdentifierField("metadata.name")
-
 	allHaveMetadataName := func(sequenceNode *yamlv3.Node) bool {
 		numWithMetadata := 0
 		for _, entry := range sequenceNode.Content {
@@ -701,12 +700,14 @@ func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemI
 		}
 		return numWithMetadata == len(sequenceNode.Content)
 	}
+
 	listAHasKey := allHaveMetadataName(listA)
 	listBHasKey := allHaveMetadataName(listB)
 	if listAHasKey && listBHasKey {
 		return key, nil
 	}
-	return "", fmt.Errorf("not all entities appear to have metadata.name fields")
+
+	return "", fmt.Errorf("not all entities appear to have %q fields", key)
 }
 
 func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) ListItemIdentifierField {
