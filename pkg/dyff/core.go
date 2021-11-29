@@ -79,10 +79,6 @@ func KubernetesEntityDetection(value bool) CompareOption {
 // objects. In this case the representation of an input file, which might
 // contain multiple documents. It returns a report with the list of differences.
 func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ...CompareOption) (Report, error) {
-	if len(from.Documents) != len(to.Documents) {
-		return Report{}, fmt.Errorf("comparing YAMLs with a different number of documents is currently not supported")
-	}
-
 	// initialize the comparator with the tool defaults
 	compare := compare{
 		settings: compareSettings{
@@ -97,7 +93,11 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		compareOption(&compare.settings)
 	}
 
-	result := make([]Diff, 0)
+	if len(from.Documents) != len(to.Documents) {
+		return Report{}, fmt.Errorf("comparing YAMLs with a different number of documents is currently not supported")
+	}
+
+	var result []Diff
 	for idx := range from.Documents {
 		diffs, err := compare.objects(
 			ytbx.Path{
