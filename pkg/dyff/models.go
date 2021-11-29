@@ -47,7 +47,7 @@ type Detail struct {
 
 // Diff encapsulates everything noteworthy about a difference
 type Diff struct {
-	Path    ytbx.Path
+	Path    *ytbx.Path
 	Details []Detail
 }
 

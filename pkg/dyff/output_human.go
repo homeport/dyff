@@ -130,7 +130,7 @@ func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Dif
 	// For the use case in which only a path-less diff is suppose to be printed,
 	// omit the indent in this case since there is only one element to show
 	indent := 2
-	if len(diff.Path.PathElements) == 0 {
+	if diff.Path != nil && len(diff.Path.PathElements) == 0 {
 		indent = 0
 	}
 
@@ -676,7 +676,11 @@ func CreateTableStyleString(separator string, indent int, columns ...string) str
 	return buf.String()
 }
 
-func styledGoPatchPath(path ytbx.Path) string {
+func styledGoPatchPath(path *ytbx.Path) string {
+	if path == nil {
+		return bunt.Sprintf("*(file level)*")
+	}
+
 	if path.PathElements == nil {
 		return bunt.Sprint("*/*")
 	}
@@ -699,7 +703,11 @@ func styledGoPatchPath(path ytbx.Path) string {
 	return strings.Join(sections, "/")
 }
 
-func styledDotStylePath(path ytbx.Path) string {
+func styledDotStylePath(path *ytbx.Path) string {
+	if path == nil {
+		return bunt.Sprintf("*(file level)*")
+	}
+
 	if path.PathElements == nil {
 		return bunt.Sprint("*(root level)*")
 	}

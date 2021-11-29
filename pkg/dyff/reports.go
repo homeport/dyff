@@ -3,7 +3,7 @@ package dyff
 import "github.com/gonvenience/ytbx"
 
 // Filter accepts YAML paths as input and returns a new report with differences for those paths only
-func (r Report) Filter(paths ...ytbx.Path) (result Report) {
+func (r Report) Filter(paths ...*ytbx.Path) (result Report) {
 	if len(paths) == 0 {
 		return r
 	}
