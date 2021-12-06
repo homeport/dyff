@@ -93,6 +93,33 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		compareOption(&compare.settings)
 	}
 
+	// in case Kubernetes mode is enabled, try to compare documents in the YAML
+	// file by their names rather than just by the order of the documents
+	if compare.settings.KubernetesEntityDetection {
+		for _, entry := range from.Documents {
+			name, err := fqrn(entry.Content[0])
+			if err == nil {
+				from.Names = append(from.Names, name)
+			}
+		}
+
+		for _, entry := range to.Documents {
+			name, err := fqrn(entry.Content[0])
+			if err == nil {
+				to.Names = append(to.Names, name)
+			}
+		}
+
+		// when the look-up of a name for each document in each file worked out, it
+		// means that the documents are most likely Kubernetes resources, so a comparison
+		// using the names can be done, otherwise, leave and continue with default behavior
+		if len(from.Names) == len(from.Documents) && len(to.Names) == len(to.Documents) {
+			if result, err := compare.documentNodes(from, to); err == nil {
+				return Report{from, to, result}, nil
+			}
+		}
+	}
+
 	if len(from.Documents) != len(to.Documents) {
 		return Report{}, fmt.Errorf("comparing YAMLs with a different number of documents is currently not supported")
 	}
@@ -190,6 +217,124 @@ func (compare *compare) nonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, t
 	}
 
 	return diffs, err
+}
+
+func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
+	var result []Diff
+
+	type doc struct {
+		node *yamlv3.Node
+		idx  int
+	}
+
+	var createDocumentLookUpMap = func(inputFile ytbx.InputFile) (map[string]doc, []string, error) {
+		var lookUpMap = make(map[string]doc)
+		var names []string
+
+		for i, document := range inputFile.Documents {
+			node := document.Content[0]
+
+			name, err := fqrn(node)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			names = append(names, name)
+			lookUpMap[name] = doc{idx: i, node: node}
+		}
+
+		return lookUpMap, names, nil
+	}
+
+	fromLookUpMap, fromNames, err := createDocumentLookUpMap(from)
+	if err != nil {
+		return nil, err
+	}
+
+	toLookUpMap, toNames, err := createDocumentLookUpMap(to)
+	if err != nil {
+		return nil, err
+	}
+
+	removals := []*yamlv3.Node{}
+	additions := []*yamlv3.Node{}
+
+	for _, name := range fromNames {
+		var fromItem = fromLookUpMap[name]
+		if toItem, ok := toLookUpMap[name]; ok {
+			// `from` and `to` contain the same `key` -> require comparison
+			diffs, err := compare.objects(
+				ytbx.Path{Root: &from, DocumentIdx: fromItem.idx},
+				followAlias(fromItem.node),
+				followAlias(toItem.node),
+			)
+
+			if err != nil {
+				return nil, err
+			}
+
+			result = append(result, diffs...)
+
+		} else {
+			// `from` contain the `key`, but `to` does not -> removal
+			removals = append(removals, fromItem.node)
+		}
+	}
+
+	for _, name := range toNames {
+		var toItem = toLookUpMap[name]
+		if _, ok := fromLookUpMap[name]; !ok {
+			// `to` contains a `key` that `from` does not have -> addition
+			additions = append(additions, toItem.node)
+		}
+	}
+
+	diff := Diff{Details: []Detail{}}
+
+	if len(removals) > 0 {
+		diff.Details = append(diff.Details,
+			Detail{
+				Kind: REMOVAL,
+				From: &yamlv3.Node{
+					Kind:    yamlv3.DocumentNode,
+					Content: removals,
+				},
+				To: nil,
+			},
+		)
+	}
+
+	if len(additions) > 0 {
+		diff.Details = append(diff.Details,
+			Detail{
+				Kind: ADDITION,
+				From: nil,
+				To: &yamlv3.Node{
+					Kind:    yamlv3.DocumentNode,
+					Content: additions,
+				},
+			},
+		)
+	}
+
+	if !compare.settings.IgnoreOrderChanges && len(fromNames) == len(toNames) {
+		for i := range fromNames {
+			if fromNames[i] != toNames[i] {
+				diff.Details = append(diff.Details, Detail{
+					Kind: ORDERCHANGE,
+					From: AsSequenceNode(fromNames),
+					To:   AsSequenceNode(toNames),
+				})
+				break
+			}
+		}
+	}
+
+	if len(diff.Details) > 0 {
+		result = append([]Diff{diff}, result...)
+	}
+
+	return result, nil
 }
 
 func (compare *compare) mappingNodes(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
@@ -708,6 +853,30 @@ func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemI
 	}
 
 	return "", fmt.Errorf("not all entities appear to have %q fields", key)
+}
+
+// fqrn returns something like a fully qualified Kubernetes resource name, which contains its kind, namepace and name
+func fqrn(node *yamlv3.Node) (string, error) {
+	if node.Kind != yamlv3.MappingNode {
+		return "", fmt.Errorf("name look-up for Kubernetes resources does only work with mapping nodes")
+	}
+
+	kind, err := nameFromPath(node, "kind")
+	if err != nil {
+		return "", err
+	}
+
+	namespace, err := nameFromPath(node, "metadata.namespace")
+	if err != nil {
+		namespace = "default"
+	}
+
+	name, err := nameFromPath(node, "metadata.name")
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s/%s/%s", kind, namespace, name), nil
 }
 
 func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) ListItemIdentifierField {

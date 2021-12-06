@@ -189,6 +189,12 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 	var output bytes.Buffer
 
 	switch detail.From.Kind {
+	case yamlv3.DocumentNode:
+		_, _ = fmt.Fprint(&output, yellow("%c %s removed:\n",
+			REMOVAL,
+			text.Plural(len(detail.From.Content), "document"),
+		))
+
 	case yamlv3.SequenceNode:
 		text := text.Plural(len(detail.From.Content), "list entry", "list entries")
 		_, _ = output.WriteString(yellow("%c %s removed:\n", REMOVAL, text))
