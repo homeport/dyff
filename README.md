@@ -26,6 +26,14 @@ The `homeport/tap` has macOS and GNU/Linux pre-built binaries available:
 brew install homeport/tap/dyff
 ```
 
+### MacPorts
+
+On macOS, `dyff` is also [available via MacPorts](https://ports.macports.org/port/dyff/):
+
+```bash
+sudo port install dyff
+```
+
 ### Snap
 
 It is [available in the `snapcraft` store](https://snapcraft.io/dyff) in the Productivity section.
