@@ -39,7 +39,7 @@ sudo port install dyff
 It is [available in the `snapcraft` store](https://snapcraft.io/dyff) in the Productivity section.
 
 ```bash
-snap install dyff
+snap install --classic dyff
 ```
 
 ### Pre-built binaries in GitHub

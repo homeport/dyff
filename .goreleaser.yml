@@ -63,13 +63,9 @@ snapcrafts:
   summary: "YAML diff tool"
   description: "δyƒƒ /ˈdʏf/ - A diff tool for YAML files, and sometimes JSON"
   grade: stable
-  confinement: strict
+  confinement: classic
   license: MIT
   base: bare
   apps:
     dyff:
-      plugs: ["home", "network", "system-files"]
-  plugs:
-    system-files:
-      read:
-      - /tmp
+      plugs: ["home", "network"]
