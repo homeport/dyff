@@ -10,8 +10,6 @@ builds:
     - arm64
     main: ./cmd/dyff/main.go
     flags:
-    - -tags
-    - netgo
     - -trimpath
     ldflags:
     - -s -w -extldflags "-static" -X github.com/homeport/dyff/internal/cmd.version={{.Version}}
