@@ -80,7 +80,7 @@ func KubernetesEntityDetection(value bool) CompareOption {
 // contain multiple documents. It returns a report with the list of differences.
 func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ...CompareOption) (Report, error) {
 	// initialize the comparator with the tool defaults
-	compare := compare{
+	cmpr := compare{
 		settings: compareSettings{
 			NonStandardIdentifierGuessCountThreshold: 3,
 			IgnoreOrderChanges:                       false,
@@ -90,12 +90,12 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 
 	// apply the optional compare options provided to this function call
 	for _, compareOption := range compareOptions {
-		compareOption(&compare.settings)
+		compareOption(&cmpr.settings)
 	}
 
 	// in case Kubernetes mode is enabled, try to compare documents in the YAML
 	// file by their names rather than just by the order of the documents
-	if compare.settings.KubernetesEntityDetection {
+	if cmpr.settings.KubernetesEntityDetection {
 		for _, entry := range from.Documents {
 			name, err := fqrn(entry.Content[0])
 			if err == nil {
@@ -114,7 +114,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		// means that the documents are most likely Kubernetes resources, so a comparison
 		// using the names can be done, otherwise, leave and continue with default behavior
 		if len(from.Names) == len(from.Documents) && len(to.Names) == len(to.Documents) {
-			if result, err := compare.documentNodes(from, to); err == nil {
+			if result, err := cmpr.documentNodes(from, to); err == nil {
 				return Report{from, to, result}, nil
 			}
 		}
@@ -126,7 +126,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 
 	var result []Diff
 	for idx := range from.Documents {
-		diffs, err := compare.objects(
+		diffs, err := cmpr.objects(
 			ytbx.Path{
 				Root:        &from,
 				DocumentIdx: idx,
