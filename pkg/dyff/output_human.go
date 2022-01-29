@@ -50,13 +50,12 @@ type stringWriter interface {
 
 // HumanReport is a reporter with human readable output in mind
 type HumanReport struct {
+	Report
+	MinorChangeThreshold float64
 	NoTableStyle         bool
 	DoNotInspectCerts    bool
 	OmitHeader           bool
 	UseGoPatchPaths      bool
-	MinorChangeThreshold float64
-
-	Report
 }
 
 // WriteReport writes a human readable report to the provided writer

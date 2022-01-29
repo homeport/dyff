@@ -96,8 +96,8 @@ func captureStdout(f func() error) (string, error) {
 	w.Close()
 
 	var buf bytes.Buffer
-	if _, err := io.Copy(&buf, r); err != nil {
-		return "", err
+	if _, copyErr := io.Copy(&buf, r); copyErr != nil {
+		return "", copyErr
 	}
 
 	return buf.String(), err
