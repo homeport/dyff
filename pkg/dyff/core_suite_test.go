@@ -29,6 +29,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -178,7 +179,9 @@ func singleDoc(input string) *yamlv3.Node {
 	return docs[0].Content[0]
 }
 
-func multiDoc(input string) []*yamlv3.Node {
+func multiDoc(x ...string) []*yamlv3.Node {
+	var input = strings.Join(x, "\n---\n")
+
 	documents, err := ytbx.LoadYAMLDocuments([]byte(input))
 	if err != nil {
 		Fail(err.Error())
