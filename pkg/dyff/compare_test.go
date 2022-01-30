@@ -653,6 +653,14 @@ listY: [ Yo, Yo, Yo ]
 				}
 			})
 
+			It("should fail to compare files with different number of documents", func() {
+				from := ytbx.InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc("foo: bar", "dead: beef")}
+				to := ytbx.InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc("bar: foo")}
+
+				_, err := CompareInputFiles(from, to)
+				Expect(err).To(HaveOccurred())
+			})
+
 			It("should return differences in named lists even if no standard identifier is used", func() {
 				results, err := CompareInputFiles(
 					file("../../assets/prometheus/from.yml"),
@@ -904,6 +912,54 @@ b: bar
 				Expect(results).ToNot(BeNil())
 
 				Expect(len(results.Diffs)).To(BeEquivalentTo(1))
+			})
+
+			It("should report that a document was added", func() {
+				from := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/from",
+					Documents: multiDoc(
+						`{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "x"}}`,
+					),
+				}
+
+				to := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/to",
+					Documents: multiDoc(
+						`{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "x"}}`,
+						`{"apiVersion": "v1", "kind": "Service", "metadata": {"name": "y"}}`,
+					),
+				}
+
+				result, err := CompareInputFiles(from, to)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(len(result.Diffs)).To(Equal(1))
+				Expect(len(result.Diffs[0].Details)).To(Equal(1))
+				Expect(result.Diffs[0].Details[0].Kind).To(Equal(ADDITION))
+			})
+
+			It("should report that a document was removed", func() {
+				from := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/from",
+					Documents: multiDoc(
+						`{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "x"}}`,
+						`{"apiVersion": "v1", "kind": "Service", "metadata": {"name": "y"}}`,
+					),
+				}
+
+				to := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/to",
+					Documents: multiDoc(
+						`{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "x"}}`,
+					),
+				}
+
+				result, err := CompareInputFiles(from, to)
+				Expect(err).NotTo(HaveOccurred())
+
+				Expect(len(result.Diffs)).To(Equal(1))
+				Expect(len(result.Diffs[0].Details)).To(Equal(1))
+				Expect(result.Diffs[0].Details[0].Kind).To(Equal(REMOVAL))
 			})
 		})
 	})
