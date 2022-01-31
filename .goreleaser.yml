@@ -66,8 +66,4 @@ snapcrafts:
   base: bare
   apps:
     dyff:
-      plugs: ["home", "network", "system-files"]
-  plugs:
-    system-files:
-      read:
-      - /tmp
+      plugs: ["home", "network"]
