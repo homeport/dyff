@@ -21,6 +21,7 @@
 package dyff
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 	"strings"
@@ -30,6 +31,7 @@ import (
 	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
 	"github.com/mitchellh/hashstructure"
+	"github.com/sergi/go-diff/diffmatchpatch"
 	yamlv3 "gopkg.in/yaml.v3"
 )
 
@@ -191,7 +193,49 @@ func (compare *compare) nonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, t
 	case yamlv3.ScalarNode:
 		switch from.Tag {
 		case "!!str":
-			diffs, err = compare.nodeValues(path, from, to)
+			if strings.Count(from.Value, "\n") > 1 {
+				dmp := diffmatchpatch.New()
+				diff := dmp.DiffMain(from.Value, to.Value, true)
+				if len(diffs) > 2 {
+					diff = dmp.DiffCleanupSemantic(diff)
+					diff = dmp.DiffCleanupEfficiency(diff)
+				}
+
+				var fromBuf, toBuf bytes.Buffer
+				for _, diff := range diff {
+					text := diff.Text
+					switch diff.Type {
+					case diffmatchpatch.DiffInsert:
+						_, _ = toBuf.WriteString("\x1b[107m")
+						toBuf.WriteString(text)
+						_, _ = toBuf.WriteString("\x1b[0m")
+					case diffmatchpatch.DiffDelete:
+						_, _ = fromBuf.WriteString("\x1b[107m")
+						fromBuf.WriteString(text)
+						_, _ = fromBuf.WriteString("\x1b[0m")
+					case diffmatchpatch.DiffEqual:
+						fromBuf.WriteString(text)
+						toBuf.WriteString(text)
+					}
+				}
+
+				from.Value = fromBuf.String()
+				to.Value = toBuf.String()
+
+				if strings.Compare(from.Value, to.Value) != 0 {
+					diffs, err = []Diff{{
+						&path,
+						[]Detail{{
+							Kind: MODIFICATION,
+							From: from,
+							To:   to,
+						}},
+					}}, nil
+
+				}
+			} else {
+				diffs, err = compare.nodeValues(path, from, to)
+			}
 
 		case "!!null":
 			// Ignore different ways to define a null value
@@ -855,7 +899,7 @@ func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemI
 	return "", fmt.Errorf("not all entities appear to have %q fields", key)
 }
 
-// fqrn returns something like a fully qualified Kubernetes resource name, which contains its kind, namepace and name
+// fqrn returns something like a fully qualified Kubernetes resource name, which contains its kind, namespace and name
 func fqrn(node *yamlv3.Node) (string, error) {
 	if node.Kind != yamlv3.MappingNode {
 		return "", fmt.Errorf("name look-up for Kubernetes resources does only work with mapping nodes")

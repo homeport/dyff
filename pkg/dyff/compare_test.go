@@ -962,5 +962,19 @@ b: bar
 				Expect(result.Diffs[0].Details[0].Kind).To(Equal(REMOVAL))
 			})
 		})
+
+		Context("Given two kubernetes files with configmaps", func() {
+			It("should detect configmaps", func() {
+				from, to, err := ytbx.LoadFiles("../../assets/kubernetes-configmaps/from.yml", "../../assets/kubernetes-configmaps/to.yml")
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(len(results.Diffs)).To(BeEquivalentTo(1))
+			})
+		})
 	})
 })
