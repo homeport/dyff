@@ -1,30 +1,93 @@
 package dyff
 
-import "github.com/gonvenience/ytbx"
+import "regexp"
 
-// Filter accepts YAML paths as input and returns a new report with differences for those paths only
-func (r Report) Filter(paths ...*ytbx.Path) (result Report) {
-	if len(paths) == 0 {
-		return r
-	}
-
+func (r Report) filter(f func(string) bool) (result Report) {
 	result = Report{
 		From: r.From,
 		To:   r.To,
 	}
 
-	pathsMap := make(map[string]struct{})
-
-	for _, path := range paths {
-		pathsMap[path.String()] = struct{}{}
-	}
-
 	for _, diff := range r.Diffs {
 		diffPathString := diff.Path.String()
-		if _, ok := pathsMap[diffPathString]; ok {
+		if f(diffPathString) {
 			result.Diffs = append(result.Diffs, diff)
 		}
 	}
 
 	return result
+}
+
+// Filter accepts YAML paths as input and returns a new report with differences for those paths only
+func (r Report) Filter(paths ...string) (result Report) {
+	if len(paths) == 0 {
+		return r
+	}
+
+	return r.filter(func(s string) bool {
+		for _, path := range paths {
+			if path == s {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+// Exclude accepts YAML paths as input and returns a new report with differences without those paths
+func (r Report) Exclude(paths ...string) (result Report) {
+	if len(paths) == 0 {
+		return r
+	}
+
+	return r.filter(func(s string) bool {
+		for _, path := range paths {
+			if path == s {
+				return false
+			}
+		}
+		return true
+	})
+}
+
+// FilterRegexp accepts regular expressions as input and returns a new report with differences for matching those patterns
+func (r Report) FilterRegexp(pattern ...string) (result Report) {
+	if len(pattern) == 0 {
+		return r
+	}
+
+	regexps := make([]*regexp.Regexp, len(pattern))
+	for i := range pattern {
+		regexps[i] = regexp.MustCompile(pattern[i])
+	}
+
+	return r.filter(func(s string) bool {
+		for _, regexp := range regexps {
+			if regexp.MatchString(s) {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+// ExcludeRegexp accepts regular expressions as input and returns a new report with differences for not matching those patterns
+func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
+	if len(pattern) == 0 {
+		return r
+	}
+
+	regexps := make([]*regexp.Regexp, len(pattern))
+	for i := range pattern {
+		regexps[i] = regexp.MustCompile(pattern[i])
+	}
+
+	return r.filter(func(s string) bool {
+		for _, regexp := range regexps {
+			if regexp.MatchString(s) {
+				return false
+			}
+		}
+		return true
+	})
 }
