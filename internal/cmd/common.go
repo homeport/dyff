@@ -51,6 +51,7 @@ type reportConfig struct {
 	omitHeader                bool
 	useGoPatchPaths           bool
 	filters                   []string
+	excludes                  []string
 }
 
 var reportOptions reportConfig
@@ -60,6 +61,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
 	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", true, "detect kubernetes entities")
 	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", nil, "filter reports to a subset of differences based on supplied arguments")
+	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", nil, "exclude reports to a subset of differences based on supplied arguments")
 
 	// Main output preferences
 	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaultOutputStyle, "specify the output style, supported styles: human, or brief")
