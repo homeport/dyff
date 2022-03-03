@@ -24,14 +24,9 @@ func (r Report) Filter(paths ...string) (result Report) {
 		return r
 	}
 
-	regexps := make([]*regexp.Regexp, len(paths))
-	for i := range paths {
-		regexps[i] = regexp.MustCompile(paths[i])
-	}
-
 	return r.filter(func(s string) bool {
-		for _, regexp := range regexps {
-			if regexp.MatchString(s) {
+		for _, path := range paths {
+			if path == s {
 				return true
 			}
 		}
@@ -45,9 +40,46 @@ func (r Report) Exclude(paths ...string) (result Report) {
 		return r
 	}
 
-	regexps := make([]*regexp.Regexp, len(paths))
-	for i := range paths {
-		regexps[i] = regexp.MustCompile(paths[i])
+	return r.filter(func(s string) bool {
+		for _, path := range paths {
+			if path == s {
+				return false
+			}
+		}
+		return true
+	})
+}
+
+// FilterRegexp accepts YAML paths as input and returns a new report with differences without those paths
+func (r Report) FilterRegexp(pattern ...string) (result Report) {
+	if len(pattern) == 0 {
+		return r
+	}
+
+	regexps := make([]*regexp.Regexp, len(pattern))
+	for i := range pattern {
+		regexps[i] = regexp.MustCompile(pattern[i])
+	}
+
+	return r.filter(func(s string) bool {
+		for _, regexp := range regexps {
+			if regexp.MatchString(s) {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+// ExcludeRegexp accepts YAML paths as input and returns a new report with differences without those paths
+func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
+	if len(pattern) == 0 {
+		return r
+	}
+
+	regexps := make([]*regexp.Regexp, len(pattern))
+	for i := range pattern {
+		regexps[i] = regexp.MustCompile(pattern[i])
 	}
 
 	return r.filter(func(s string) bool {

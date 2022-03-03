@@ -95,8 +95,16 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			report = report.Filter(reportOptions.filters...)
 		}
 
+		if reportOptions.filterRegexps != nil {
+			report = report.FilterRegexp(reportOptions.filterRegexps...)
+		}
+
 		if reportOptions.excludes != nil {
 			report = report.Exclude(reportOptions.excludes...)
+		}
+
+		if reportOptions.excludeRegexps != nil {
+			report = report.ExcludeRegexp(reportOptions.excludeRegexps...)
 		}
 
 		return writeReport(cmd, report)

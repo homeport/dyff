@@ -757,12 +757,12 @@ listY: [ Yo, Yo, Yo ]
 					singleDiff("/yaml/map/barfoo", ADDITION, nil, "barfoo"),
 				}}
 
-				Expect(report.Filter()).To(BeEquivalentTo(report))
-				Expect(report.Filter("foobar")).To(BeEquivalentTo(Report{Diffs: []Diff{
+				Expect(report.FilterRegexp()).To(BeEquivalentTo(report))
+				Expect(report.FilterRegexp("foobar")).To(BeEquivalentTo(Report{Diffs: []Diff{
 					singleDiff(pathString, ADDITION, nil, "foobar"),
 				}}))
 
-				Expect(report.Filter("/does/not/exist")).To(BeEquivalentTo(Report{}))
+				Expect(report.FilterRegexp("/does/not/exist")).To(BeEquivalentTo(Report{}))
 			})
 
 			It("should exclude my report based on regular expressions", func() {
@@ -773,12 +773,12 @@ listY: [ Yo, Yo, Yo ]
 					singleDiff("/yaml/map/barfoo", ADDITION, nil, "barfoo"),
 				}}
 
-				Expect(report.Exclude()).To(BeEquivalentTo(report))
-				Expect(report.Exclude("barfoo")).To(BeEquivalentTo(Report{Diffs: []Diff{
+				Expect(report.ExcludeRegexp()).To(BeEquivalentTo(report))
+				Expect(report.ExcludeRegexp("barfoo")).To(BeEquivalentTo(Report{Diffs: []Diff{
 					singleDiff(pathString, ADDITION, nil, "foobar"),
 				}}))
 
-				Expect(report.Exclude("/does/not/exist")).To(BeEquivalentTo(report))
+				Expect(report.ExcludeRegexp("/does/not/exist")).To(BeEquivalentTo(report))
 			})
 		})
 
