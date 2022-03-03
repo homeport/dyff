@@ -2,15 +2,26 @@ package dyff
 
 import "regexp"
 
+func (r Report) filter(f func(string) bool) (result Report) {
+	result = Report{
+		From: r.From,
+		To:   r.To,
+	}
+
+	for _, diff := range r.Diffs {
+		diffPathString := diff.Path.String()
+		if f(diffPathString) {
+			result.Diffs = append(result.Diffs, diff)
+		}
+	}
+
+	return result
+}
+
 // Filter accepts YAML paths as input and returns a new report with differences for those paths only
 func (r Report) Filter(paths ...string) (result Report) {
 	if len(paths) == 0 {
 		return r
-	}
-
-	result = Report{
-		From: r.From,
-		To:   r.To,
 	}
 
 	regexps := make([]*regexp.Regexp, len(paths))
@@ -18,17 +29,14 @@ func (r Report) Filter(paths ...string) (result Report) {
 		regexps[i] = regexp.MustCompile(paths[i])
 	}
 
-	for _, diff := range r.Diffs {
-		diffPathString := diff.Path.String()
+	return r.filter(func(s string) bool {
 		for _, regexp := range regexps {
-			if regexp.MatchString(diffPathString) {
-				result.Diffs = append(result.Diffs, diff)
-				break
+			if regexp.MatchString(s) {
+				return true
 			}
 		}
-	}
-
-	return result
+		return false
+	})
 }
 
 // Exclude accepts YAML paths as input and returns a new report with differences without those paths
@@ -37,30 +45,17 @@ func (r Report) Exclude(paths ...string) (result Report) {
 		return r
 	}
 
-	result = Report{
-		From: r.From,
-		To:   r.To,
-	}
-
 	regexps := make([]*regexp.Regexp, len(paths))
 	for i := range paths {
 		regexps[i] = regexp.MustCompile(paths[i])
 	}
 
-	for _, diff := range r.Diffs {
-		diffPathString := diff.Path.String()
-		var any bool
+	return r.filter(func(s string) bool {
 		for _, regexp := range regexps {
-			if regexp.MatchString(diffPathString) {
-				any = true
-				break
+			if regexp.MatchString(s) {
+				return false
 			}
 		}
-
-		if !any {
-			result.Diffs = append(result.Diffs, diff)
-		}
-	}
-
-	return result
+		return true
+	})
 }
