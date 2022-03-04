@@ -50,7 +50,7 @@ func (r Report) Exclude(paths ...string) (result Report) {
 	})
 }
 
-// FilterRegexp accepts YAML paths as input and returns a new report with differences without those paths
+// FilterRegexp accepts regular expressions as input and returns a new report with differences for matching those patterns
 func (r Report) FilterRegexp(pattern ...string) (result Report) {
 	if len(pattern) == 0 {
 		return r
@@ -71,7 +71,7 @@ func (r Report) FilterRegexp(pattern ...string) (result Report) {
 	})
 }
 
-// ExcludeRegexp accepts YAML paths as input and returns a new report with differences without those paths
+// ExcludeRegexp accepts regular expressions as input and returns a new report with differences for not matching those patterns
 func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
 	if len(pattern) == 0 {
 		return r
