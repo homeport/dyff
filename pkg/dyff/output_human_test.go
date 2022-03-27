@@ -181,6 +181,25 @@ variables.ROUTER_TLS_PEM.options
 		})
 	})
 
+	Context("human friendly multiline text differences", func() {
+		BeforeEach(func() {
+			SetColorSettings(ON, ON)
+		})
+
+		AfterEach(func() {
+			SetColorSettings(AUTO, AUTO)
+		})
+
+		It("should use human friendly compact diff of multiline text differences", func() {
+			compareAgainstExpected(
+				assets("kubernetes-configmaps/from.yml"),
+				assets("kubernetes-configmaps/to.yml"),
+				assets("kubernetes-configmaps/expected-dyff-spruce.human"),
+				false,
+			)
+		})
+	})
+
 	Context("reported output issues", func() {
 		BeforeEach(func() {
 			SetColorSettings(OFF, OFF)

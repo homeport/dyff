@@ -327,29 +327,71 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 }
 
 func (report *HumanReport) writeStringDiff(output stringWriter, from string, to string) {
-	if fromCertText, toCertText, err := report.LoadX509Certs(from, to); err == nil {
+	fromCertText, toCertText, err := report.LoadX509Certs(from, to)
+
+	switch {
+	case err == nil:
 		_, _ = output.WriteString(yellow("%c certificate change\n", MODIFICATION))
 		_, _ = output.WriteString(report.highlightByLine(fromCertText, toCertText))
 
-	} else if isWhitespaceOnlyChange(from, to) {
+	case isWhitespaceOnlyChange(from, to):
 		_, _ = output.WriteString(yellow("%c whitespace only change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
 			red("%s", createStringWithPrefix("  - ", showWhitespaceCharacters(from))),
 			green("%s", createStringWithPrefix("  + ", showWhitespaceCharacters(to))),
 		)
-	} else if isMultiLine(from, to) {
-		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
-		report.writeTextBlocks(output, 0,
-			red("%s", createStringWithPrefix("  - ", from)),
-			green("%s", createStringWithPrefix("  + ", to)),
-		)
-	} else if isMinorChange(from, to, report.MinorChangeThreshold) {
+
+	case isMultiLine(from, to):
+		if !bunt.UseColors() {
+			_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
+			report.writeTextBlocks(output, 0,
+				red("%s", createStringWithPrefix("  - ", from)),
+				green("%s", createStringWithPrefix("  + ", to)),
+			)
+
+		} else {
+			dmp := diffmatchpatch.New()
+			diff := dmp.DiffMain(from, to, true)
+			diff = dmp.DiffCleanupSemantic(diff)
+			diff = dmp.DiffCleanupEfficiency(diff)
+
+			var ins, del int
+			var buf bytes.Buffer
+			for _, d := range diff {
+				switch d.Type {
+				case diffmatchpatch.DiffInsert:
+					bunt.Fprintf(&buf, green("%s", d.Text))
+					ins++
+
+				case diffmatchpatch.DiffDelete:
+					bunt.Fprintf(&buf, red("%s", d.Text))
+					del++
+
+				case diffmatchpatch.DiffEqual:
+					bunt.Fprintf(&buf, "DimGray{%s}", d.Text)
+				}
+			}
+			fmt.Fprintln(&buf)
+
+			var insDelDetails []string
+			if ins > 0 {
+				insDelDetails = append(insDelDetails, text.Plural(ins, "insert"))
+			}
+			if del > 0 {
+				insDelDetails = append(insDelDetails, text.Plural(del, "deletion"))
+			}
+
+			_, _ = output.WriteString(yellow("%c value change in multiline text (%s)\n", MODIFICATION, strings.Join(insDelDetails, ", ")))
+			_, _ = output.WriteString(createStringWithPrefix("    ", buf.String()))
+		}
+
+	case isMinorChange(from, to, report.MinorChangeThreshold):
 		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
 		diffs := diffmatchpatch.New().DiffMain(from, to, false)
 		_, _ = output.WriteString(highlightRemovals(diffs))
 		_, _ = output.WriteString(highlightAdditions(diffs))
 
-	} else {
+	default:
 		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
 		_, _ = output.WriteString(red("%s", createStringWithPrefix("  - ", from)))
 		_, _ = output.WriteString(green("%s", createStringWithPrefix("  + ", to)))
