@@ -855,7 +855,7 @@ func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemI
 	return "", fmt.Errorf("not all entities appear to have %q fields", key)
 }
 
-// fqrn returns something like a fully qualified Kubernetes resource name, which contains its kind, namepace and name
+// fqrn returns something like a fully qualified Kubernetes resource name, which contains its kind, namespace and name
 func fqrn(node *yamlv3.Node) (string, error) {
 	if node.Kind != yamlv3.MappingNode {
 		return "", fmt.Errorf("name look-up for Kubernetes resources does only work with mapping nodes")
