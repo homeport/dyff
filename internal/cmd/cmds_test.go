@@ -215,6 +215,24 @@ list:
 }
 `))
 		})
+
+		It("should print various timestamp formats and strings that look like timestamps", func() {
+			out, err := dyff("json", assets("issues", "issue-217", "datestring.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(Equal(`{
+  "Datestring": "2033-12-20T00:00:00Z",
+  "ThirteenthMonth": "2033-13-20",
+  "FortyDays": "2033-13-40",
+  "TheYear9999": "9999-11-20T00:00:00Z",
+  "OneShortDatestring": "999-99-99",
+  "ExtDatestring": "2021-01-01-04-05",
+  "DatestringFake": "9999-99-99",
+  "DatestringNonHyphenated": 99999999,
+  "DatestringOneHyphen": "9999-9999",
+  "DatestringSlashes": "2022/01/01"
+}
+`))
+		})
 	})
 
 	Context("between command", func() {
