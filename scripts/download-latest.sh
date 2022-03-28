@@ -37,7 +37,7 @@ fi
 
 if [[ $# -eq 0 ]]; then
   # Find the latest version using the GitHub API
-  SELECTED_TAG="$(curl --silent --location https://api.github.com/repos/${ORG}/${REPO}/releases | jq --raw-output '.[0].tag_name')"
+  SELECTED_TAG="$(curl --silent --location https://api.github.com/repos/${ORG}/${REPO}/releases | jq --raw-output 'map(select((.assets | length) > 0)) | .[0].tag_name')"
 else
   # Use provided argument as tag to download
   SELECTED_TAG="$1"
