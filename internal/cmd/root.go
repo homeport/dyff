@@ -81,7 +81,14 @@ func Execute() error {
 	// In case `KUBECTL_EXTERNAL_DIFF` is set with `dyff`, it is very likely
 	// that `kubectl` intends to use `dyff` for its `diff` command. Therefore,
 	// enable Kubernetes specific entity detection and fix the order issue.
-	if strings.Contains(os.Getenv("KUBECTL_EXTERNAL_DIFF"), name) {
+
+	// Reordering positional arguments can cause problems when dyff is used as an
+	// external git diff command.
+	// If `GIT_DIFF_PATH_TOTAL` is set, likely dyff is invoked by `git diff`
+	//
+
+	if strings.Contains(os.Getenv("KUBECTL_EXTERNAL_DIFF"), name) &&
+		os.Getenv("GIT_DIFF_PATH_TOTAL") == "" {
 		// Rearrange the arguments to match `dyff between --flags from to` to
 		// mitigate an issue in `kubectl`, which puts the `from` and `to` at
 		// the second and third position in the command arguments.
