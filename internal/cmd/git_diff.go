@@ -79,7 +79,6 @@ https://git-scm.com/docs/git-difftool for more information about gif diff
 func init() {
 	rootCmd.AddCommand(gitDiffCmd)
 
-	//applyReportOptionsFlags(gitDiffCmd)
 	GIT_CONFIG_PARAMETERS := os.Getenv("GIT_CONFIG_PARAMETERS")
 	enableColor := strings.Contains(GIT_CONFIG_PARAMETERS, "'color.ui=always'")
 	enableColor = enableColor || strings.Contains(GIT_CONFIG_PARAMETERS, "'color.diff=always'")

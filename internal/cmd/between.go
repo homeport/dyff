@@ -30,6 +30,7 @@ import (
 
 type betweenCmdOptions struct {
 	swap                     bool
+	kubectlExternalDiff      bool
 	translateListToDocuments bool
 	chroot                   string
 	chrootFrom               string
@@ -118,6 +119,7 @@ func init() {
 
 	// Input documents modification flags
 	betweenCmd.Flags().BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
+	betweenCmd.Flags().BoolVar(&betweenCmdSettings.kubectlExternalDiff, "kubectl-external-diff", false, "Invoked by kubectl external diff, supposed to be configured in KUBECTL_EXTERNAL_DIFF environment variable")
 	betweenCmd.Flags().StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
 	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
 	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")

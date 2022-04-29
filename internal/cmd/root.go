@@ -23,7 +23,6 @@ package cmd
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/term"
@@ -78,17 +77,15 @@ func ResetSettings() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
-	// In case `KUBECTL_EXTERNAL_DIFF` is set with `dyff`, it is very likely
-	// that `kubectl` intends to use `dyff` for its `diff` command. Therefore,
-	// enable Kubernetes specific entity detection and fix the order issue.
+	// Run with `--kubectl-external-diff` explicitly to trigger argument reordering.
+	// Example when running:
+	// KUBECTL_EXTERNAL_DIFF="dyff between --kubectl-external-diff" kubectl diff -f xxx/yyy/zzz.yaml
+	// kubectl will invoke dyff with the arguments: (injecting two directores as arg[1] and arg[2])
+	// dyff tmp/fileA tmp/fileB between --kubectl-external-diff
 
-	// Reordering positional arguments can cause problems when dyff is used as an
-	// external git diff command.
-	// If `GIT_DIFF_PATH_TOTAL` is set, likely dyff is invoked by `git diff`
-	//
+	if contains(os.Args, "--kubectl-external-diff") {
+		ytbx.PreserveKeyOrderInJSON = true
 
-	if strings.Contains(os.Getenv("KUBECTL_EXTERNAL_DIFF"), name) &&
-		os.Getenv("GIT_DIFF_PATH_TOTAL") == "" {
 		// Rearrange the arguments to match `dyff between --flags from to` to
 		// mitigate an issue in `kubectl`, which puts the `from` and `to` at
 		// the second and third position in the command arguments.
@@ -104,8 +101,6 @@ func Execute() error {
 
 		os.Args = append(args, paths...)
 
-		// Enable Kubernetes specific entity detection implicitly
-		reportOptions.kubernetesEntityDetection = true
 	}
 
 	if err := rootCmd.Execute(); err != nil {
@@ -134,4 +129,13 @@ func init() {
 	rootCmd.PersistentFlags().VarP(&bunt.TrueColorSetting, "truecolor", "t", "specify true color usage: on, off, or auto")
 	rootCmd.PersistentFlags().IntVarP(&term.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
 	rootCmd.PersistentFlags().BoolVarP(&ytbx.PreserveKeyOrderInJSON, "preserve-key-order-in-json", "k", false, "use ordered keys during JSON decoding (non standard behavior)")
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
