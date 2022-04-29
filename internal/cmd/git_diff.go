@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	// Arbitrary length of the git SHA1 in sortable format
+	// Arbitrary length of the git SHA1 in short format
 	// It does not calculate git-sha1
 	GIT_SHA1_LENGTH = 7
 )
