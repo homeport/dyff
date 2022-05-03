@@ -27,6 +27,7 @@ import (
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/ytbx"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -83,24 +84,27 @@ func Execute() error {
 	// kubectl will invoke dyff with the arguments: (injecting two directores as arg[1] and arg[2])
 	// dyff tmp/fileA tmp/fileB between --kubectl-external-diff
 
-	if contains(os.Args, "--kubectl-external-diff") {
+	if indexSlice(os.Args, "--kubectl-external-diff") > 1 && indexSlice(os.Args, "between") > 1 {
 		ytbx.PreserveKeyOrderInJSON = true
-
 		// Rearrange the arguments to match `dyff between --flags from to` to
 		// mitigate an issue in `kubectl`, which puts the `from` and `to` at
 		// the second and third position in the command arguments.
-		var paths, args []string
-		for _, entry := range os.Args {
-			if info, err := os.Stat(entry); err == nil && info.IsDir() {
-				paths = append(paths, entry)
 
+		// only check arg[1] and arg[2], in case `dyff` or `between` are directories
+		for i := 1; i <= 2; i++ {
+			if info, err := os.Stat(os.Args[i]); err == nil && info.IsDir() {
 			} else {
-				args = append(args, entry)
+				return ExitCode{
+					Value: 255,
+					Cause: errors.Errorf("%s is not a directory? is this invoked by kubectl diff?", os.Args[i]),
+				}
 			}
 		}
-
-		os.Args = append(args, paths...)
-
+		var args []string
+		args = append(args, os.Args[0])
+		args = append(args, os.Args[3:]...)
+		args = append(args, os.Args[1], os.Args[2])
+		os.Args = args
 	}
 
 	if err := rootCmd.Execute(); err != nil {
@@ -131,11 +135,11 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&ytbx.PreserveKeyOrderInJSON, "preserve-key-order-in-json", "k", false, "use ordered keys during JSON decoding (non standard behavior)")
 }
 
-func contains(s []string, str string) bool {
-	for _, v := range s {
+func indexSlice(s []string, str string) int {
+	for i, v := range s {
 		if v == str {
-			return true
+			return i
 		}
 	}
-	return false
+	return -1
 }
