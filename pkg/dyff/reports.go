@@ -1,16 +1,19 @@
 package dyff
 
-import "regexp"
+import (
+	"regexp"
 
-func (r Report) filter(f func(string) bool) (result Report) {
+	"github.com/gonvenience/ytbx"
+)
+
+func (r Report) filter(hasPath func(*ytbx.Path) bool) (result Report) {
 	result = Report{
 		From: r.From,
 		To:   r.To,
 	}
 
 	for _, diff := range r.Diffs {
-		diffPathString := diff.Path.String()
-		if f(diffPathString) {
+		if hasPath(diff.Path) {
 			result.Diffs = append(result.Diffs, diff)
 		}
 	}
@@ -24,12 +27,14 @@ func (r Report) Filter(paths ...string) (result Report) {
 		return r
 	}
 
-	return r.filter(func(s string) bool {
-		for _, path := range paths {
-			if path == s {
+	return r.filter(func(filterPath *ytbx.Path) bool {
+		for _, pathString := range paths {
+			path, err := ytbx.ParsePathStringUnsafe(pathString)
+			if err == nil && path.String() == filterPath.String() {
 				return true
 			}
 		}
+
 		return false
 	})
 }
@@ -40,12 +45,14 @@ func (r Report) Exclude(paths ...string) (result Report) {
 		return r
 	}
 
-	return r.filter(func(s string) bool {
-		for _, path := range paths {
-			if path == s {
+	return r.filter(func(filterPath *ytbx.Path) bool {
+		for _, pathString := range paths {
+			path, err := ytbx.ParsePathStringUnsafe(pathString)
+			if err == nil && path.String() == filterPath.String() {
 				return false
 			}
 		}
+
 		return true
 	})
 }
@@ -61,9 +68,9 @@ func (r Report) FilterRegexp(pattern ...string) (result Report) {
 		regexps[i] = regexp.MustCompile(pattern[i])
 	}
 
-	return r.filter(func(s string) bool {
+	return r.filter(func(filterPath *ytbx.Path) bool {
 		for _, regexp := range regexps {
-			if regexp.MatchString(s) {
+			if regexp.MatchString(filterPath.String()) {
 				return true
 			}
 		}
@@ -82,9 +89,9 @@ func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
 		regexps[i] = regexp.MustCompile(pattern[i])
 	}
 
-	return r.filter(func(s string) bool {
+	return r.filter(func(filterPath *ytbx.Path) bool {
 		for _, regexp := range regexps {
-			if regexp.MatchString(s) {
+			if regexp.MatchString(filterPath.String()) {
 				return false
 			}
 		}
