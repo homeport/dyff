@@ -70,7 +70,7 @@ _Please note:_ This will install `dyff` based on the latest available code base.
 
   ```bash
   # Setup
-  export KUBECTL_EXTERNAL_DIFF="dyff between --omit-header --set-exit-code"
+  export KUBECTL_EXTERNAL_DIFF="dyff between --omit-header --set-exit-code --kubectl-external-diff"
 
   # Usage
   kubectl diff [...]
@@ -96,12 +96,14 @@ _Please note:_ This will install `dyff` based on the latest available code base.
 
     ```bash
     # Setup...
-    git config --local diff.dyff.command 'dyff_between() { dyff --color on between --omit-header "$2" "$5"; }; dyff_between'
-    echo '*.yml diff=dyff' >> .gitattributes
+    git config --local diff.dyff.command 'dyff git-diff'
+    echo '*.yml diff=dyff'  >> .gitattributes
+    echo '*.yaml diff=dyff' >> .gitattributes
 
     # And have fun, e.g.:
     git log --ext-diff -u
     git show --ext-diff HEAD
+    GIT_CONFIG_PARAMETERS="'color.ui=always'"  git log --ext-diff -u '**/*.yaml' '**/*.yml'
     ```
 
     ![dyff between example of a Git commit](.docs/dyff-between-git-commits-example.png?raw=true "dyff in Git example of an example commit")

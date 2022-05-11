@@ -23,11 +23,11 @@ package cmd
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/ytbx"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -78,27 +78,33 @@ func ResetSettings() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
-	// In case `KUBECTL_EXTERNAL_DIFF` is set with `dyff`, it is very likely
-	// that `kubectl` intends to use `dyff` for its `diff` command. Therefore,
-	// enable Kubernetes specific entity detection and fix the order issue.
-	if strings.Contains(os.Getenv("KUBECTL_EXTERNAL_DIFF"), name) {
+	// Run with `--kubectl-external-diff` explicitly to trigger argument reordering.
+	// Example when running:
+	// KUBECTL_EXTERNAL_DIFF="dyff between --kubectl-external-diff" kubectl diff -f xxx/yyy/zzz.yaml
+	// kubectl will invoke dyff with the arguments: (injecting two directores as arg[1] and arg[2])
+	// dyff tmp/fileA tmp/fileB between --kubectl-external-diff
+
+	if indexSlice(os.Args, "--kubectl-external-diff") > 1 && indexSlice(os.Args, "between") > 1 {
+		ytbx.PreserveKeyOrderInJSON = true
 		// Rearrange the arguments to match `dyff between --flags from to` to
 		// mitigate an issue in `kubectl`, which puts the `from` and `to` at
 		// the second and third position in the command arguments.
-		var paths, args []string
-		for _, entry := range os.Args {
-			if info, err := os.Stat(entry); err == nil && info.IsDir() {
-				paths = append(paths, entry)
 
+		// only check arg[1] and arg[2], in case `dyff` or `between` are directories
+		for i := 1; i <= 2; i++ {
+			if info, err := os.Stat(os.Args[i]); err == nil && info.IsDir() {
 			} else {
-				args = append(args, entry)
+				return ExitCode{
+					Value: 255,
+					Cause: errors.Errorf("%s is not a directory? is this invoked by kubectl diff?", os.Args[i]),
+				}
 			}
 		}
-
-		os.Args = append(args, paths...)
-
-		// Enable Kubernetes specific entity detection implicitly
-		reportOptions.kubernetesEntityDetection = true
+		var args []string
+		args = append(args, os.Args[0])
+		args = append(args, os.Args[3:]...)
+		args = append(args, os.Args[1], os.Args[2])
+		os.Args = args
 	}
 
 	if err := rootCmd.Execute(); err != nil {
@@ -127,4 +133,13 @@ func init() {
 	rootCmd.PersistentFlags().VarP(&bunt.TrueColorSetting, "truecolor", "t", "specify true color usage: on, off, or auto")
 	rootCmd.PersistentFlags().IntVarP(&term.FixedTerminalWidth, "fixed-width", "w", -1, "disable terminal width detection and use provided fixed value")
 	rootCmd.PersistentFlags().BoolVarP(&ytbx.PreserveKeyOrderInJSON, "preserve-key-order-in-json", "k", false, "use ordered keys during JSON decoding (non standard behavior)")
+}
+
+func indexSlice(s []string, str string) int {
+	for i, v := range s {
+		if v == str {
+			return i
+		}
+	}
+	return -1
 }
