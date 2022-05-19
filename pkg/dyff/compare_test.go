@@ -992,6 +992,30 @@ b: bar
 				Expect(len(result.Diffs[0].Details)).To(Equal(1))
 				Expect(result.Diffs[0].Details[0].Kind).To(Equal(REMOVAL))
 			})
+
+			It("should omit nil/empty documents", func() {
+				from := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/from",
+					Documents: multiDoc(
+						`{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "x"}}`,
+						`{"apiVersion": "v1", "kind": "Service", "metadata": {"name": "y"}}`,
+					),
+				}
+
+				to := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/to",
+					Documents: multiDoc(
+						`{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "x"}}`,
+						``,
+						`{"apiVersion": "v1", "kind": "Service", "metadata": {"name": "y"}}`,
+						``,
+					),
+				}
+
+				result, err := CompareInputFiles(from, to)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Diffs).To(HaveLen(0))
+			})
 		})
 	})
 })

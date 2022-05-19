@@ -96,24 +96,37 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 	// in case Kubernetes mode is enabled, try to compare documents in the YAML
 	// file by their names rather than just by the order of the documents
 	if cmpr.settings.KubernetesEntityDetection {
-		for _, entry := range from.Documents {
-			name, err := fqrn(entry.Content[0])
-			if err == nil {
-				from.Names = append(from.Names, name)
+		var fromDocs, toDocs []*yamlv3.Node
+		var fromNames, toNames []string
+
+		for i := range from.Documents {
+			if entry := from.Documents[i]; !isEmptyDocument(entry) {
+				fromDocs = append(fromDocs, entry)
+				if name, err := fqrn(entry.Content[0]); err == nil {
+					fromNames = append(fromNames, name)
+				}
 			}
 		}
 
-		for _, entry := range to.Documents {
-			name, err := fqrn(entry.Content[0])
-			if err == nil {
-				to.Names = append(to.Names, name)
+		for i := range to.Documents {
+			if entry := to.Documents[i]; !isEmptyDocument(entry) {
+				toDocs = append(toDocs, entry)
+				if name, err := fqrn(entry.Content[0]); err == nil {
+					toNames = append(toNames, name)
+				}
 			}
 		}
 
 		// when the look-up of a name for each document in each file worked out, it
 		// means that the documents are most likely Kubernetes resources, so a comparison
 		// using the names can be done, otherwise, leave and continue with default behavior
-		if len(from.Names) == len(from.Documents) && len(to.Names) == len(to.Documents) {
+		if len(fromNames) == len(fromDocs) && len(toNames) == len(toDocs) {
+			// Reset the docs and names based on the collected details
+			from.Documents, from.Names = fromDocs, fromNames
+			to.Documents, to.Names = toDocs, toNames
+
+			// Compare the document nodes, in case of an error it will fall back to the default
+			// implementation and continue to compare the files without any special semantics
 			if result, err := cmpr.documentNodes(from, to); err == nil {
 				return Report{from, to, result}, nil
 			}
@@ -877,6 +890,22 @@ func fqrn(node *yamlv3.Node) (string, error) {
 	}
 
 	return fmt.Sprintf("%s/%s/%s", kind, namespace, name), nil
+}
+
+// isEmptyDocument returns true in case the given YAML node is an empty document
+func isEmptyDocument(node *yamlv3.Node) bool {
+	if node.Kind != yamlv3.DocumentNode {
+		return false
+	}
+
+	switch len(node.Content) {
+	case 1:
+		// special case: content is just null (scalar)
+		return node.Content[0].Kind == yamlv3.ScalarNode &&
+			node.Content[0].Tag == "!!null"
+	}
+
+	return false
 }
 
 func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) ListItemIdentifierField {
