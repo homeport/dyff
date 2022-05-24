@@ -66,6 +66,13 @@ func lightred(format string, a ...interface{}) string {
 	return colored(bunt.LightSalmon, render(format, a...))
 }
 
+func dimgray(format string, a ...interface{}) string {
+	return bunt.Style(
+		render(format, a...),
+		bunt.Foreground(bunt.DimGray),
+	)
+}
+
 func bold(format string, a ...interface{}) string {
 	return bunt.Style(
 		fmt.Sprintf(format, a...),
