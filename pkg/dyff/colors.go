@@ -67,10 +67,7 @@ func lightred(format string, a ...interface{}) string {
 }
 
 func dimgray(format string, a ...interface{}) string {
-	return bunt.Style(
-		render(format, a...),
-		bunt.Foreground(bunt.DimGray),
-	)
+	return colored(bunt.DimGray, render(format, a...))
 }
 
 func bold(format string, a ...interface{}) string {

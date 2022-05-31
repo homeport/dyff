@@ -1,0 +1,6 @@
+---
+data: |
+  string foo = "bar";
+  string x_forwarded_host = 53;
+  string worker_status = 54;
+  uint64 worker_cpu_time_micro = 55;
