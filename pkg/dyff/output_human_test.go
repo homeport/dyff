@@ -200,7 +200,7 @@ variables.ROUTER_TLS_PEM.options
 		})
 	})
 
-	Context("reported output issues", func() {
+	Context("reported output issues (without colors)", func() {
 		BeforeEach(func() {
 			SetColorSettings(OFF, OFF)
 		})
@@ -213,6 +213,25 @@ variables.ROUTER_TLS_PEM.options
 			compareAgainstExpected("../../assets/issues/issue-89/from.yml",
 				"../../assets/issues/issue-89/to.yml",
 				"../../assets/issues/issue-89/expected-dyff-spruce.human",
+				false,
+			)
+		})
+	})
+
+	Context("reported output issues (with colors)", func() {
+		BeforeEach(func() {
+			SetColorSettings(ON, ON)
+		})
+
+		AfterEach(func() {
+			SetColorSettings(AUTO, AUTO)
+		})
+
+		It("should not parse markdown in multiline text diff output", func() {
+			compareAgainstExpected(
+				assets("issues", "issue-225", "from.yml"),
+				assets("issues", "issue-225", "to.yml"),
+				assets("issues", "issue-225", "expected-dyff-spruce.human"),
 				false,
 			)
 		})

@@ -56,7 +56,6 @@ type HumanReport struct {
 	DoNotInspectCerts    bool
 	OmitHeader           bool
 	UseGoPatchPaths      bool
-	SupportMarkdown      bool
 }
 
 // WriteReport writes a human readable report to the provided writer
@@ -358,25 +357,18 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 
 			var ins, del int
 			var buf bytes.Buffer
-			var opts []bunt.ParseOption
-			if report.SupportMarkdown {
-				opts = append(opts, bunt.ProcessTextAnnotations())
-			}
 			for _, d := range diff {
 				switch d.Type {
 				case diffmatchpatch.DiffInsert:
-					s, _ := bunt.ParseString(green("%s", d.Text), opts...)
-					fmt.Fprint(&buf, s)
+					fmt.Fprint(&buf, green("%s", d.Text))
 					ins++
 
 				case diffmatchpatch.DiffDelete:
-					s, _ := bunt.ParseString(red("%s", d.Text), opts...)
-					fmt.Fprint(&buf, s)
+					fmt.Fprint(&buf, red("%s", d.Text))
 					del++
 
 				case diffmatchpatch.DiffEqual:
-					s, _ := bunt.ParseString(dimgray("%s", d.Text), opts...)
-					bunt.Fprint(&buf, s)
+					fmt.Fprint(&buf, dimgray("%s", d.Text))
 				}
 			}
 			fmt.Fprintln(&buf)
