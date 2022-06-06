@@ -24,8 +24,9 @@ github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaS
 github.com/golang/protobuf v1.5.2 h1:ROPKBNFfQgOUMifHyP+KYbvpjbdoFNs+aK7DXlji0Tw=
 github.com/golang/protobuf v1.5.2/go.mod h1:XVQd3VNwM+JqD3oG2Ue2ip4fOMUkwXdXDdiuN0vRsmY=
 github.com/gonvenience/bunt v1.3.2/go.mod h1:oTOZqb1TVL1KqZm57zUCJCiwUliNfY8+d3QndOVqxpg=
-github.com/gonvenience/bunt v1.3.3 h1:a751qSbJIgWGbazGYr9hyuudOg7wMHh2m4JjE3tfURE=
 github.com/gonvenience/bunt v1.3.3/go.mod h1:XjlODZ8sTL9jQs9c4Kj1ZBTrHSsbUGdoRy7ROCtw8nU=
+github.com/gonvenience/bunt v1.3.4 h1:Row599Ohja2BPooaqd1tHYdTAKu6SWq7W/UeakTXddM=
+github.com/gonvenience/bunt v1.3.4/go.mod h1:j8eqHLBo8eWCCYuc34oFdlgyxL1rZ4ywYz4BZa4b09w=
 github.com/gonvenience/neat v1.3.8/go.mod h1:4SFVz5TfDxRwOWEijaQrR+3g0j5ZRyoYO3HeyNsfTlk=
 github.com/gonvenience/neat v1.3.10 h1:gHrVkQAvbUsZgnpEglPwsAJLPqSFQxOgfbB3FWLhmUo=
 github.com/gonvenience/neat v1.3.10/go.mod h1:SenKN3l5LkhNYKXTq6Ibvq64wE9O2rxir+YEtqdi4jc=
