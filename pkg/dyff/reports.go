@@ -30,7 +30,7 @@ func (r Report) Filter(paths ...string) (result Report) {
 	return r.filter(func(filterPath *ytbx.Path) bool {
 		for _, pathString := range paths {
 			path, err := ytbx.ParsePathStringUnsafe(pathString)
-			if err == nil && path.String() == filterPath.String() {
+			if err == nil && filterPath != nil && path.String() == filterPath.String() {
 				return true
 			}
 		}
@@ -48,7 +48,7 @@ func (r Report) Exclude(paths ...string) (result Report) {
 	return r.filter(func(filterPath *ytbx.Path) bool {
 		for _, pathString := range paths {
 			path, err := ytbx.ParsePathStringUnsafe(pathString)
-			if err == nil && path.String() == filterPath.String() {
+			if err == nil && filterPath != nil && path.String() == filterPath.String() {
 				return false
 			}
 		}
@@ -70,7 +70,7 @@ func (r Report) FilterRegexp(pattern ...string) (result Report) {
 
 	return r.filter(func(filterPath *ytbx.Path) bool {
 		for _, regexp := range regexps {
-			if regexp.MatchString(filterPath.String()) {
+			if filterPath != nil && regexp.MatchString(filterPath.String()) {
 				return true
 			}
 		}
@@ -91,7 +91,7 @@ func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
 
 	return r.filter(func(filterPath *ytbx.Path) bool {
 		for _, regexp := range regexps {
-			if regexp.MatchString(filterPath.String()) {
+			if filterPath != nil && regexp.MatchString(filterPath.String()) {
 				return false
 			}
 		}
