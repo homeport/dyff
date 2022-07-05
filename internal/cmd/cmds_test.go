@@ -533,6 +533,22 @@ yaml.map.whitespaces
 			})
 		})
 
+		It("should show a report when filtering and a document has been removed between inputs", func() {
+			expected := `
+spec.replicas  (Deployment/default/test)
+  ± value change
+    - 2
+    + 3
+
+
+`
+			By("using the --filter flag", func() {
+				out, err := dyff("between", "--omit-header", "--filter", "/spec/replicas", assets("issues", "issue-232", "from.yml"), assets("issues", "issue-232", "to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(out).To(BeEquivalentTo(expected))
+			})
+		})
+
 		It("should properly print multi-line strings (https://github.com/homeport/dyff/issues/180)", func() {
 			out, err := dyff("between", "--omit-header", assets("issues", "issue-180", "old.yml"), assets("issues", "issue-180", "new.yml"))
 			Expect(err).ToNot(HaveOccurred())
