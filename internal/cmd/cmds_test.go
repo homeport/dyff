@@ -540,7 +540,6 @@ spec.replicas  (Deployment/default/test)
     - 2
     + 3
 
-
 `
 			By("using the --filter flag", func() {
 				out, err := dyff("between", "--omit-header", "--filter", "/spec/replicas", assets("issues", "issue-232", "from.yml"), assets("issues", "issue-232", "to.yml"))
