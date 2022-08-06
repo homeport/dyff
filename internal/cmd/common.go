@@ -39,8 +39,6 @@ import (
 	"github.com/homeport/dyff/pkg/dyff"
 )
 
-const defaultOutputStyle = "human"
-
 type reportConfig struct {
 	style                     string
 	ignoreOrderChanges        bool
@@ -56,29 +54,44 @@ type reportConfig struct {
 	excludeRegexps            []string
 }
 
+var defaults = reportConfig{
+	style:                     "human",
+	ignoreOrderChanges:        false,
+	kubernetesEntityDetection: true,
+	noTableStyle:              false,
+	doNotInspectCerts:         false,
+	exitWithCode:              false,
+	omitHeader:                false,
+	useGoPatchPaths:           false,
+	filters:                   nil,
+	excludes:                  nil,
+	filterRegexps:             nil,
+	excludeRegexps:            nil,
+}
+
 var reportOptions reportConfig
 
 func applyReportOptionsFlags(cmd *cobra.Command) {
 	// Compare options
-	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", false, "ignore order changes in lists")
-	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", true, "detect kubernetes entities")
-	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", nil, "filter reports to a subset of differences based on supplied arguments")
-	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", nil, "exclude reports from a set of differences based on supplied arguments")
-	cmd.Flags().StringSliceVar(&reportOptions.filterRegexps, "filter-regexp", nil, "filter reports to a subset of differences based on supplied regular expressions")
-	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", nil, "exclude reports from a set of differences based on supplied regular expressions")
+	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", defaults.ignoreOrderChanges, "ignore order changes in lists")
+	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", defaults.kubernetesEntityDetection, "detect kubernetes entities")
+	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", defaults.filters, "filter reports to a subset of differences based on supplied arguments")
+	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", defaults.excludes, "exclude reports from a set of differences based on supplied arguments")
+	cmd.Flags().StringSliceVar(&reportOptions.filterRegexps, "filter-regexp", defaults.filterRegexps, "filter reports to a subset of differences based on supplied regular expressions")
+	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", defaults.excludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
 
 	// Main output preferences
-	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaultOutputStyle, "specify the output style, supported styles: human, or brief")
-	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", false, "omit the dyff summary header")
-	cmd.Flags().BoolVarP(&reportOptions.exitWithCode, "set-exit-code", "s", false, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
+	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, or brief")
+	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", defaults.omitHeader, "omit the dyff summary header")
+	cmd.Flags().BoolVarP(&reportOptions.exitWithCode, "set-exit-code", "s", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
 
 	// Human/BOSH output related flags
-	cmd.Flags().BoolVarP(&reportOptions.noTableStyle, "no-table-style", "l", false, "do not place blocks next to each other, always use one row per text block")
-	cmd.Flags().BoolVarP(&reportOptions.doNotInspectCerts, "no-cert-inspection", "x", false, "disable x509 certificate inspection, compare as raw text")
-	cmd.Flags().BoolVarP(&reportOptions.useGoPatchPaths, "use-go-patch-style", "g", false, "use Go-Patch style paths in outputs")
+	cmd.Flags().BoolVarP(&reportOptions.noTableStyle, "no-table-style", "l", defaults.noTableStyle, "do not place blocks next to each other, always use one row per text block")
+	cmd.Flags().BoolVarP(&reportOptions.doNotInspectCerts, "no-cert-inspection", "x", defaults.doNotInspectCerts, "disable x509 certificate inspection, compare as raw text")
+	cmd.Flags().BoolVarP(&reportOptions.useGoPatchPaths, "use-go-patch-style", "g", defaults.useGoPatchPaths, "use Go-Patch style paths in outputs")
 
 	// Deprecated
-	cmd.Flags().BoolVar(&reportOptions.exitWithCode, "set-exit-status", false, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
+	cmd.Flags().BoolVar(&reportOptions.exitWithCode, "set-exit-status", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
 	_ = cmd.Flags().MarkDeprecated("set-exit-status", "use --set-exit-code instead")
 }
 

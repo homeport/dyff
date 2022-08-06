@@ -69,7 +69,7 @@ is preserved during the conversion.
 // ResetSettings resets command settings to default. This is only required by
 // the test suite to make sure that the flag parsing works correctly.
 func ResetSettings() {
-	reportOptions = reportConfig{style: defaultOutputStyle}
+	reportOptions = defaults
 	betweenCmdSettings = betweenCmdOptions{}
 	yamlCmdSettings = yamlCmdOptions{}
 	jsonCmdSettings = jsonCmdOptions{}
