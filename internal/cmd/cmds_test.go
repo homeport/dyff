@@ -22,10 +22,9 @@ package cmd_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	. "github.com/homeport/dyff/internal/cmd"
@@ -120,7 +119,7 @@ list:
 					Expect(err).ToNot(HaveOccurred())
 					Expect(out).To(BeEmpty())
 
-					data, err := ioutil.ReadFile(filename)
+					data, err := os.ReadFile(filename)
 					Expect(err).To(BeNil())
 					Expect(string(data)).To(BeEquivalentTo(`---
 list:
@@ -150,7 +149,7 @@ list:
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEmpty())
 
-			data, err := ioutil.ReadFile(filename)
+			data, err := os.ReadFile(filename)
 			Expect(err).To(BeNil())
 			Expect(string(data)).To(BeEquivalentTo(`{"list": [{"name": "one", "aaa": "bbb"}]}
 `))

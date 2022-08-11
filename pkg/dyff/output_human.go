@@ -533,16 +533,17 @@ func (report *HumanReport) LoadX509Certs(from, to string) (string, string, error
 
 // Create a YAML (hash with key/value) from a certificate to only display a few
 // important fields (https://www.sslshopper.com/certificate-decoder.html):
-//   Common Name: www.example.com
-//   Organization: Company Name
-//   Organization Unit: Org
-//   Locality: Portland
-//   State: Oregon
-//   Country: US
-//   Valid From: April 2, 2018
-//   Valid To: April 2, 2019
-//   Issuer: www.example.com, Company Name
-//   Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
+//
+//	Common Name: www.example.com
+//	Organization: Company Name
+//	Organization Unit: Org
+//	Locality: Portland
+//	State: Oregon
+//	Country: US
+//	Valid From: April 2, 2018
+//	Valid To: April 2, 2019
+//	Issuer: www.example.com, Company Name
+//	Serial Number: 14581103526614300972 (0xca5a7c67490a792c)
 func certificateSummaryAsYAML(cert *x509.Certificate) string {
 	const template = `Subject:
   Common Name: %s

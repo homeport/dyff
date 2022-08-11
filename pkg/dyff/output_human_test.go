@@ -23,13 +23,14 @@ package dyff_test
 import (
 	"fmt"
 
-	. "github.com/gonvenience/bunt"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/homeport/dyff/pkg/dyff"
+	. "github.com/gonvenience/bunt"
 
 	"github.com/gonvenience/ytbx"
+
+	"github.com/homeport/dyff/pkg/dyff"
 )
 
 var _ = Describe("human readable report", func() {
@@ -43,7 +44,7 @@ var _ = Describe("human readable report", func() {
 		})
 
 		It("should show a nice string difference", func() {
-			content := singleDiff("/some/yaml/structure/string", MODIFICATION, "fOObar?", "Foobar!")
+			content := singleDiff("/some/yaml/structure/string", dyff.MODIFICATION, "fOObar?", "Foobar!")
 			Expect(humanDiff(content)).To(BeEquivalentTo(`
 some.yaml.structure.string
   ± value change
@@ -54,7 +55,7 @@ some.yaml.structure.string
 		})
 
 		It("should show a nice integer difference", func() {
-			content := singleDiff("/some/yaml/structure/int", MODIFICATION, 12, 147)
+			content := singleDiff("/some/yaml/structure/int", dyff.MODIFICATION, 12, 147)
 			Expect(humanDiff(content)).To(BeEquivalentTo(`
 some.yaml.structure.int
   ± value change
@@ -65,7 +66,7 @@ some.yaml.structure.int
 		})
 
 		It("should show a type difference", func() {
-			content := singleDiff("/some/yaml/structure/test", MODIFICATION, 12, 12.0)
+			content := singleDiff("/some/yaml/structure/test", dyff.MODIFICATION, 12, 12.0)
 			Expect(humanDiff(content)).To(BeEquivalentTo(`
 some.yaml.structure.test
   ± type change from int to float
@@ -98,7 +99,7 @@ input: |+
 			Expect(result).NotTo(BeNil())
 			Expect(len(result)).To(BeEquivalentTo(1))
 			Expect(result[0]).To(BeSameDiffAs(singleDiff("/input",
-				MODIFICATION,
+				dyff.MODIFICATION,
 				"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n",
 				"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n\n")))
 
@@ -167,7 +168,7 @@ input: |+
 			path, err := ytbx.ParseGoPatchStylePathString("/variables/name=ROUTER_TLS_PEM/options")
 			Expect(err).ToNot(HaveOccurred())
 
-			content := singleDiff(path.String(), MODIFICATION, 12, 12.0)
+			content := singleDiff(path.String(), dyff.MODIFICATION, 12, 12.0)
 			actual := humanDiff(content)
 
 			Expect(fmt.Sprintf("%#v", RemoveAllEscapeSequences(actual))).To(

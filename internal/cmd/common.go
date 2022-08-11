@@ -25,7 +25,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -136,7 +135,7 @@ func (w *OutputWriter) WriteInplace(filename string) error {
 
 	// Write the buffered output to the provided input file (override in place)
 	bufWriter.Flush()
-	if err := ioutil.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(filename, buf.Bytes(), 0644); err != nil {
 		return wrap.Errorf(err, "failed to overwrite %s in place", humanReadableFilename(filename))
 	}
 

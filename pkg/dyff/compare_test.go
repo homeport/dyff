@@ -21,11 +21,12 @@
 package dyff_test
 
 import (
-	"github.com/gonvenience/ytbx"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/homeport/dyff/pkg/dyff"
+	"github.com/gonvenience/ytbx"
+
+	"github.com/homeport/dyff/pkg/dyff"
 )
 
 var _ = Describe("Core/Compare", func() {
@@ -53,7 +54,7 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(len(result[0].Details)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", MODIFICATION, "foobar", "fOObAr")))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", dyff.MODIFICATION, "foobar", "fOObAr")))
 			})
 
 			It("should return that an integer was modified", func() {
@@ -77,7 +78,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", MODIFICATION, 1, 2)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", dyff.MODIFICATION, 1, 2)))
 			})
 
 			It("should return that a float was modified", func() {
@@ -101,7 +102,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/level", MODIFICATION, 3.14159265359, 2.7182818284)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/level", dyff.MODIFICATION, 3.14159265359, 2.7182818284)))
 			})
 
 			It("should return that a boolean was modified", func() {
@@ -125,7 +126,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/enabled", MODIFICATION, false, true)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/enabled", dyff.MODIFICATION, false, true)))
 			})
 
 			It("should return that one value was added", func() {
@@ -148,7 +149,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", ADDITION, nil, yml(`version: v1`))))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", dyff.ADDITION, nil, yml(`version: v1`))))
 			})
 
 			It("should return that one value was removed", func() {
@@ -171,7 +172,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", REMOVAL, yml(`version: v1`), nil)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", dyff.REMOVAL, yml(`version: v1`), nil)))
 			})
 
 			It("should return two diffs if one value was removed and another one added", func() {
@@ -196,8 +197,8 @@ some:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeSameDiffAs(doubleDiff("/some/yaml/structure",
-					REMOVAL, yml(`version: v1`), nil,
-					ADDITION, nil, yml(`release: v1`))))
+					dyff.REMOVAL, yml(`version: v1`), nil,
+					dyff.ADDITION, nil, yml(`release: v1`))))
 			})
 		})
 
@@ -226,7 +227,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ three ]`))))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.ADDITION, nil, list(`[ three ]`))))
 			})
 
 			It("should return that an integer list entry was added", func() {
@@ -253,7 +254,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", ADDITION, nil, list(`[ 3 ]`))))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.ADDITION, nil, list(`[ 3 ]`))))
 			})
 
 			It("should return that a string list entry was removed", func() {
@@ -280,7 +281,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ three ]`), nil)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.REMOVAL, list(`[ three ]`), nil)))
 			})
 
 			It("should return that an integer list entry was removed", func() {
@@ -307,7 +308,7 @@ some:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", REMOVAL, list(`[ 3 ]`), nil)))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.REMOVAL, list(`[ 3 ]`), nil)))
 			})
 
 			It("should not return a change if only the order in a hash was changed", func() {
@@ -407,13 +408,13 @@ instance_groups:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(7))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", MODIFICATION, "192.168.1.1", "192.168.0.1")))
-				Expect(result[1]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs", ADDITION, nil, list(`[ { release: custom, name: logger } ]`))))
-				Expect(result[2]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
-				Expect(result[3]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/development_mode", MODIFICATION, true, false)))
-				Expect(result[4]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/instances", MODIFICATION, 1, 2)))
-				Expect(result[5]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/networks", REMOVAL, list(`[ { name: testnet } ]`), nil)))
-				Expect(result[6]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password", MODIFICATION, "supersecret", "zwX#(;P=%hTfFzM[")))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", dyff.MODIFICATION, "192.168.1.1", "192.168.0.1")))
+				Expect(result[1]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs", dyff.ADDITION, nil, list(`[ { release: custom, name: logger } ]`))))
+				Expect(result[2]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", dyff.MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
+				Expect(result[3]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/development_mode", dyff.MODIFICATION, true, false)))
+				Expect(result[4]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/instances", dyff.MODIFICATION, 1, 2)))
+				Expect(result[5]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/networks", dyff.REMOVAL, list(`[ { name: testnet } ]`), nil)))
+				Expect(result[6]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=db/jobs/name=postgresql/properties/databases/name=atc/password", dyff.MODIFICATION, "supersecret", "zwX#(;P=%hTfFzM[")))
 			})
 
 			It("should return even difficult ones", func() {
@@ -454,7 +455,7 @@ resource_pools:
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(result[0]).To(BeSameDiffAs(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters/0/CLS_PAAS_SFT_035/resource_pool", MODIFICATION, "other-vsphere-res-pool", "new-vsphere-res-pool")))
+				Expect(result[0]).To(BeSameDiffAs(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters/0/CLS_PAAS_SFT_035/resource_pool", dyff.MODIFICATION, "other-vsphere-res-pool", "new-vsphere-res-pool")))
 			})
 
 			It("should return even difficult ones that cannot simply be compared", func() {
@@ -483,8 +484,8 @@ resource_pools:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeSameDiffAs(doubleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters",
-					REMOVAL, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`), nil,
-					ADDITION, nil, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`))))
+					dyff.REMOVAL, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`), nil,
+					dyff.ADDITION, nil, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`))))
 			})
 		})
 
@@ -517,7 +518,7 @@ resource_pools:
 				Expect(result).NotTo(BeNil())
 				Expect(len(result)).To(BeEquivalentTo(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/name=three/version",
-					MODIFICATION, 4, 3)))
+					dyff.MODIFICATION, 4, 3)))
 			})
 		})
 
@@ -539,9 +540,9 @@ resource_pools:
 			It("should return all differences between the files", func() {
 				results, err := compare(yml("../../assets/examples/from.yml"), yml("../../assets/examples/to.yml"))
 				Expect(err).To(BeNil())
-				expected := []Diff{
+				expected := []dyff.Diff{
 					doubleDiff("/yaml/map",
-						REMOVAL, yml(`---
+						dyff.REMOVAL, yml(`---
 stringB: fOObAr
 intB: 10
 floatB: 2.71
@@ -549,7 +550,7 @@ boolB: false
 mapB: { key0: B, key1: B }
 listB: [ B, B, B ]
 `), nil,
-						ADDITION, nil, yml(`---
+						dyff.ADDITION, nil, yml(`---
 stringY: YAML!
 intY: 147
 floatY: 24.0
@@ -558,27 +559,27 @@ mapY: { key0: Y, key1: Y }
 listY: [ Yo, Yo, Yo ]
 `)),
 
-					singleDiff("/yaml/map/type-change-1", MODIFICATION, "string", 147),
+					singleDiff("/yaml/map/type-change-1", dyff.MODIFICATION, "string", 147),
 
-					singleDiff("/yaml/map/type-change-2", MODIFICATION, "12", 12),
+					singleDiff("/yaml/map/type-change-2", dyff.MODIFICATION, "12", 12),
 
-					singleDiff("/yaml/map/whitespaces", MODIFICATION, "Strings can  have whitespaces.", "Strings can  have whitespaces.\n\n\n"),
+					singleDiff("/yaml/map/whitespaces", dyff.MODIFICATION, "Strings can  have whitespaces.", "Strings can  have whitespaces.\n\n\n"),
 
 					doubleDiff("/yaml/simple-list",
-						REMOVAL, list(`[ X, Z ]`), nil,
-						ADDITION, nil, list(`[ D, E ]`)),
+						dyff.REMOVAL, list(`[ X, Z ]`), nil,
+						dyff.ADDITION, nil, list(`[ D, E ]`)),
 
 					doubleDiff("/yaml/named-entry-list-using-name",
-						REMOVAL, list(`[ {name: X}, {name: Z} ]`), nil,
-						ADDITION, nil, list(`[ {name: D}, {name: E} ]`)),
+						dyff.REMOVAL, list(`[ {name: X}, {name: Z} ]`), nil,
+						dyff.ADDITION, nil, list(`[ {name: D}, {name: E} ]`)),
 
 					doubleDiff("/yaml/named-entry-list-using-key",
-						REMOVAL, list(`[ {key: X}, {key: Z} ]`), nil,
-						ADDITION, nil, list(`[ {key: D}, {key: E} ]`)),
+						dyff.REMOVAL, list(`[ {key: X}, {key: Z} ]`), nil,
+						dyff.ADDITION, nil, list(`[ {key: D}, {key: E} ]`)),
 
 					doubleDiff("/yaml/named-entry-list-using-id",
-						REMOVAL, list(`[ {id: X}, {id: Z} ]`), nil,
-						ADDITION, nil, list(`[ {id: D}, {id: E} ]`)),
+						dyff.REMOVAL, list(`[ {id: X}, {id: Z} ]`), nil,
+						dyff.ADDITION, nil, list(`[ {id: D}, {id: E} ]`)),
 				}
 
 				Expect(results).NotTo(BeNil())
@@ -589,7 +590,7 @@ listY: [ Yo, Yo, Yo ]
 				}
 			})
 
-			It("should return order changes in named entry lists (ignoring additions and removals)", func() {
+			It("should return order changes in named entry lists (ignoring dyff.additions and dyff.removals)", func() {
 				from := yml(`list: [ {name: A}, {name: C}, {name: B}, {name: D}, {name: E} ]`)
 				to := yml(`list: [ {name: A}, {name: X1}, {name: B}, {name: C}, {name: D}, {name: X2} ]`)
 				results, err := compare(from, to)
@@ -597,10 +598,10 @@ listY: [ Yo, Yo, Yo ]
 				Expect(results).NotTo(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(1))
 				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
-				Expect(results[0].Details[0]).To(BeEquivalentTo(Detail{
-					Kind: ORDERCHANGE,
-					From: AsSequenceNode([]string{"A", "C", "B", "D"}),
-					To:   AsSequenceNode([]string{"A", "B", "C", "D"}),
+				Expect(results[0].Details[0]).To(BeEquivalentTo(dyff.Detail{
+					Kind: dyff.ORDERCHANGE,
+					From: dyff.AsSequenceNode([]string{"A", "C", "B", "D"}),
+					To:   dyff.AsSequenceNode([]string{"A", "B", "C", "D"}),
 				}))
 			})
 
@@ -608,14 +609,14 @@ listY: [ Yo, Yo, Yo ]
 				results, err := compare(
 					yml(`list: [ {name: A}, {name: C}, {name: B}, {name: D}, {name: E} ]`),
 					yml(`list: [ {name: A}, {name: B}, {name: C}, {name: D}, {name: E} ]`),
-					IgnoreOrderChanges(true),
+					dyff.IgnoreOrderChanges(true),
 				)
 
 				Expect(err).To(BeNil())
 				Expect(len(results)).To(BeEquivalentTo(0))
 			})
 
-			It("should return order changes in simple lists (ignoring additions and removals)", func() {
+			It("should return order changes in simple lists (ignoring dyff.additions and dyff.removals)", func() {
 				from := yml(`list: [ A, C, B, D, E ]`)
 				to := yml(`list: [ A, X1, B, C, D, X2 ]`)
 				results, err := compare(from, to)
@@ -625,22 +626,22 @@ listY: [ Yo, Yo, Yo ]
 				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
 
 				actual := results[0].Details[0]
-				expected := Detail{
-					Kind: ORDERCHANGE,
-					From: AsSequenceNode([]string{"A", "C", "B", "D"}),
-					To:   AsSequenceNode([]string{"A", "B", "C", "D"}),
+				expected := dyff.Detail{
+					Kind: dyff.ORDERCHANGE,
+					From: dyff.AsSequenceNode([]string{"A", "C", "B", "D"}),
+					To:   dyff.AsSequenceNode([]string{"A", "B", "C", "D"}),
 				}
 
 				Expect(isSameDetail(actual, expected)).To(BeTrue())
 			})
 
 			It("should return all differences between the files with multiple documents", func() {
-				results, err := CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
-				expected := []Diff{
-					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", MODIFICATION, "100m", "1000m"),
-					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/memory", MODIFICATION, "100Mi", "10Gi"),
-					singleDiff("#0/spec/template/spec/containers/name=registry/ports", ADDITION, nil, list(`[ {containerPort: 5001, name: backdoor, protocol: TCP} ]`)),
-					singleDiff("#1/spec/ports", ADDITION, nil, list(`[ {name: backdoor, port: 5001, protocol: TCP} ]`)),
+				results, err := dyff.CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
+				expected := []dyff.Diff{
+					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", dyff.MODIFICATION, "100m", "1000m"),
+					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/memory", dyff.MODIFICATION, "100Mi", "10Gi"),
+					singleDiff("#0/spec/template/spec/containers/name=registry/ports", dyff.ADDITION, nil, list(`[ {containerPort: 5001, name: backdoor, protocol: TCP} ]`)),
+					singleDiff("#1/spec/ports", dyff.ADDITION, nil, list(`[ {name: backdoor, port: 5001, protocol: TCP} ]`)),
 				}
 
 				Expect(err).To(BeNil())
@@ -657,12 +658,12 @@ listY: [ Yo, Yo, Yo ]
 				from := ytbx.InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc("foo: bar", "dead: beef")}
 				to := ytbx.InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc("bar: foo")}
 
-				_, err := CompareInputFiles(from, to)
+				_, err := dyff.CompareInputFiles(from, to)
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("should return differences in named lists even if no standard identifier is used", func() {
-				results, err := CompareInputFiles(
+				results, err := dyff.CompareInputFiles(
 					file("../../assets/prometheus/from.yml"),
 					file("../../assets/prometheus/to.yml"),
 				)
@@ -671,8 +672,8 @@ listY: [ Yo, Yo, Yo ]
 				Expect(results).NotTo(BeNil())
 				Expect(results.Diffs).NotTo(BeNil())
 
-				expected := []Diff{
-					singleDiff("/scrape_configs", ORDERCHANGE,
+				expected := []dyff.Diff{
+					singleDiff("/scrape_configs", dyff.ORDERCHANGE,
 						[]string{
 							"kubernetes-nodes",
 							"kubernetes-apiservers",
@@ -693,12 +694,12 @@ listY: [ Yo, Yo, Yo ]
 						},
 					),
 
-					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/scheme", MODIFICATION,
+					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/scheme", dyff.MODIFICATION,
 						"http",
 						"https",
 					),
 
-					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/relabel_configs/0/regex", MODIFICATION,
+					singleDiff("/scrape_configs/job_name=kubernetes-apiservers/relabel_configs/0/regex", dyff.MODIFICATION,
 						"default;kubernetes;http",
 						"default;kubernetes;https",
 					),
@@ -711,10 +712,10 @@ listY: [ Yo, Yo, Yo ]
 			})
 
 			It("should fail to find the non-standard identifier if the threshold is too high", func() {
-				report, err := CompareInputFiles(
+				report, err := dyff.CompareInputFiles(
 					file("../../assets/prometheus/from.yml"),
 					file("../../assets/prometheus/to.yml"),
-					NonStandardIdentifierGuessCountThreshold(8),
+					dyff.NonStandardIdentifierGuessCountThreshold(8),
 				)
 
 				Expect(err).To(BeNil())
@@ -724,7 +725,7 @@ listY: [ Yo, Yo, Yo ]
 				var orderChangeDiffs = 0
 				for _, diff := range report.Diffs {
 					for _, detail := range diff.Details {
-						if detail.Kind == ORDERCHANGE {
+						if detail.Kind == dyff.ORDERCHANGE {
 							orderChangeDiffs++
 						}
 					}
@@ -736,46 +737,46 @@ listY: [ Yo, Yo, Yo ]
 			It("should filter my report based on set of paths", func() {
 				pathString := "/yaml/map/foobar"
 
-				report := Report{Diffs: []Diff{
-					singleDiff(pathString, ADDITION, nil, "foobar"),
-					singleDiff("/yaml/map/barfoo", ADDITION, nil, "barfoo"),
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff(pathString, dyff.ADDITION, nil, "foobar"),
+					singleDiff("/yaml/map/barfoo", dyff.ADDITION, nil, "barfoo"),
 				}}
 
 				Expect(report.Filter()).To(BeEquivalentTo(report))
-				Expect(report.Filter(pathString)).To(BeEquivalentTo(Report{Diffs: []Diff{
-					singleDiff(pathString, ADDITION, nil, "foobar"),
+				Expect(report.Filter(pathString)).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff(pathString, dyff.ADDITION, nil, "foobar"),
 				}}))
 
-				Expect(report.Filter("/does/not/exist")).To(BeEquivalentTo(Report{}))
+				Expect(report.Filter("/does/not/exist")).To(BeEquivalentTo(dyff.Report{}))
 			})
 
 			It("should filter my report based on set of regular expressions", func() {
 				pathString := "/yaml/map/foobar"
 
-				report := Report{Diffs: []Diff{
-					singleDiff(pathString, ADDITION, nil, "foobar"),
-					singleDiff("/yaml/map/barfoo", ADDITION, nil, "barfoo"),
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff(pathString, dyff.ADDITION, nil, "foobar"),
+					singleDiff("/yaml/map/barfoo", dyff.ADDITION, nil, "barfoo"),
 				}}
 
 				Expect(report.FilterRegexp()).To(BeEquivalentTo(report))
-				Expect(report.FilterRegexp("foobar")).To(BeEquivalentTo(Report{Diffs: []Diff{
-					singleDiff(pathString, ADDITION, nil, "foobar"),
+				Expect(report.FilterRegexp("foobar")).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff(pathString, dyff.ADDITION, nil, "foobar"),
 				}}))
 
-				Expect(report.FilterRegexp("/does/not/exist")).To(BeEquivalentTo(Report{}))
+				Expect(report.FilterRegexp("/does/not/exist")).To(BeEquivalentTo(dyff.Report{}))
 			})
 
 			It("should exclude my report based on regular expressions", func() {
 				pathString := "/yaml/map/foobar"
 
-				report := Report{Diffs: []Diff{
-					singleDiff(pathString, ADDITION, nil, "foobar"),
-					singleDiff("/yaml/map/barfoo", ADDITION, nil, "barfoo"),
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff(pathString, dyff.ADDITION, nil, "foobar"),
+					singleDiff("/yaml/map/barfoo", dyff.ADDITION, nil, "barfoo"),
 				}}
 
 				Expect(report.ExcludeRegexp()).To(BeEquivalentTo(report))
-				Expect(report.ExcludeRegexp("barfoo")).To(BeEquivalentTo(Report{Diffs: []Diff{
-					singleDiff(pathString, ADDITION, nil, "foobar"),
+				Expect(report.ExcludeRegexp("barfoo")).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff(pathString, dyff.ADDITION, nil, "foobar"),
 				}}))
 
 				Expect(report.ExcludeRegexp("/does/not/exist")).To(BeEquivalentTo(report))
@@ -797,17 +798,17 @@ b: bar
 ]
 }`)}
 
-				err := ChangeRoot(&to, "/items", false, true)
+				err := dyff.ChangeRoot(&to, "/items", false, true)
 				if err != nil {
 					Fail(err.Error())
 				}
 
-				results, err := CompareInputFiles(from, to)
+				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).To(BeNil())
 
-				expected := []Diff{
-					singleDiff("#0/a", MODIFICATION, "foo", "Foo"),
-					singleDiff("#1/b", MODIFICATION, "bar", "Bar"),
+				expected := []dyff.Diff{
+					singleDiff("#0/a", dyff.MODIFICATION, "foo", "Foo"),
+					singleDiff("#1/b", dyff.MODIFICATION, "bar", "Bar"),
 				}
 
 				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
@@ -824,19 +825,19 @@ b: bar
 					assets("kubernetes-lists", "to.yml"),
 				)
 
-				results, err := CompareInputFiles(from, to, KubernetesEntityDetection(true))
+				results, err := dyff.CompareInputFiles(from, to, dyff.KubernetesEntityDetection(true))
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(len(results.Diffs)).To(BeEquivalentTo(2))
 				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
 					"#0/items",
-					ORDERCHANGE,
-					AsSequenceNode([]string{"foo-2", "foo-1"}),
-					AsSequenceNode([]string{"foo-1", "foo-2"}),
+					dyff.ORDERCHANGE,
+					dyff.AsSequenceNode([]string{"foo-2", "foo-1"}),
+					dyff.AsSequenceNode([]string{"foo-1", "foo-2"}),
 				)))
 				Expect(results.Diffs[1]).To(BeSameDiffAs(singleDiff(
 					"/items/metadata.name=foo-1/metadata/labels/foo",
-					MODIFICATION,
+					dyff.MODIFICATION,
 					"bAr",
 					"bar",
 				)))
@@ -850,7 +851,7 @@ b: bar
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())
 
-				results, err := CompareInputFiles(from, to)
+				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
@@ -863,7 +864,7 @@ b: bar
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())
 
-				results, err := CompareInputFiles(from, to)
+				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
@@ -876,7 +877,7 @@ b: bar
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())
 
-				results, err := CompareInputFiles(from, to)
+				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
@@ -890,7 +891,7 @@ b: bar
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())
 
-				results, err := CompareInputFiles(from, to)
+				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 				Expect(len(results.Diffs)).ToNot(BeZero())
@@ -900,16 +901,16 @@ b: bar
 				from := ytbx.InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc(`{ "keys": [ "value1", "value2", "value1", "value2" ] }`)}
 				to := ytbx.InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc(`{ "keys": [ "value1", "value1", "value2", "value2" ] }`)}
 
-				results, err := CompareInputFiles(from, to)
+				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
 				Expect(len(results.Diffs)).To(Equal(1))
 				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
 					"/keys",
-					ORDERCHANGE,
-					AsSequenceNode([]string{"value1", "value2", "value1", "value2"}),
-					AsSequenceNode([]string{"value1", "value1", "value2", "value2"}),
+					dyff.ORDERCHANGE,
+					dyff.AsSequenceNode([]string{"value1", "value2", "value1", "value2"}),
+					dyff.AsSequenceNode([]string{"value1", "value1", "value2", "value2"}),
 				)))
 			})
 
@@ -919,12 +920,12 @@ b: bar
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())
 
-				results, err := CompareInputFiles(from, to, IgnoreOrderChanges(false))
+				results, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(false))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 				Expect(len(results.Diffs)).ToNot(BeZero())
 
-				results, err = CompareInputFiles(from, to, IgnoreOrderChanges(true))
+				results, err = dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(true))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 				Expect(len(results.Diffs)).To(BeZero())
@@ -938,7 +939,7 @@ b: bar
 				Expect(from).ToNot(BeNil())
 				Expect(to).ToNot(BeNil())
 
-				results, err := CompareInputFiles(from, to)
+				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
@@ -961,12 +962,12 @@ b: bar
 					),
 				}
 
-				result, err := CompareInputFiles(from, to)
+				result, err := dyff.CompareInputFiles(from, to)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(len(result.Diffs)).To(Equal(1))
 				Expect(len(result.Diffs[0].Details)).To(Equal(1))
-				Expect(result.Diffs[0].Details[0].Kind).To(Equal(ADDITION))
+				Expect(result.Diffs[0].Details[0].Kind).To(Equal(dyff.ADDITION))
 			})
 
 			It("should report that a document was removed", func() {
@@ -985,12 +986,12 @@ b: bar
 					),
 				}
 
-				result, err := CompareInputFiles(from, to)
+				result, err := dyff.CompareInputFiles(from, to)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(len(result.Diffs)).To(Equal(1))
 				Expect(len(result.Diffs[0].Details)).To(Equal(1))
-				Expect(result.Diffs[0].Details[0].Kind).To(Equal(REMOVAL))
+				Expect(result.Diffs[0].Details[0].Kind).To(Equal(dyff.REMOVAL))
 			})
 
 			It("should omit nil/empty documents", func() {
@@ -1012,7 +1013,7 @@ b: bar
 					),
 				}
 
-				result, err := CompareInputFiles(from, to)
+				result, err := dyff.CompareInputFiles(from, to)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Diffs).To(HaveLen(0))
 			})

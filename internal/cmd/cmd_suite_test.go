@@ -23,7 +23,6 @@ package cmd_test
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,7 +30,7 @@ import (
 	. "github.com/gonvenience/bunt"
 	"github.com/gonvenience/text"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	. "github.com/homeport/dyff/internal/cmd"
@@ -47,7 +46,7 @@ func createTestFile(input string) string {
 }
 
 func createTestFileInDir(dir string, input string) string {
-	file, err := ioutil.TempFile(dir, "some-file-name")
+	file, err := os.CreateTemp(dir, "some-file-name")
 	Expect(err).To(BeNil())
 
 	_, err = file.Write([]byte(input))

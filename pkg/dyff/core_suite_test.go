@@ -24,7 +24,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -32,16 +31,16 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
-
-	. "github.com/homeport/dyff/pkg/dyff"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/ytbx"
 	yamlv3 "gopkg.in/yaml.v3"
+
+	"github.com/homeport/dyff/pkg/dyff"
 )
 
 func TestCore(t *testing.T) {
@@ -113,18 +112,18 @@ func (matcher *extendedStringMatcher) NegatedFailureMessage(actual interface{}) 
 	)
 }
 
-func compareAgainstExpected(fromPath string, toPath string, expectedPath string, useGoPatchPaths bool, compareOptions ...CompareOption) {
+func compareAgainstExpected(fromPath string, toPath string, expectedPath string, useGoPatchPaths bool, compareOptions ...dyff.CompareOption) {
 	from, to, err := ytbx.LoadFiles(fromPath, toPath)
 	Expect(err).To(BeNil())
 
-	rawBytes, err := ioutil.ReadFile(expectedPath)
+	rawBytes, err := os.ReadFile(expectedPath)
 	Expect(err).To(BeNil())
 
-	report, err := CompareInputFiles(from, to, compareOptions...)
+	report, err := dyff.CompareInputFiles(from, to, compareOptions...)
 	Expect(report).ToNot(BeNil())
 	Expect(err).To(BeNil())
 
-	reportWriter := &HumanReport{
+	reportWriter := &dyff.HumanReport{
 		Report:            report,
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
@@ -222,9 +221,9 @@ func path(path string) *ytbx.Path {
 	return &result
 }
 
-func humanDiff(diff Diff) string {
-	reporter := HumanReport{
-		Report:            Report{Diffs: []Diff{diff}},
+func humanDiff(diff dyff.Diff) string {
+	reporter := dyff.HumanReport{
+		Report:            dyff.Report{Diffs: []dyff.Diff{diff}},
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
 		OmitHeader:        true,
@@ -248,7 +247,7 @@ func nodify(obj interface{}) *yamlv3.Node {
 		return tobj
 
 	case []string:
-		return AsSequenceNode(tobj)
+		return dyff.AsSequenceNode(tobj)
 
 	case string:
 		return &yamlv3.Node{
@@ -283,10 +282,10 @@ func nodify(obj interface{}) *yamlv3.Node {
 	return nil
 }
 
-func singleDiff(p string, change rune, from, to interface{}) Diff {
-	return Diff{
+func singleDiff(p string, change rune, from, to interface{}) dyff.Diff {
+	return dyff.Diff{
 		Path: path(p),
-		Details: []Detail{
+		Details: []dyff.Detail{
 			{
 				Kind: change,
 				From: nodify(from),
@@ -296,10 +295,10 @@ func singleDiff(p string, change rune, from, to interface{}) Diff {
 	}
 }
 
-func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, from2, to2 interface{}) Diff {
-	return Diff{
+func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, from2, to2 interface{}) dyff.Diff {
+	return dyff.Diff{
 		Path: path(p),
-		Details: []Detail{
+		Details: []dyff.Detail{
 			{
 				Kind: change1,
 				From: nodify(from1),
@@ -314,8 +313,8 @@ func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, fr
 	}
 }
 
-func compare(from *yamlv3.Node, to *yamlv3.Node, compareOptions ...CompareOption) ([]Diff, error) {
-	report, err := CompareInputFiles(
+func compare(from *yamlv3.Node, to *yamlv3.Node, compareOptions ...dyff.CompareOption) ([]dyff.Diff, error) {
+	report, err := dyff.CompareInputFiles(
 		ytbx.InputFile{Documents: []*yamlv3.Node{from}},
 		ytbx.InputFile{Documents: []*yamlv3.Node{to}},
 		compareOptions...,
@@ -328,18 +327,18 @@ func compare(from *yamlv3.Node, to *yamlv3.Node, compareOptions ...CompareOption
 	return report.Diffs, nil
 }
 
-func BeSameDiffAs(expected Diff) types.GomegaMatcher {
+func BeSameDiffAs(expected dyff.Diff) types.GomegaMatcher {
 	return &diffMatcher{
 		expected: expected,
 	}
 }
 
 type diffMatcher struct {
-	expected Diff
+	expected dyff.Diff
 }
 
 func (matcher *diffMatcher) Match(actual interface{}) (success bool, err error) {
-	actualDiff, ok := actual.(Diff)
+	actualDiff, ok := actual.(dyff.Diff)
 	if !ok {
 		return false, fmt.Errorf("BeSameDiffAs matcher expected a object of type Diff, not %T", actual)
 	}
@@ -360,7 +359,7 @@ func (matcher *diffMatcher) NegatedFailureMessage(actual interface{}) string {
 	)
 }
 
-func isSameDiff(a, b Diff) (bool, error) {
+func isSameDiff(a, b dyff.Diff) (bool, error) {
 	if a.Path.ToGoPatchStyle() != b.Path.ToGoPatchStyle() {
 		return false, nil
 	}
@@ -378,7 +377,7 @@ func isSameDiff(a, b Diff) (bool, error) {
 	return true, nil
 }
 
-func isSameDetail(a, b Detail) (bool, error) {
+func isSameDetail(a, b dyff.Detail) (bool, error) {
 	if a.Kind != b.Kind {
 		return false, nil
 	}
