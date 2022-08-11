@@ -25,7 +25,7 @@ all: clean test
 
 .PHONY: clean
 clean:
-	@rm -rf dist internal/cmd/cmd.coverprofile pkg/dyff/dyff.coverprofile
+	@rm -rf dist unit.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
 .PHONY: ginkgo
