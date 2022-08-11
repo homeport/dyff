@@ -127,7 +127,7 @@ It is [available in the `snapcraft` store](https://snapcraft.io/dyff) in the Pro
 snap install dyff
 ```
 
-_Please note:_ Since `dyff` needs use `strict` confinement to manual clearance, there are some limits to its usage. Most notably, users reported that in strict confinement reading file from the temporary directory does not work. This makes it impossible to use it in the `kubectl diff` use case. Consider using `brew`, or pre-built binaries instead.
+_Please note:_ Since `dyff` needs to use `strict` confinement due to otherwise manual clearance requirements, there are some limits to its usage. Most notably, users reported that in `strict` confinement reading files from the temporary directory does not work. This makes it impossible to use it in the `kubectl diff` use case. Consider using `brew`, or pre-built binaries instead.
 
 ### Pre-built binaries in GitHub
 
