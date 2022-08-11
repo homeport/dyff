@@ -23,12 +23,12 @@ package dyff_test
 import (
 	"fmt"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/gonvenience/bunt"
+	"github.com/homeport/dyff/pkg/dyff"
 
-	. "github.com/homeport/dyff/pkg/dyff"
+	. "github.com/gonvenience/bunt"
 )
 
 var _ = Describe("general output tests", func() {
@@ -53,7 +53,7 @@ Miss Foobar`
 40000
 500000`
 
-			Expect(CreateTableStyleString("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(`
+			Expect(dyff.CreateTableStyleString("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(`
 #1  Mr. Foobar   10
 #2  Mrs. Foobar  200
 #3  Miss Foobar  3000
@@ -84,7 +84,7 @@ Miss Foobar`
 40000
 500000`
 
-			Expect(CreateTableStyleString("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(fmt.Sprintf(`
+			Expect(dyff.CreateTableStyleString("  ", 0, stringA, stringB, stringC)).To(BeEquivalentTo(fmt.Sprintf(`
 %s  Mr. Foobar   10
 %s  Mrs. Foobar  200
 %s  Miss Foobar  3000

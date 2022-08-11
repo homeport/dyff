@@ -28,39 +28,19 @@ clean:
 	@rm -rf dist internal/cmd/cmd.coverprofile pkg/dyff/dyff.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
-.PHONY: fmt
-fmt: $(sources)
-	@GO111MODULE=on gofmt -s -w $(sources)
-	@GO111MODULE=on goimports -w $(sources)
-
-.PHONY: vet
-vet:
-	@GO111MODULE=on go vet $(shell go list ./...)
-
-.PHONY: lint
-lint:
-	@GO111MODULE=on golint -set_exit_status $(shell go list ./...)
-
-.PHONY: gocyclo
-gocyclo:
-	@GO111MODULE=on gocyclo -over 20 $(sources)
-
-.PHONY: misspell
-misspell:
-	@misspell -error README.md $(sources)
-
 .PHONY: ginkgo
 ginkgo:
-	@ginkgo \
-		-r \
-		-randomizeAllSpecs \
-		-randomizeSuites \
-		-failOnPending \
-		-trace \
-		-race \
-		-nodes=4 \
-		-compilers=2 \
-		-cover
+	@ginkgo run \
+	  --coverprofile=unit.coverprofile \
+	  --randomize-all \
+	  --randomize-suites \
+	  --fail-on-pending \
+	  --keep-going \
+	  --slow-spec-threshold=4m \
+	  --compilers=2 \
+	  --race \
+	  --trace \
+	  ./...
 
 .PHONY: test
-test: vet lint gocyclo misspell ginkgo
+test: ginkgo
