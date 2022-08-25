@@ -40,6 +40,7 @@ type compareSettings struct {
 	NonStandardIdentifierGuessCountThreshold int
 	IgnoreOrderChanges                       bool
 	KubernetesEntityDetection                bool
+	AdditionalIdentifiers                    []ListItemIdentifierField
 }
 
 type compare struct {
@@ -49,10 +50,20 @@ type compare struct {
 // ListItemIdentifierField names the field that identifies a list.
 type ListItemIdentifierField string
 
+// AdditionalIdentifiers specifies additional identifiers that will be
+// used as the key for matcing maps from source to target.
+func AdditionalIdentifiers(ids ...string) CompareOption {
+	return func(settings *compareSettings) {
+		for _, i := range ids {
+			settings.AdditionalIdentifiers = append(settings.AdditionalIdentifiers, ListItemIdentifierField(i))
+		}
+	}
+}
+
 // NonStandardIdentifierGuessCountThreshold specifies how many list entries are
 // needed for the guess-the-identifier function to actually consider the key
 // name. Or in short, if the lists only contain two entries each, there are more
-// possibilities to find unique enough key, which might no qualify as such.
+// possibilities to find unique enough key, which might not qualify as such.
 func NonStandardIdentifierGuessCountThreshold(nonStandardIdentifierGuessCountThreshold int) CompareOption {
 	return func(settings *compareSettings) {
 		settings.NonStandardIdentifierGuessCountThreshold = nonStandardIdentifierGuessCountThreshold
@@ -63,7 +74,6 @@ func NonStandardIdentifierGuessCountThreshold(nonStandardIdentifierGuessCountThr
 func IgnoreOrderChanges(value bool) CompareOption {
 	return func(settings *compareSettings) {
 		settings.IgnoreOrderChanges = value
-
 	}
 }
 
@@ -71,7 +81,6 @@ func IgnoreOrderChanges(value bool) CompareOption {
 func KubernetesEntityDetection(value bool) CompareOption {
 	return func(settings *compareSettings) {
 		settings.KubernetesEntityDetection = value
-
 	}
 }
 
@@ -784,6 +793,7 @@ func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentif
 
 func (compare *compare) listItemIdentifierCandidates() []ListItemIdentifierField {
 	var candidates = []ListItemIdentifierField{"name", "key", "id"}
+	candidates = append(compare.settings.AdditionalIdentifiers, candidates...)
 
 	// Add Kubernetes specific extra candidate
 	if compare.settings.KubernetesEntityDetection {

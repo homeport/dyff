@@ -1018,5 +1018,31 @@ b: bar
 				Expect(result.Diffs).To(HaveLen(0))
 			})
 		})
+
+		Context("input files containing complex objects with custom keys", func() {
+			It("cannot determine the keys through heuristics", func() {
+				from, to, err := ytbx.LoadFiles(assets("issues", "issue-243", "to.yml"), assets("issues", "issue-243", "from.yml"))
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(true))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(len(results.Diffs)).ToNot(Equal(0))
+			})
+
+			It("accurately reports no differences when keys are given", func() {
+				from, to, err := ytbx.LoadFiles(assets("issues", "issue-243", "to.yml"), assets("issues", "issue-243", "from.yml"))
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(true), dyff.AdditionalIdentifiers("branch"))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(len(results.Diffs)).To(Equal(0))
+			})
+		})
 	})
 })
