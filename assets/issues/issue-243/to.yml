@@ -1,0 +1,112 @@
+project_id: 66800
+info:
+    members:
+        users:
+            - id: 13509
+              name: User3
+              maxrole: 30
+            - id: 552
+              name: User1
+              maxrole: 40
+            - id: 12141
+              name: User2
+              maxrole: 20
+        groups:
+            - id: 41866
+              name: approvers
+              maxrole: 30
+            - id: 41865
+              name: maintainers
+              maxrole: 40
+            - id: 3857
+              name: all
+              maxrole: 30
+            - id: 16951
+              name: developers
+              maxrole: 30
+general:
+    visibility:
+        public: false
+        visibility: internal
+        issuesaccesslevel: disabled
+        analyticsaccesslevel: enabled
+        securityandcomplianceaccesslevel: private
+        wikiaccesslevel: disabled
+        snippetsaccesslevel: disabled
+        mergerequestsaccesslevel: enabled
+        requestaccessenabled: false
+    mergerequests:
+        mergerequestsenabled: true
+        mergemethod: ff
+        mergepipelinesenabled: true
+        mergetrainsenabled: false
+        resolveoutdateddiffdiscussions: true
+        printingmergerequestlinkenabled: true
+        removesourcebranchaftermerge: true
+        squashoption: default_on
+        onlyallowmergeifpipelinesucceeds: true
+        allowmergeonskippedpipeline: false
+        onlyallowmergeifalldiscussionsareresolved: true
+        mergecommittemplate: ""
+        squashcommittemplate: ""
+    mergerequestapprovals:
+        mergerequestsauthorapproval: false
+        mergerequestsdisablecommittersapproval: false
+        disableoverridingapproverspermergerequest: true
+        requirepasswordtoapprove: false
+        resetapprovalsonpush: false
+        approvalrules:
+            - name: Git Approvers
+              users: []
+              groups:
+                - developers
+              targetbranch: []
+              required: 1
+repository:
+    defaultbranch:
+        defaultbranch: main
+        autoclosereferencedissues: true
+    pushrules:
+        membercheck: true
+        rejectunsignedcommits: false
+        denydeletetag: true
+        commitcommittercheck: true
+        preventsecrets: true
+        branchnameregex: ^(feature|topic)\/.+
+        filenameregex: (jar|exe)$
+        maxfilesize: 1
+    protectedbranches:
+        - branch: main
+          allowedtomerge:
+            - level: 40
+              name: developers
+          allowedtopush:
+            - level: 40
+              name: Build Systems
+            - level: 0
+              name: No one
+          allowedtoforcepush: false
+          codeownerapproval: true
+        - branch: go1.17-boringcrypto
+          allowedtomerge:
+            - level: 40
+              name: developers
+          allowedtopush:
+            - level: 40
+              name: Build Systems
+            - level: 0
+              name: No one
+          allowedtoforcepush: false
+          codeownerapproval: true
+    protectedtags: []
+cicd:
+    generalpipelines:
+        publicpipelines: false
+        autocancelredundantpipelines: enabled
+        gitstrategy: fetch
+        buildtimeout: 3600
+        buildcoverageregex: ""
+    runners: []
+    artifacts:
+        keepartifacts: true
+    variables: []
