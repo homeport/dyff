@@ -792,7 +792,10 @@ func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentif
 }
 
 func (compare *compare) listItemIdentifierCandidates() []ListItemIdentifierField {
+	// Set default candidates that are most widly used
 	var candidates = []ListItemIdentifierField{"name", "key", "id"}
+
+	// Add user supplied additional candidates (taking precedence over defaults)
 	candidates = append(compare.settings.AdditionalIdentifiers, candidates...)
 
 	// Add Kubernetes specific extra candidate

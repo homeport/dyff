@@ -47,6 +47,7 @@ type reportConfig struct {
 	exitWithCode              bool
 	omitHeader                bool
 	useGoPatchPaths           bool
+	additionalIdentifiers     []string
 	filters                   []string
 	excludes                  []string
 	filterRegexps             []string
@@ -62,6 +63,7 @@ var defaults = reportConfig{
 	exitWithCode:              false,
 	omitHeader:                false,
 	useGoPatchPaths:           false,
+	additionalIdentifiers:     nil,
 	filters:                   nil,
 	excludes:                  nil,
 	filterRegexps:             nil,
@@ -74,6 +76,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	// Compare options
 	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", defaults.ignoreOrderChanges, "ignore order changes in lists")
 	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", defaults.kubernetesEntityDetection, "detect kubernetes entities")
+	cmd.Flags().StringArrayVar(&reportOptions.additionalIdentifiers, "additional-identifier", defaults.additionalIdentifiers, "use additional identifier candidates in named entry lists")
 	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", defaults.filters, "filter reports to a subset of differences based on supplied arguments")
 	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", defaults.excludes, "exclude reports from a set of differences based on supplied arguments")
 	cmd.Flags().StringSliceVar(&reportOptions.filterRegexps, "filter-regexp", defaults.filterRegexps, "filter reports to a subset of differences based on supplied regular expressions")
