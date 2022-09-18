@@ -573,6 +573,12 @@ spec.replicas  (Deployment/default/test)
 
 `))
 		})
+
+		It("should accept additional identifier candidates for named-entry list processing", func() {
+			out, err := dyff("between", "--additional-identifier=branch", "--ignore-order-changes", "--omit-header", assets("issues", "issue-243", "from.yml"), assets("issues", "issue-243", "to.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo("\n"))
+		})
 	})
 
 	Context("last-applied command", func() {
