@@ -1,5 +1,5 @@
 ---
-name: tests
+name: golangci-lint
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    name: tests
+    name: golangci-lint
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go
@@ -27,13 +27,7 @@ jobs:
     - name: Build source code
       run: go build ./...
 
-    - name: Run Unit Tests
-      run: make test
-
-    - name: Upload Code Coverage Profile
-      uses: codecov/codecov-action@v1
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
       with:
-        files: ./*.coverprofile
-        flags: unittests
-        fail_ci_if_error: true
-        verbose: false
+        only-new-issues: true
