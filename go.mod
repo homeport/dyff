@@ -13,7 +13,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/onsi/ginkgo/v2 v2.3.0
-	github.com/onsi/gomega v1.21.1
+	github.com/onsi/gomega v1.22.1
 	github.com/sergi/go-diff v1.2.0
 	github.com/spf13/cobra v1.6.0
 	github.com/texttheater/golang-levenshtein v1.0.1
@@ -22,9 +22,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.0 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/mattn/go-ciede2000 v0.0.0-20170301095244-782e8c62fec3 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
@@ -37,6 +35,5 @@ require (
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.8 // indirect
-	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
