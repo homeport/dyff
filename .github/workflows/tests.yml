@@ -28,7 +28,9 @@ jobs:
       run: go build ./...
 
     - name: Run Unit Tests
-      run: make test
+      run: |
+        go get -t github.com/onsi/ginkgo/v2/ginkgo/...@$(grep github.com/onsi/ginkgo/v2 go.mod | awk '{ print $2 }')
+        make test
 
     - name: Upload Code Coverage Profile
       uses: codecov/codecov-action@v1
