@@ -30,6 +30,7 @@ clean:
 
 .PHONY: ginkgo
 ginkgo:
+	@go get github.com/onsi/ginkgo/v2/ginkgo/...
 	@go run github.com/onsi/ginkgo/v2/ginkgo \
 	  --coverprofile=unit.coverprofile \
 	  --randomize-all \
