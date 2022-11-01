@@ -15,7 +15,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.3.0
 	github.com/onsi/gomega v1.21.1
 	github.com/sergi/go-diff v1.2.0
-	github.com/spf13/cobra v1.6.0
+	github.com/spf13/cobra v1.6.1
 	github.com/texttheater/golang-levenshtein v1.0.1
 	gopkg.in/yaml.v3 v3.0.1
 )
