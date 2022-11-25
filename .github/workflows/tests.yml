@@ -1,5 +1,5 @@
 ---
-name: tests
+name: Tests
 
 on:
   push:
@@ -13,29 +13,29 @@ on:
 
 jobs:
   build:
-    name: tests
+    name: Tests
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: 1.18.x
+        go-version: 1.19.x
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
 
-    - name: Build source code
+    - name: Build
       run: go build ./...
 
-    - name: Run Unit Tests
+    - name: Test
       run: |
-        go get -t github.com/onsi/ginkgo/v2/ginkgo/...@$(grep github.com/onsi/ginkgo/v2 go.mod | awk '{ print $2 }')
+        go install github.com/onsi/ginkgo/v2/ginkgo
         make test
 
     - name: Upload Code Coverage Profile
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
-        files: ./*.coverprofile
+        files: unit.coverprofile
         flags: unittests
         fail_ci_if_error: true
         verbose: false

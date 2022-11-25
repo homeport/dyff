@@ -28,19 +28,18 @@ clean:
 	@rm -rf dist unit.coverprofile
 	@go clean -i -cache $(shell go list ./...)
 
-.PHONY: ginkgo
-ginkgo:
-	@go run github.com/onsi/ginkgo/v2/ginkgo \
+.PHONY: test
+test:
+	@ginkgo run \
 	  --coverprofile=unit.coverprofile \
 	  --randomize-all \
 	  --randomize-suites \
 	  --fail-on-pending \
 	  --keep-going \
-	  --slow-spec-threshold=4m \
 	  --compilers=2 \
 	  --race \
 	  --trace \
 	  ./...
 
-.PHONY: test
-test: ginkgo
+.PHONY: ginkgo
+ginkgo: test
