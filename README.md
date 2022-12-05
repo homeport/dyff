@@ -155,7 +155,7 @@ _Please note:_ This will install `dyff` based on the latest available code base.
 
 We are happy to have other people contributing to the project. If you decide to do that, here's how to:
 
-- get Go (`dyff` requires Go version 1.18 or greater)
+- get Go (`dyff` requires Go version 1.19 or greater)
 - fork the project
 - create a new branch
 - make your changes
