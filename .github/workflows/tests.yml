@@ -29,7 +29,7 @@ jobs:
 
     - name: Test
       run: |
-        go install github.com/onsi/ginkgo/v2/ginkgo
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
         make test
 
     - name: Upload Code Coverage Profile
