@@ -22,7 +22,10 @@ package cmd_test
 
 import (
 	"fmt"
+	dyff2 "github.com/homeport/dyff/pkg/dyff"
+	yamlv3 "gopkg.in/yaml.v3"
 	"os"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -579,6 +582,88 @@ spec.replicas  (Deployment/default/test)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo("\n"))
 		})
+
+		It("should create a patch file when requested", func() {
+			from := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"aaa":"bbb","name":"two"}]}`)
+			defer os.Remove(to)
+
+			_, err := dyff("between", "--generate-patch", "--patch-file=patch.txt", from, to)
+			Expect(err).ToNot(HaveOccurred())
+			defer os.Remove("patch.txt")
+
+			out, err := os.ReadFile("patch.txt")
+			Expect(err).ToNot(HaveOccurred())
+
+			var p []dyff2.PatchOp
+			err = yamlv3.Unmarshal(out, &p)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(p).To(HaveLen(2))
+			Expect(p[0].Op).To(Equal("remove"))
+			Expect(p[1].Op).To(Equal("add"))
+		})
+	})
+
+	Context("apply-patch command", func() {
+		It("should apply a patch successfully and write output to a file", func() {
+			type testdoc struct {
+				Foo string
+			}
+
+			from := createTestFile(`{"foo":"bar"}`)
+			defer os.Remove(from)
+
+			patch := createTestFile(`- op: replace
+  fromkind: scalar
+  tokind: scalar
+  path: /foo
+  tovalue: abc
+  fromvalue: bar`)
+			defer os.Remove(patch)
+
+			_, err := dyff("apply-patch", "--output=out.yml", patch, from)
+			Expect(err).ToNot(HaveOccurred())
+			defer os.Remove("out.yml")
+
+			d, err := os.ReadFile("out.yml")
+			Expect(err).ToNot(HaveOccurred())
+
+			var td testdoc
+			err = yamlv3.Unmarshal(d, &td)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(td.Foo).To(Equal("abc"))
+		})
+
+		It("should apply a patch successfully and write output to stdout if requested", func() {
+			type testdoc struct {
+				Foo string
+			}
+
+			from := createTestFile(`{"foo":"bar"}`)
+			defer os.Remove(from)
+
+			patch := createTestFile(`- op: replace
+  fromkind: scalar
+  tokind: scalar
+  path: /foo
+  tovalue: abc
+  fromvalue: bar`)
+			defer os.Remove(patch)
+
+			out, err := dyff("apply-patch", "--output=-", patch, from)
+			Expect(err).ToNot(HaveOccurred())
+
+			var td testdoc
+			err = yamlv3.Unmarshal([]byte(strings.TrimSpace(out)), &td)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(td.Foo).To(Equal("abc"))
+		})
+		
 	})
 
 	Context("last-applied command", func() {
