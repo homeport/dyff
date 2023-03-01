@@ -21,11 +21,13 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
-	"github.com/spf13/cobra"
-
 	"github.com/homeport/dyff/pkg/dyff"
+	"github.com/spf13/cobra"
+	yamlv3 "gopkg.in/yaml.v3"
+	"os"
 )
 
 type betweenCmdOptions struct {
@@ -34,6 +36,8 @@ type betweenCmdOptions struct {
 	chroot                   string
 	chrootFrom               string
 	chrootTo                 string
+	genPatch                 bool
+	patchfile                string
 }
 
 var betweenCmdSettings betweenCmdOptions
@@ -109,7 +113,31 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			report = report.ExcludeRegexp(reportOptions.excludeRegexps...)
 		}
 
-		return writeReport(cmd, report)
+		if err := writeReport(cmd, report); err != nil {
+			return err
+		}
+
+		if betweenCmdSettings.genPatch {
+			p, err := dyff.GeneratePatch(&report)
+			if err != nil {
+				return wrap.Errorf(err, "error generating patch")
+			}
+			pm, err := yamlv3.Marshal(p)
+			if err != nil {
+				return wrap.Errorf(err, "error marshaling patch")
+			}
+
+			if betweenCmdSettings.patchfile == "-" {
+				fmt.Printf("%s\n", pm)
+			} else {
+				err := os.WriteFile(betweenCmdSettings.patchfile, pm, 0644)
+				if err != nil {
+					return wrap.Errorf(err, "error writing patch file")
+				}
+			}
+		}
+
+		return nil
 	},
 }
 
@@ -126,4 +154,6 @@ func init() {
 	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
 	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
 	betweenCmd.Flags().BoolVar(&betweenCmdSettings.translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
+	betweenCmd.Flags().BoolVar(&betweenCmdSettings.genPatch, "generate-patch", false, "generate patch")
+	betweenCmd.Flags().StringVar(&betweenCmdSettings.patchfile, "patch-file", "patch.txt", "patch output filename (use - for stdout)")
 }
