@@ -4,6 +4,6 @@ updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-    interval: weekly
+    interval: daily
   open-pull-requests-limit: 10
   target-branch: main
