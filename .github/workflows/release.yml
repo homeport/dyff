@@ -23,9 +23,9 @@ jobs:
       - name: Setup Snapcraft
         run: |
           sudo snap install snapcraft --classic
-          snapcraft login --with - <<<"${SNAP_TOKEN}"
+          snapcraft login
         env:
-          SNAP_TOKEN: ${{ secrets.SNAP_LOGIN }}
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
           SNAPCRAFT_BUILD_ENVIRONMENT: host
 
       - name: Run GoReleaser
