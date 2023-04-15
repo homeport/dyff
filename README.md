@@ -183,7 +183,7 @@ ginkgo run ./...
 Create binaries:
 
 ```bash
-goreleaser build --rm-dist --snapshot
+goreleaser build --clean --snapshot
 ```
 
 ## License

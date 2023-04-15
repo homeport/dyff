@@ -3,6 +3,7 @@ builds:
   - env:
     - CGO_ENABLED=0
     goos:
+    - windows
     - linux
     - darwin
     goarch:
@@ -14,11 +15,6 @@ builds:
     ldflags:
     - -s -w -extldflags "-static" -X github.com/homeport/dyff/internal/cmd.version={{.Version}}
     mod_timestamp: '{{ .CommitTimestamp }}'
-
-archives:
-- replacements:
-    darwin: darwin
-    linux: linux
 
 checksum:
   name_template: 'checksums.txt'
