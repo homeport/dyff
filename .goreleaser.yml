@@ -50,16 +50,3 @@ brews:
   skip_upload: false
   test: |
     system "#{bin}/dyff version"
-
-snapcrafts:
-- id: dyff
-  publish: true
-  summary: "YAML diff tool"
-  description: "δyƒƒ /ˈdʏf/ - A diff tool for YAML files, and sometimes JSON"
-  grade: stable
-  confinement: strict
-  license: MIT
-  base: bare
-  apps:
-    dyff:
-      plugs: ["home", "network"]
