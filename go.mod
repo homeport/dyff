@@ -12,7 +12,7 @@ require (
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/onsi/ginkgo/v2 v2.9.2
+	github.com/onsi/ginkgo/v2 v2.9.3
 	github.com/onsi/gomega v1.27.6
 	github.com/sergi/go-diff v1.3.1
 	github.com/spf13/cobra v1.7.0
