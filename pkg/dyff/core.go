@@ -21,6 +21,7 @@
 package dyff
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -47,8 +48,53 @@ type compare struct {
 	settings compareSettings
 }
 
-// ListItemIdentifierField names the field that identifies a list.
+// ListItemIdentifier identifies an item in a list
+type ListItemIdentifier interface {
+	// Identify returns a unique identifier for a node
+	Identify(*yamlv3.Node) (string, error)
+}
+
+// ListItemIdentifierField names the field that identifies a list item
 type ListItemIdentifierField string
+
+func (fieldID ListItemIdentifierField) Identify(node *yamlv3.Node) (string, error) {
+	return nameFromPath(node, fieldID)
+}
+
+// CompositeItemIdentifierField names a set of fields that collectively identify a list item
+type CompositeItemIdentifierField []ListItemIdentifierField
+
+func (compositeID CompositeItemIdentifierField) Identify(node *yamlv3.Node) (string, error) {
+	if len(compositeID) == 0 {
+		return "", errors.New("a list item ID must have more than one field")
+	}
+
+	nonNilParts := 0
+	var parts []string
+	for _, field := range compositeID {
+		value, err := field.Identify(node)
+		if err != nil {
+			parts = append(parts, "")
+			continue
+		}
+		nonNilParts++
+		parts = append(parts, value)
+	}
+
+	if nonNilParts == 0 {
+		return "", fmt.Errorf("expected to find at least one field: %v", compositeID)
+	}
+
+	return strings.Join(parts, ":"), nil
+}
+
+func (compositeID CompositeItemIdentifierField) String() string {
+	var parts []string
+	for _, fieldID := range compositeID {
+		parts = append(parts, string(fieldID))
+	}
+	return strings.Join(parts, ":")
+}
 
 // AdditionalIdentifiers specifies additional identifiers that will be
 // used as the key for matcing maps from source to target.
@@ -550,7 +596,7 @@ func nameFromPath(node *yamlv3.Node, field ListItemIdentifierField) (string, err
 	return nameFromPath(val, ListItemIdentifierField(parts[1]))
 }
 
-func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdentifierField, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdentifier, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	removals := make([]*yamlv3.Node, 0)
 	additions := make([]*yamlv3.Node, 0)
 
@@ -564,7 +610,7 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 	// Find entries that are common to both lists to compare them separately, and
 	// find entries that are only in from, but not to and are therefore removed
 	for _, fromEntry := range from.Content {
-		name, err := nameFromPath(fromEntry, identifier)
+		name, err := identifier.Identify(fromEntry)
 		if err != nil {
 			return nil, fmt.Errorf("nameEntryList from issue: %w", err)
 		}
@@ -590,7 +636,7 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 
 	// Find entries that are only in to, but not from and are therefore added
 	for _, toEntry := range to.Content {
-		name, err := nameFromPath(toEntry, identifier)
+		name, err := identifier.Identify(toEntry)
 		if err != nil {
 			return nil, fmt.Errorf("nameEntryList to issue: %w", err)
 		}
@@ -781,9 +827,9 @@ func getValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, error) {
 // getEntryFromNamedList returns the entry that is identified by the identifier
 // key and a name, for example: `name: one` where name is the identifier key and
 // one the name. Function will return nil with bool false if there is no entry.
-func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentifierField, name string) (*yamlv3.Node, bool) {
+func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentifier, name string) (*yamlv3.Node, bool) {
 	for _, mappingNode := range sequenceNode.Content {
-		nodeName, _ := nameFromPath(mappingNode, identifier)
+		nodeName, _ := identifier.Identify(mappingNode)
 		if nodeName == name {
 			return mappingNode, true
 		}
@@ -856,14 +902,14 @@ func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (
 }
 
 // getIdentifierFromKubernetesEntityList returns 'metadata.name' as a field identifier if the provided objects all have the key.
-func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
-	key := ListItemIdentifierField("metadata.name")
+func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (CompositeItemIdentifierField, error) {
+	key := CompositeItemIdentifierField{"apiVersion", "kind", "metadata.name"}
 	allHaveMetadataName := func(sequenceNode *yamlv3.Node) bool {
 		numWithMetadata := 0
 		for _, entry := range sequenceNode.Content {
 			switch entry.Kind {
 			case yamlv3.MappingNode:
-				_, err := nameFromPath(entry, key)
+				_, err := key.Identify(entry)
 				if err == nil {
 					numWithMetadata++
 				}
@@ -878,7 +924,7 @@ func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemI
 		return key, nil
 	}
 
-	return "", fmt.Errorf("not all entities appear to have %q fields", key)
+	return CompositeItemIdentifierField{}, fmt.Errorf("not all entities appear to have %q fields", key)
 }
 
 // fqrn returns something like a fully qualified Kubernetes resource name, which contains its kind, namespace and name

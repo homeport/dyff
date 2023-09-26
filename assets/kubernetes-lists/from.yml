@@ -10,7 +10,6 @@ items:
     name: foo-2
     namespace: foobar
 - apiVersion: v1
-  kind: Pod
   metadata:
     labels:
       foo: bAr

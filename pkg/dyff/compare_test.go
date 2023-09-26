@@ -818,6 +818,19 @@ b: bar
 			})
 		})
 
+		Context("given two identical kubernetes lists", func() {
+			It("should not report a difference", func() {
+				from, to := loadFiles(
+					assets("matching-kubernetes-lists", "input.yml"),
+					assets("matching-kubernetes-lists", "input.yml"),
+				)
+
+				results, err := dyff.CompareInputFiles(from, to, dyff.KubernetesEntityDetection(true))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results.Diffs).To(BeNil())
+			})
+		})
+
 		Context("two YAML structures with Kubernetes lists", func() {
 			It("should identify individual list entries based on the nested name field in the respective entry metadata", func() {
 				from, to := loadFiles(
@@ -832,11 +845,11 @@ b: bar
 				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
 					"#0/items",
 					dyff.ORDERCHANGE,
-					dyff.AsSequenceNode([]string{"foo-2", "foo-1"}),
-					dyff.AsSequenceNode([]string{"foo-1", "foo-2"}),
+					dyff.AsSequenceNode([]string{"v1:Pod:foo-2", "v1::foo-1"}),
+					dyff.AsSequenceNode([]string{"v1::foo-1", "v1:Pod:foo-2"}),
 				)))
 				Expect(results.Diffs[1]).To(BeSameDiffAs(singleDiff(
-					"/items/metadata.name=foo-1/metadata/labels/foo",
+					"/items/apiVersion:kind:metadata.name=v1::foo-1/metadata/labels/foo",
 					dyff.MODIFICATION,
 					"bAr",
 					"bar",
