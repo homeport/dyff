@@ -344,8 +344,8 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 			if fromNames[i] != toNames[i] {
 				diff.Details = append(diff.Details, Detail{
 					Kind: ORDERCHANGE,
-					From: AsSequenceNode(fromNames),
-					To:   AsSequenceNode(toNames),
+					From: AsSequenceNode(fromNames...),
+					To:   AsSequenceNode(toNames...),
 				})
 				break
 			}
@@ -661,7 +661,7 @@ func (compare *compare) hasEntry(list []*yamlv3.Node, searchEntry *yamlv3.Node) 
 }
 
 // AsSequenceNode translates a string list into a SequenceNode
-func AsSequenceNode(list []string) *yamlv3.Node {
+func AsSequenceNode(list ...string) *yamlv3.Node {
 	result := make([]*yamlv3.Node, len(list))
 	for i, entry := range list {
 		result[i] = &yamlv3.Node{
@@ -690,8 +690,8 @@ func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
 		if idxLookupMap[name] != idx {
 			orderchanges = append(orderchanges, Detail{
 				Kind: ORDERCHANGE,
-				From: AsSequenceNode(fromNames),
-				To:   AsSequenceNode(toNames),
+				From: AsSequenceNode(fromNames...),
+				To:   AsSequenceNode(toNames...),
 			})
 			break
 		}

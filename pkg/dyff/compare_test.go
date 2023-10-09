@@ -52,8 +52,8 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
-				Expect(len(result[0].Details)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
+				Expect(result[0].Details).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", dyff.MODIFICATION, "foobar", "fOObAr")))
 			})
 
@@ -77,7 +77,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", dyff.MODIFICATION, 1, 2)))
 			})
 
@@ -101,7 +101,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/level", dyff.MODIFICATION, 3.14159265359, 2.7182818284)))
 			})
 
@@ -125,7 +125,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/enabled", dyff.MODIFICATION, false, true)))
 			})
 
@@ -148,7 +148,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", dyff.ADDITION, nil, yml(`version: v1`))))
 			})
 
@@ -171,7 +171,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure", dyff.REMOVAL, yml(`version: v1`), nil)))
 			})
 
@@ -195,7 +195,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(doubleDiff("/some/yaml/structure",
 					dyff.REMOVAL, yml(`version: v1`), nil,
 					dyff.ADDITION, nil, yml(`release: v1`))))
@@ -226,7 +226,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.ADDITION, nil, list(`[ three ]`))))
 			})
 
@@ -253,7 +253,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.ADDITION, nil, list(`[ 3 ]`))))
 			})
 
@@ -280,7 +280,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.REMOVAL, list(`[ three ]`), nil)))
 			})
 
@@ -307,7 +307,7 @@ some:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/list", dyff.REMOVAL, list(`[ 3 ]`), nil)))
 			})
 
@@ -328,7 +328,7 @@ list:
 
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(0))
+				Expect(result).To(HaveLen(0))
 			})
 		})
 
@@ -407,7 +407,7 @@ instance_groups:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(7))
+				Expect(result).To(HaveLen(7))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/networks/name=concourse/static_ips", dyff.MODIFICATION, "192.168.1.1", "192.168.0.1")))
 				Expect(result[1]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs", dyff.ADDITION, nil, list(`[ { release: custom, name: logger } ]`))))
 				Expect(result[2]).To(BeSameDiffAs(singleDiff("/instance_groups/name=web/jobs/name=atc/properties/external_url", dyff.MODIFICATION, "http://192.168.1.100:8080", "http://192.168.0.100:8080")))
@@ -454,7 +454,7 @@ resource_pools:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters/0/CLS_PAAS_SFT_035/resource_pool", dyff.MODIFICATION, "other-vsphere-res-pool", "new-vsphere-res-pool")))
 			})
 
@@ -482,7 +482,7 @@ resource_pools:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(doubleDiff("/resource_pools/name=concourse_resource_pool/cloud_properties/datacenters/0/clusters",
 					dyff.REMOVAL, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36-vsphere-res-pool}} ]`), nil,
 					dyff.ADDITION, nil, list(`[ {CLS_PAAS_SFT_035: {resource_pool: 35a-vsphere-res-pool}}, {CLS_PAAS_SFT_036: {resource_pool: 36a-vsphere-res-pool}} ]`))))
@@ -516,7 +516,7 @@ resource_pools:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).NotTo(BeNil())
-				Expect(len(result)).To(BeEquivalentTo(1))
+				Expect(result).To(HaveLen(1))
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/name=three/version",
 					dyff.MODIFICATION, 4, 3)))
 			})
@@ -526,13 +526,13 @@ resource_pools:
 			It("should return differences in raw texts", func() {
 				from := file("../../assets/raw-text/from.txt")
 				to := file("../../assets/raw-text/to.txt")
-				Expect(len(from.Documents)).To(BeIdenticalTo(1))
-				Expect(len(to.Documents)).To(BeIdenticalTo(1))
+				Expect(from.Documents).To(HaveLen(1))
+				Expect(to.Documents).To(HaveLen(1))
 
 				results, err := compare(from.Documents[0], to.Documents[0])
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
-				Expect(len(results)).To(BeEquivalentTo(1))
+				Expect(results).To(HaveLen(1))
 			})
 		})
 
@@ -583,7 +583,7 @@ listY: [ Yo, Yo, Yo ]
 				}
 
 				Expect(results).NotTo(BeNil())
-				Expect(len(results)).To(BeEquivalentTo(len(expected)))
+				Expect(results).To(HaveLen(len(expected)))
 
 				for i, result := range results {
 					Expect(result).To(BeSameDiffAs(expected[i]))
@@ -596,12 +596,12 @@ listY: [ Yo, Yo, Yo ]
 				results, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
-				Expect(len(results)).To(BeEquivalentTo(1))
-				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
+				Expect(results).To(HaveLen(1))
+				Expect(results[0].Details).To(HaveLen(3))
 				Expect(results[0].Details[0]).To(BeEquivalentTo(dyff.Detail{
 					Kind: dyff.ORDERCHANGE,
-					From: dyff.AsSequenceNode([]string{"A", "C", "B", "D"}),
-					To:   dyff.AsSequenceNode([]string{"A", "B", "C", "D"}),
+					From: dyff.AsSequenceNode("A", "C", "B", "D"),
+					To:   dyff.AsSequenceNode("A", "B", "C", "D"),
 				}))
 			})
 
@@ -613,7 +613,7 @@ listY: [ Yo, Yo, Yo ]
 				)
 
 				Expect(err).To(BeNil())
-				Expect(len(results)).To(BeEquivalentTo(0))
+				Expect(results).To(HaveLen(0))
 			})
 
 			It("should return order changes in simple lists (ignoring dyff.additions and dyff.removals)", func() {
@@ -622,14 +622,14 @@ listY: [ Yo, Yo, Yo ]
 				results, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
-				Expect(len(results)).To(BeEquivalentTo(1))
-				Expect(len(results[0].Details)).To(BeEquivalentTo(3))
+				Expect(results).To(HaveLen(1))
+				Expect(results[0].Details).To(HaveLen(3))
 
 				actual := results[0].Details[0]
 				expected := dyff.Detail{
 					Kind: dyff.ORDERCHANGE,
-					From: dyff.AsSequenceNode([]string{"A", "C", "B", "D"}),
-					To:   dyff.AsSequenceNode([]string{"A", "B", "C", "D"}),
+					From: dyff.AsSequenceNode("A", "C", "B", "D"),
+					To:   dyff.AsSequenceNode("A", "B", "C", "D"),
 				}
 
 				Expect(isSameDetail(actual, expected)).To(BeTrue())
@@ -647,7 +647,7 @@ listY: [ Yo, Yo, Yo ]
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(results.Diffs).NotTo(BeNil())
-				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
+				Expect(results.Diffs).To(HaveLen(len(expected)))
 
 				for i, result := range results.Diffs {
 					Expect(result).To(BeSameDiffAs(expected[i]))
@@ -705,7 +705,7 @@ listY: [ Yo, Yo, Yo ]
 					),
 				}
 
-				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
+				Expect(results.Diffs).To(HaveLen(len(expected)))
 				for i, diff := range results.Diffs {
 					Expect(diff).To(BeSameDiffAs(expected[i]))
 				}
@@ -811,7 +811,7 @@ b: bar
 					singleDiff("#1/b", dyff.MODIFICATION, "bar", "Bar"),
 				}
 
-				Expect(len(results.Diffs)).To(BeEquivalentTo(len(expected)))
+				Expect(results.Diffs).To(HaveLen(len(expected)))
 				for i, result := range results.Diffs {
 					Expect(result).To(BeSameDiffAs(expected[i]))
 				}
@@ -821,19 +821,19 @@ b: bar
 		Context("two YAML structures with Kubernetes lists", func() {
 			It("should identify individual list entries based on the nested name field in the respective entry metadata", func() {
 				from, to := loadFiles(
-					assets("kubernetes-lists", "from.yml"),
-					assets("kubernetes-lists", "to.yml"),
+					assets("kubernetes-lists", "pods", "from.yml"),
+					assets("kubernetes-lists", "pods", "to.yml"),
 				)
 
 				results, err := dyff.CompareInputFiles(from, to, dyff.KubernetesEntityDetection(true))
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(len(results.Diffs)).To(BeEquivalentTo(2))
+				Expect(results.Diffs).To(HaveLen(2))
 				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
 					"#0/items",
 					dyff.ORDERCHANGE,
-					dyff.AsSequenceNode([]string{"foo-2", "foo-1"}),
-					dyff.AsSequenceNode([]string{"foo-1", "foo-2"}),
+					dyff.AsSequenceNode("foo-2", "foo-1"),
+					dyff.AsSequenceNode("foo-1", "foo-2"),
 				)))
 				Expect(results.Diffs[1]).To(BeSameDiffAs(singleDiff(
 					"/items/metadata.name=foo-1/metadata/labels/foo",
@@ -855,7 +855,7 @@ b: bar
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
-				Expect(len(results.Diffs)).To(BeEquivalentTo(0))
+				Expect(results.Diffs).To(HaveLen(0))
 			})
 
 			It("should process files with YAML anchors", func() {
@@ -868,7 +868,7 @@ b: bar
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
-				Expect(len(results.Diffs)).To(BeEquivalentTo(2))
+				Expect(results.Diffs).To(HaveLen(2))
 			})
 
 			It("should treat the string content as-is with no evaluation", func() {
@@ -894,7 +894,7 @@ b: bar
 				results, err := dyff.CompareInputFiles(from, to)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
-				Expect(len(results.Diffs)).ToNot(BeZero())
+				Expect(results.Diffs).ToNot(HaveLen(0))
 			})
 
 			It("should detect order changes in simple lists with duplicate entries", func() {
@@ -905,12 +905,12 @@ b: bar
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
-				Expect(len(results.Diffs)).To(Equal(1))
+				Expect(results.Diffs).To(HaveLen(1))
 				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
 					"/keys",
 					dyff.ORDERCHANGE,
-					dyff.AsSequenceNode([]string{"value1", "value2", "value1", "value2"}),
-					dyff.AsSequenceNode([]string{"value1", "value1", "value2", "value2"}),
+					dyff.AsSequenceNode("value1", "value2", "value1", "value2"),
+					dyff.AsSequenceNode("value1", "value1", "value2", "value2"),
 				)))
 			})
 
@@ -923,12 +923,12 @@ b: bar
 				results, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(false))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
-				Expect(len(results.Diffs)).ToNot(BeZero())
+				Expect(results.Diffs).ToNot(HaveLen(0))
 
 				results, err = dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(true))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
-				Expect(len(results.Diffs)).To(BeZero())
+				Expect(results.Diffs).To(HaveLen(0))
 			})
 		})
 
@@ -943,7 +943,7 @@ b: bar
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 
-				Expect(len(results.Diffs)).To(BeEquivalentTo(1))
+				Expect(results.Diffs).To(HaveLen(1))
 			})
 
 			It("should report that a document was added", func() {
@@ -965,8 +965,8 @@ b: bar
 				result, err := dyff.CompareInputFiles(from, to)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(len(result.Diffs)).To(Equal(1))
-				Expect(len(result.Diffs[0].Details)).To(Equal(1))
+				Expect(result.Diffs).To(HaveLen(1))
+				Expect(result.Diffs[0].Details).To(HaveLen(1))
 				Expect(result.Diffs[0].Details[0].Kind).To(Equal(dyff.ADDITION))
 			})
 
@@ -989,8 +989,8 @@ b: bar
 				result, err := dyff.CompareInputFiles(from, to)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(len(result.Diffs)).To(Equal(1))
-				Expect(len(result.Diffs[0].Details)).To(Equal(1))
+				Expect(result.Diffs).To(HaveLen(1))
+				Expect(result.Diffs[0].Details).To(HaveLen(1))
 				Expect(result.Diffs[0].Details[0].Kind).To(Equal(dyff.REMOVAL))
 			})
 
@@ -1029,7 +1029,7 @@ b: bar
 				results, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(true))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
-				Expect(len(results.Diffs)).ToNot(Equal(0))
+				Expect(results.Diffs).ToNot(HaveLen(0))
 			})
 
 			It("accurately reports no differences when keys are given", func() {
@@ -1041,7 +1041,7 @@ b: bar
 				results, err := dyff.CompareInputFiles(from, to, dyff.IgnoreOrderChanges(true), dyff.AdditionalIdentifiers("branch"))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(results).ToNot(BeNil())
-				Expect(len(results.Diffs)).To(Equal(0))
+				Expect(results.Diffs).To(HaveLen(0))
 			})
 		})
 	})

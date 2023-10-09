@@ -247,7 +247,7 @@ func nodify(obj interface{}) *yamlv3.Node {
 		return tobj
 
 	case []string:
-		return dyff.AsSequenceNode(tobj)
+		return dyff.AsSequenceNode(tobj...)
 
 	case string:
 		return &yamlv3.Node{
