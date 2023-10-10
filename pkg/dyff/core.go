@@ -881,28 +881,41 @@ func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemI
 	return "", fmt.Errorf("not all entities appear to have %q fields", key)
 }
 
-// fqrn returns something like a fully qualified Kubernetes resource name, which contains its kind, namespace and name
+// fqrn returns something like a fully qualified Kubernetes resource name, which
+// contains its apiVersion, kind, namespace, and name where the namespace is
+// only included if it is defined
 func fqrn(node *yamlv3.Node) (string, error) {
 	if node.Kind != yamlv3.MappingNode {
 		return "", fmt.Errorf("name look-up for Kubernetes resources does only work with mapping nodes")
 	}
 
+	var elem []string
+
+	apiVersion, err := nameFromPath(node, "apiVersion")
+	if err != nil {
+		return "", err
+	}
+	elem = append(elem, apiVersion)
+
 	kind, err := nameFromPath(node, "kind")
 	if err != nil {
 		return "", err
 	}
+	elem = append(elem, kind)
 
+	// namespace is optional and will be omited if not set
 	namespace, err := nameFromPath(node, "metadata.namespace")
-	if err != nil {
-		namespace = "default"
+	if err == nil {
+		elem = append(elem, namespace)
 	}
 
 	name, err := nameFromPath(node, "metadata.name")
 	if err != nil {
 		return "", err
 	}
+	elem = append(elem, name)
 
-	return fmt.Sprintf("%s/%s/%s", kind, namespace, name), nil
+	return strings.Join(elem, "/"), nil
 }
 
 // isEmptyDocument returns true in case the given YAML node is an empty document

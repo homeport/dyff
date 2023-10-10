@@ -534,7 +534,7 @@ yaml.map.whitespaces
 
 		It("should show a report when filtering and a document has been removed between inputs", func() {
 			expected := `
-spec.replicas  (Deployment/default/test)
+spec.replicas  (apps/v1/Deployment/test)
   ± value change
     - 2
     + 3
