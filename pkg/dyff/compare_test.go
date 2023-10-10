@@ -524,8 +524,8 @@ resource_pools:
 
 		Context("Given two files", func() {
 			It("should return differences in raw texts", func() {
-				from := file("../../assets/raw-text/from.txt")
-				to := file("../../assets/raw-text/to.txt")
+				from := file(assets("raw-text/from.txt"))
+				to := file(assets("raw-text/to.txt"))
 				Expect(from.Documents).To(HaveLen(1))
 				Expect(to.Documents).To(HaveLen(1))
 
@@ -664,8 +664,8 @@ listY: [ Yo, Yo, Yo ]
 
 			It("should return differences in named lists even if no standard identifier is used", func() {
 				results, err := dyff.CompareInputFiles(
-					file("../../assets/prometheus/from.yml"),
-					file("../../assets/prometheus/to.yml"),
+					file(assets("prometheus/from.yml")),
+					file(assets("prometheus/to.yml")),
 				)
 
 				Expect(err).To(BeNil())
@@ -713,8 +713,8 @@ listY: [ Yo, Yo, Yo ]
 
 			It("should fail to find the non-standard identifier if the threshold is too high", func() {
 				report, err := dyff.CompareInputFiles(
-					file("../../assets/prometheus/from.yml"),
-					file("../../assets/prometheus/to.yml"),
+					file(assets("prometheus/from.yml")),
+					file(assets("prometheus/to.yml")),
 					dyff.NonStandardIdentifierGuessCountThreshold(8),
 				)
 
