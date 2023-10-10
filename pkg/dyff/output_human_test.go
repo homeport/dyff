@@ -193,9 +193,9 @@ variables.ROUTER_TLS_PEM.options
 
 		It("should use human friendly compact diff of multiline text differences", func() {
 			compareAgainstExpected(
-				assets("kubernetes-configmaps/from.yml"),
-				assets("kubernetes-configmaps/to.yml"),
-				assets("kubernetes-configmaps/expected-dyff-spruce.human"),
+				assets("kubernetes/configmaps/from.yml"),
+				assets("kubernetes/configmaps/to.yml"),
+				assets("kubernetes/configmaps/expected-dyff-spruce.human"),
 				false,
 			)
 		})
