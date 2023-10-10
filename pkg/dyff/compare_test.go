@@ -636,7 +636,6 @@ listY: [ Yo, Yo, Yo ]
 			})
 
 			It("should return all differences between the files with multiple documents", func() {
-				results, err := dyff.CompareInputFiles(file("../../assets/kubernetes-yaml/from.yml"), file("../../assets/kubernetes-yaml/to.yml"))
 				expected := []dyff.Diff{
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", dyff.MODIFICATION, "100m", "1000m"),
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/memory", dyff.MODIFICATION, "100Mi", "10Gi"),
@@ -644,6 +643,7 @@ listY: [ Yo, Yo, Yo ]
 					singleDiff("#1/spec/ports", dyff.ADDITION, nil, list(`[ {name: backdoor, port: 5001, protocol: TCP} ]`)),
 				}
 
+				results, err := dyff.CompareInputFiles(file(assets("kubernetes/multi-docs/from.yml")), file(assets("kubernetes/multi-docs/to.yml")))
 				Expect(err).To(BeNil())
 				Expect(results).NotTo(BeNil())
 				Expect(results.Diffs).NotTo(BeNil())
@@ -821,8 +821,8 @@ b: bar
 		Context("two YAML structures with Kubernetes lists", func() {
 			It("should identify individual list entries based on the nested name field in the respective entry metadata", func() {
 				from, to := loadFiles(
-					assets("kubernetes-lists", "pods", "from.yml"),
-					assets("kubernetes-lists", "pods", "to.yml"),
+					assets("kubernetes", "lists", "from.yml"),
+					assets("kubernetes", "lists", "to.yml"),
 				)
 
 				results, err := dyff.CompareInputFiles(from, to, dyff.KubernetesEntityDetection(true))

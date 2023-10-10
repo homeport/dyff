@@ -1,0 +1,11 @@
+---
+apiVersion: v1beta1
+kind: some-kind
+metadata:
+  name: some-item
+
+---
+apiVersion: v1alpha1
+kind: some-kind
+metadata:
+  name: some-item
