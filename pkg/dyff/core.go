@@ -547,6 +547,19 @@ func nameFromPath(node *yamlv3.Node, field ListItemIdentifierField) (string, err
 	return nameFromPath(val, ListItemIdentifierField(parts[1]))
 }
 
+// getEntryFromNamedList returns the entry that is identified by the identifier
+// key and a name, for example: `name: one` where name is the identifier key and
+// one the name. Function will return nil with bool false if there is no entry.
+func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentifierField, name string) (*yamlv3.Node, bool) {
+	for _, mappingNode := range sequenceNode.Content {
+		nodeName, _ := nameFromPath(mappingNode, identifier)
+		if nodeName == name {
+			return mappingNode, true
+		}
+	}
+	return nil, false
+}
+
 func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdentifierField, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	removals := make([]*yamlv3.Node, 0)
 	additions := make([]*yamlv3.Node, 0)
@@ -775,19 +788,6 @@ func getValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, error) {
 	return nil, fmt.Errorf("no key '%s' found in map and also failed to get a list of key for this map", key)
 }
 
-// getEntryFromNamedList returns the entry that is identified by the identifier
-// key and a name, for example: `name: one` where name is the identifier key and
-// one the name. Function will return nil with bool false if there is no entry.
-func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentifierField, name string) (*yamlv3.Node, bool) {
-	for _, mappingNode := range sequenceNode.Content {
-		nodeName, _ := nameFromPath(mappingNode, identifier)
-		if nodeName == name {
-			return mappingNode, true
-		}
-	}
-	return nil, false
-}
-
 func (compare *compare) listItemIdentifierCandidates() []ListItemIdentifierField {
 	// Set default candidates that are most widly used
 	var candidates = []ListItemIdentifierField{"name", "key", "id"}
@@ -850,6 +850,51 @@ func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (
 	}
 
 	return "", fmt.Errorf("unable to find a key that can serve as an unique identifier")
+}
+
+func (compare *compare) getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) ListItemIdentifierField {
+	createKeyCountMap := func(list *yamlv3.Node) map[string]int {
+		tmp := map[string]map[string]struct{}{}
+		for _, entry := range list.Content {
+			if entry.Kind != yamlv3.MappingNode {
+				return map[string]int{}
+			}
+
+			for i := 0; i < len(entry.Content); i += 2 {
+				k, v := followAlias(entry.Content[i]), followAlias(entry.Content[i+1])
+				if k.Kind == yamlv3.ScalarNode && k.Tag == "!!str" &&
+					v.Kind == yamlv3.ScalarNode && v.Tag == "!!str" {
+					if _, ok := tmp[k.Value]; !ok {
+						tmp[k.Value] = map[string]struct{}{}
+					}
+
+					tmp[k.Value][v.Value] = struct{}{}
+				}
+			}
+		}
+
+		result := map[string]int{}
+		for key, value := range tmp {
+			result[key] = len(value)
+		}
+
+		return result
+	}
+
+	listALength := len(listA.Content)
+	listBLength := len(listB.Content)
+	counterA := createKeyCountMap(listA)
+	counterB := createKeyCountMap(listB)
+
+	for keyA, countA := range counterA {
+		if countB, ok := counterB[keyA]; ok {
+			if countA == listALength && countB == listBLength && countA > compare.settings.NonStandardIdentifierGuessCountThreshold {
+				return ListItemIdentifierField(keyA)
+			}
+		}
+	}
+
+	return ""
 }
 
 // getIdentifierFromKubernetesEntityList returns 'metadata.name' as a field identifier if the provided objects all have the key.
@@ -933,51 +978,6 @@ func isEmptyDocument(node *yamlv3.Node) bool {
 	}
 
 	return false
-}
-
-func (compare *compare) getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) ListItemIdentifierField {
-	createKeyCountMap := func(list *yamlv3.Node) map[string]int {
-		tmp := map[string]map[string]struct{}{}
-		for _, entry := range list.Content {
-			if entry.Kind != yamlv3.MappingNode {
-				return map[string]int{}
-			}
-
-			for i := 0; i < len(entry.Content); i += 2 {
-				k, v := followAlias(entry.Content[i]), followAlias(entry.Content[i+1])
-				if k.Kind == yamlv3.ScalarNode && k.Tag == "!!str" &&
-					v.Kind == yamlv3.ScalarNode && v.Tag == "!!str" {
-					if _, ok := tmp[k.Value]; !ok {
-						tmp[k.Value] = map[string]struct{}{}
-					}
-
-					tmp[k.Value][v.Value] = struct{}{}
-				}
-			}
-		}
-
-		result := map[string]int{}
-		for key, value := range tmp {
-			result[key] = len(value)
-		}
-
-		return result
-	}
-
-	listALength := len(listA.Content)
-	listBLength := len(listB.Content)
-	counterA := createKeyCountMap(listA)
-	counterB := createKeyCountMap(listB)
-
-	for keyA, countA := range counterA {
-		if countB, ok := counterB[keyA]; ok {
-			if countA == listALength && countB == listBLength && countA > compare.settings.NonStandardIdentifierGuessCountThreshold {
-				return ListItemIdentifierField(keyA)
-			}
-		}
-	}
-
-	return ""
 }
 
 func (compare *compare) createLookUpMap(sequenceNode *yamlv3.Node) map[uint64][]int {
