@@ -437,25 +437,22 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 		return []Diff{}, nil
 	}
 
+	// check if a known identifier (e.g. name, or id) can be used
 	if identifier, err := compare.getIdentifierFromNamedLists(from, to); err == nil {
 		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
-	if identifier := getNonStandardIdentifierFromNamedLists(from, to, compare.settings.NonStandardIdentifierGuessCountThreshold); identifier != "" {
-		d, err := compare.namedEntryLists(path, identifier, from, to)
-		if err != nil {
-			return nil, fmt.Errorf("sequenceNodes(nonstd): %w", err)
-		}
-
-		return d, nil
+	// check if there is a field in all entries that could serve as an identifier
+	if identifier := compare.getNonStandardIdentifierFromNamedLists(from, to); identifier != "" {
+		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
-	if compare.settings.KubernetesEntityDetection {
-		if identifier, err := getIdentifierFromKubernetesEntityList(from, to); err == nil {
-			return compare.namedEntryLists(path, identifier, from, to)
-		}
+	// check if Kubernetes resource fields can be used to identify items
+	if identifier, err := compare.getIdentifierFromKubernetesEntityList(from, to); err == nil {
+		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
+	// in any other case, compare lists as simple lists by relying on hashes
 	return compare.simpleLists(path, from, to)
 }
 
@@ -856,7 +853,11 @@ func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (
 }
 
 // getIdentifierFromKubernetesEntityList returns 'metadata.name' as a field identifier if the provided objects all have the key.
-func getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
+func (compare *compare) getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
+	if !compare.settings.KubernetesEntityDetection {
+		return "", fmt.Errorf("entity detection for Kubernetes resource is not enabled")
+	}
+
 	key := ListItemIdentifierField("metadata.name")
 	allHaveMetadataName := func(sequenceNode *yamlv3.Node) bool {
 		numWithMetadata := 0
@@ -934,7 +935,7 @@ func isEmptyDocument(node *yamlv3.Node) bool {
 	return false
 }
 
-func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStandardIdentifierGuessCountThreshold int) ListItemIdentifierField {
+func (compare *compare) getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) ListItemIdentifierField {
 	createKeyCountMap := func(list *yamlv3.Node) map[string]int {
 		tmp := map[string]map[string]struct{}{}
 		for _, entry := range list.Content {
@@ -970,7 +971,7 @@ func getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node, nonStanda
 
 	for keyA, countA := range counterA {
 		if countB, ok := counterB[keyA]; ok {
-			if countA == listALength && countB == listBLength && countA > nonStandardIdentifierGuessCountThreshold {
+			if countA == listALength && countB == listBLength && countA > compare.settings.NonStandardIdentifierGuessCountThreshold {
 				return ListItemIdentifierField(keyA)
 			}
 		}
