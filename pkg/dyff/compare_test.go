@@ -24,10 +24,17 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/gonvenience/ytbx"
-
 	"github.com/homeport/dyff/pkg/dyff"
+
+	"github.com/gonvenience/ytbx"
+	yamlv3 "gopkg.in/yaml.v3"
 )
+
+var nullNode = &yamlv3.Node{
+	Kind:  yamlv3.ScalarNode,
+	Tag:   "!!null",
+	Value: "null",
+}
 
 var _ = Describe("Core/Compare", func() {
 	Describe("Difference between YAMLs", func() {
@@ -603,6 +610,21 @@ listY: [ Yo, Yo, Yo ]
 					From: dyff.AsSequenceNode("A", "C", "B", "D"),
 					To:   dyff.AsSequenceNode("A", "B", "C", "D"),
 				}))
+			})
+
+			It("should return changes where one of the items is null", func() {
+				from := yml(`foo: null`)
+				to := yml(`foo: "bar"`)
+				results, err := compare(from, to)
+				Expect(err).To(BeNil())
+				Expect(results).NotTo(BeNil())
+				Expect(results).To(HaveLen(1))
+				Expect(results[0]).To(BeSameDiffAs(singleDiff(
+					"/foo",
+					dyff.MODIFICATION,
+					nullNode,
+					"bar",
+				)))
 			})
 
 			It("should not return order changes in named entry lists in case the ignore option is enabled", func() {
