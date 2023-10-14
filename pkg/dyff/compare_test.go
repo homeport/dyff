@@ -635,6 +635,15 @@ listY: [ Yo, Yo, Yo ]
 				Expect(isSameDetail(actual, expected)).To(BeTrue())
 			})
 
+			It("should process simple lists independent of other compare settings", func() {
+				from := yml(`list: [ A, B, C, D, E ]`)
+				to := yml(`list: [ A, B, C, D, E ]`)
+
+				results, err := compare(from, to, dyff.KubernetesEntityDetection(false))
+				Expect(err).To(BeNil())
+				Expect(results).To(BeNil())
+			})
+
 			It("should return all differences between the files with multiple documents", func() {
 				expected := []dyff.Diff{
 					singleDiff("#0/spec/template/spec/containers/name=registry/resources/limits/cpu", dyff.MODIFICATION, "100m", "1000m"),
