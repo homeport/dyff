@@ -40,23 +40,18 @@ type compareSettings struct {
 	NonStandardIdentifierGuessCountThreshold int
 	IgnoreOrderChanges                       bool
 	KubernetesEntityDetection                bool
-	AdditionalIdentifiers                    []ListItemIdentifierField
+	AdditionalIdentifiers                    []string
 }
 
 type compare struct {
 	settings compareSettings
 }
 
-// ListItemIdentifierField names the field that identifies a list.
-type ListItemIdentifierField string
-
 // AdditionalIdentifiers specifies additional identifiers that will be
-// used as the key for matcing maps from source to target.
-func AdditionalIdentifiers(ids ...string) CompareOption {
+// used as the key for matching maps from source to target.
+func AdditionalIdentifiers(fieldNames ...string) CompareOption {
 	return func(settings *compareSettings) {
-		for _, i := range ids {
-			settings.AdditionalIdentifiers = append(settings.AdditionalIdentifiers, ListItemIdentifierField(i))
-		}
+		settings.AdditionalIdentifiers = append(settings.AdditionalIdentifiers, fieldNames...)
 	}
 }
 
@@ -111,7 +106,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		for i := range from.Documents {
 			if entry := from.Documents[i]; !isEmptyDocument(entry) {
 				fromDocs = append(fromDocs, entry)
-				if name, err := fqrn(entry.Content[0]); err == nil {
+				if name, err := k8sItem.Name(entry.Content[0]); err == nil {
 					fromNames = append(fromNames, name)
 				}
 			}
@@ -120,7 +115,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		for i := range to.Documents {
 			if entry := to.Documents[i]; !isEmptyDocument(entry) {
 				toDocs = append(toDocs, entry)
-				if name, err := fqrn(entry.Content[0]); err == nil {
+				if name, err := k8sItem.Name(entry.Content[0]); err == nil {
 					toNames = append(toNames, name)
 				}
 			}
@@ -256,7 +251,7 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		for i, document := range inputFile.Documents {
 			node := document.Content[0]
 
-			name, err := fqrn(node)
+			name, err := k8sItem.Name(node)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -443,7 +438,7 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 	}
 
 	// check if there is a field in all entries that could serve as an identifier
-	if identifier := compare.getNonStandardIdentifierFromNamedLists(from, to); identifier != "" {
+	if identifier := compare.getNonStandardIdentifierFromNamedLists(from, to); identifier != nil {
 		return compare.namedEntryLists(path, identifier, from, to)
 	}
 
@@ -534,33 +529,7 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 	return packChangesAndAddToResult([]Diff{}, path, orderChanges, additions, removals)
 }
 
-func nameFromPath(node *yamlv3.Node, field ListItemIdentifierField) (string, error) {
-	parts := strings.SplitN(string(field), ".", 2)
-	key := parts[0]
-	val, err := getValueByKey(node, key)
-	if err != nil {
-		return "", fmt.Errorf("nameFromPath issue: %w", err)
-	}
-	if len(parts) == 1 {
-		return val.Value, nil
-	}
-	return nameFromPath(val, ListItemIdentifierField(parts[1]))
-}
-
-// getEntryFromNamedList returns the entry that is identified by the identifier
-// key and a name, for example: `name: one` where name is the identifier key and
-// one the name. Function will return nil with bool false if there is no entry.
-func getEntryFromNamedList(sequenceNode *yamlv3.Node, identifier ListItemIdentifierField, name string) (*yamlv3.Node, bool) {
-	for _, mappingNode := range sequenceNode.Content {
-		nodeName, _ := nameFromPath(mappingNode, identifier)
-		if nodeName == name {
-			return mappingNode, true
-		}
-	}
-	return nil, false
-}
-
-func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdentifierField, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdentifier, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
 	removals := make([]*yamlv3.Node, 0)
 	additions := make([]*yamlv3.Node, 0)
 
@@ -574,12 +543,12 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 	// Find entries that are common to both lists to compare them separately, and
 	// find entries that are only in from, but not to and are therefore removed
 	for _, fromEntry := range from.Content {
-		name, err := nameFromPath(fromEntry, identifier)
+		name, err := identifier.Name(fromEntry)
 		if err != nil {
-			return nil, fmt.Errorf("nameEntryList from issue: %w", err)
+			return nil, fmt.Errorf("failed to identify name: %w", err)
 		}
 
-		if toEntry, ok := getEntryFromNamedList(to, identifier, name); ok {
+		if toEntry, err := identifier.FindNodeByName(to, name); err == nil {
 			// `from` and `to` have the same entry identified by identifier and name -> require comparison
 			diffs, err := compare.objects(
 				ytbx.NewPathWithNamedListElement(path, identifier, name),
@@ -600,12 +569,12 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier ListItemIdent
 
 	// Find entries that are only in to, but not from and are therefore added
 	for _, toEntry := range to.Content {
-		name, err := nameFromPath(toEntry, identifier)
+		name, err := identifier.Name(toEntry)
 		if err != nil {
-			return nil, fmt.Errorf("nameEntryList to issue: %w", err)
+			return nil, fmt.Errorf("failed to identify name: %w", err)
 		}
 
-		if _, ok := getEntryFromNamedList(from, identifier, name); ok {
+		if _, err := identifier.FindNodeByName(from, name); err == nil {
 			// `to` and `from` have the same entry identified by identifier and name (comparison already covered by previous range)
 			toNames = append(toNames, name)
 
@@ -770,27 +739,9 @@ func findValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, bool) {
 	return nil, false
 }
 
-// getValueByKey returns the value for a given key in a provided mapping node,
-// or nil with an error if there is no such entry. This is comparable to getting
-// a value from a map with `foobar[key]`.
-func getValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, error) {
-	for i := 0; i < len(mappingNode.Content); i += 2 {
-		k, v := followAlias(mappingNode.Content[i]), followAlias(mappingNode.Content[i+1])
-		if k.Value == key {
-			return v, nil
-		}
-	}
-
-	if names, err := ytbx.ListStringKeys(mappingNode); err == nil {
-		return nil, fmt.Errorf("no key '%s' found in map, available keys are: %s", key, strings.Join(names, ", "))
-	}
-
-	return nil, fmt.Errorf("no key '%s' found in map and also failed to get a list of key for this map", key)
-}
-
-func (compare *compare) listItemIdentifierCandidates() []ListItemIdentifierField {
+func (compare *compare) listItemIdentifierCandidates() []string {
 	// Set default candidates that are most widly used
-	var candidates = []ListItemIdentifierField{"name", "key", "id"}
+	var candidates = []string{"name", "key", "id"}
 
 	// Add user supplied additional candidates (taking precedence over defaults)
 	candidates = append(compare.settings.AdditionalIdentifiers, candidates...)
@@ -803,7 +754,7 @@ func (compare *compare) listItemIdentifierCandidates() []ListItemIdentifierField
 	return candidates
 }
 
-func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
+func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (listItemIdentifier, error) {
 	isCandidate := func(node *yamlv3.Node) bool {
 		if node.Kind == yamlv3.ScalarNode {
 			for _, entry := range compare.listItemIdentifierCandidates() {
@@ -816,19 +767,19 @@ func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (
 		return false
 	}
 
-	createKeyCountMap := func(sequenceNode *yamlv3.Node) map[ListItemIdentifierField]map[string]struct{} {
-		result := map[ListItemIdentifierField]map[string]struct{}{}
+	createKeyCountMap := func(sequenceNode *yamlv3.Node) map[string]map[string]struct{} {
+		result := map[string]map[string]struct{}{}
 		for _, entry := range sequenceNode.Content {
 			switch entry.Kind {
 			case yamlv3.MappingNode:
 				for i := 0; i < len(entry.Content); i += 2 {
 					k, v := followAlias(entry.Content[i]), followAlias(entry.Content[i+1])
 					if isCandidate(k) {
-						if _, found := result[ListItemIdentifierField(k.Value)]; !found {
-							result[ListItemIdentifierField(k.Value)] = map[string]struct{}{}
+						if _, found := result[k.Value]; !found {
+							result[k.Value] = map[string]struct{}{}
 						}
 
-						result[ListItemIdentifierField(k.Value)][v.Value] = struct{}{}
+						result[k.Value][v.Value] = struct{}{}
 					}
 				}
 			}
@@ -844,15 +795,15 @@ func (compare *compare) getIdentifierFromNamedLists(listA, listB *yamlv3.Node) (
 	for _, identifier := range compare.listItemIdentifierCandidates() {
 		if countA, okA := counterA[identifier]; okA && len(countA) == len(listA.Content) {
 			if countB, okB := counterB[identifier]; okB && len(countB) == len(listB.Content) {
-				return identifier, nil
+				return &singleField{identifier}, nil
 			}
 		}
 	}
 
-	return "", fmt.Errorf("unable to find a key that can serve as an unique identifier")
+	return nil, fmt.Errorf("unable to find a key that can serve as an unique identifier")
 }
 
-func (compare *compare) getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) ListItemIdentifierField {
+func (compare *compare) getNonStandardIdentifierFromNamedLists(listA, listB *yamlv3.Node) listItemIdentifier {
 	createKeyCountMap := func(list *yamlv3.Node) map[string]int {
 		tmp := map[string]map[string]struct{}{}
 		for _, entry := range list.Content {
@@ -889,79 +840,39 @@ func (compare *compare) getNonStandardIdentifierFromNamedLists(listA, listB *yam
 	for keyA, countA := range counterA {
 		if countB, ok := counterB[keyA]; ok {
 			if countA == listALength && countB == listBLength && countA > compare.settings.NonStandardIdentifierGuessCountThreshold {
-				return ListItemIdentifierField(keyA)
+				return &singleField{keyA}
 			}
 		}
 	}
 
-	return ""
+	return nil
 }
 
 // getIdentifierFromKubernetesEntityList returns 'metadata.name' as a field identifier if the provided objects all have the key.
-func (compare *compare) getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (ListItemIdentifierField, error) {
+func (compare *compare) getIdentifierFromKubernetesEntityList(listA, listB *yamlv3.Node) (listItemIdentifier, error) {
 	if !compare.settings.KubernetesEntityDetection {
-		return "", fmt.Errorf("entity detection for Kubernetes resource is not enabled")
+		return nil, fmt.Errorf("entity detection for Kubernetes resource is not enabled")
 	}
 
-	key := ListItemIdentifierField("metadata.name")
 	allHaveMetadataName := func(sequenceNode *yamlv3.Node) bool {
-		numWithMetadata := 0
+		var numWithMetadata int
 		for _, entry := range sequenceNode.Content {
 			switch entry.Kind {
 			case yamlv3.MappingNode:
-				_, err := nameFromPath(entry, key)
-				if err == nil {
+				if _, err := k8sItem.Name(entry); err == nil {
 					numWithMetadata++
 				}
 			}
 		}
+
 		return numWithMetadata == len(sequenceNode.Content)
 	}
 
-	listAHasKey := allHaveMetadataName(listA)
-	listBHasKey := allHaveMetadataName(listB)
-	if listAHasKey && listBHasKey {
-		return key, nil
+	if allHaveMetadataName(listA) && allHaveMetadataName(listB) {
+		return k8sItem, nil
 	}
 
-	return "", fmt.Errorf("not all entities appear to have %q fields", key)
-}
-
-// fqrn returns something like a fully qualified Kubernetes resource name, which
-// contains its apiVersion, kind, namespace, and name where the namespace is
-// only included if it is defined
-func fqrn(node *yamlv3.Node) (string, error) {
-	if node.Kind != yamlv3.MappingNode {
-		return "", fmt.Errorf("name look-up for Kubernetes resources does only work with mapping nodes")
-	}
-
-	var elem []string
-
-	apiVersion, err := nameFromPath(node, "apiVersion")
-	if err != nil {
-		return "", err
-	}
-	elem = append(elem, apiVersion)
-
-	kind, err := nameFromPath(node, "kind")
-	if err != nil {
-		return "", err
-	}
-	elem = append(elem, kind)
-
-	// namespace is optional and will be omited if not set
-	namespace, err := nameFromPath(node, "metadata.namespace")
-	if err == nil {
-		elem = append(elem, namespace)
-	}
-
-	name, err := nameFromPath(node, "metadata.name")
-	if err != nil {
-		return "", err
-	}
-	elem = append(elem, name)
-
-	return strings.Join(elem, "/"), nil
+	return nil, fmt.Errorf("unable to verify list entries to be Kubernetes resources using Kubernetes fields")
 }
 
 // isEmptyDocument returns true in case the given YAML node is an empty document
@@ -1169,4 +1080,14 @@ func pathToString(path *ytbx.Path, useGoPatchPaths bool, showPathRoot bool) stri
 	}
 
 	return result
+}
+
+func grab(node *yamlv3.Node, pathString string) (*yamlv3.Node, error) {
+	return ytbx.Grab(
+		&yamlv3.Node{
+			Kind:    yamlv3.DocumentNode,
+			Content: []*yamlv3.Node{node},
+		},
+		pathString,
+	)
 }

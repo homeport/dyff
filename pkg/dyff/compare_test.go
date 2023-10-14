@@ -832,14 +832,32 @@ b: bar
 				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
 					"#0/items",
 					dyff.ORDERCHANGE,
-					dyff.AsSequenceNode("foo-2", "foo-1"),
-					dyff.AsSequenceNode("foo-1", "foo-2"),
+					dyff.AsSequenceNode("v1/Pod/foobar/foo-2", "v1/Pod/foobar/foo-1"),
+					dyff.AsSequenceNode("v1/Pod/foobar/foo-1", "v1/Pod/foobar/foo-2"),
 				)))
 				Expect(results.Diffs[1]).To(BeSameDiffAs(singleDiff(
-					"/items/metadata.name=foo-1/metadata/labels/foo",
+					"/items/resource=v1\\/Pod\\/foobar\\/foo-1/metadata/labels/foo",
 					dyff.MODIFICATION,
 					"bAr",
 					"bar",
+				)))
+			})
+
+			It("should detect Kubernetes items by their apiVersion, kind, and name", func() {
+				from, to := loadFiles(
+					assets("kubernetes", "lists-versioned-crds", "from.yml"),
+					assets("kubernetes", "lists-versioned-crds", "to.yml"),
+				)
+
+				results, err := dyff.CompareInputFiles(from, to, dyff.KubernetesEntityDetection(true))
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(results.Diffs).To(HaveLen(1))
+				Expect(results.Diffs[0]).To(BeSameDiffAs(singleDiff(
+					"#0/items",
+					dyff.ORDERCHANGE,
+					dyff.AsSequenceNode("v2/kindv2/item", "v1/kindv1/item"),
+					dyff.AsSequenceNode("v1/kindv1/item", "v2/kindv2/item"),
 				)))
 			})
 		})
