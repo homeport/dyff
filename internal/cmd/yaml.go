@@ -21,6 +21,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
@@ -57,10 +59,7 @@ Converts input document into YAML format while preserving the order of all keys.
 		var errors []error
 		for _, filename := range args {
 			if ytbx.IsStdin(filename) && yamlCmdSettings.inplace {
-				return wrap.Error(
-					bunt.Errorf("cannot use in-place flag in combination with input from _*stdin*_"),
-					"incompatible flags",
-				)
+				return fmt.Errorf("incompatible flags: %w", bunt.Errorf("cannot use in-place flag in combination with input from _*stdin*_"))
 			}
 
 			if yamlCmdSettings.inplace {
