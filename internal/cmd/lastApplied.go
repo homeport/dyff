@@ -23,7 +23,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
 	yamlv3 "gopkg.in/yaml.v3"
@@ -61,7 +60,7 @@ to compare it against the current configuration.
 
 		report, err := dyff.CompareInputFiles(lastConfiguration, inputFile, dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges))
 		if err != nil {
-			return wrap.Errorf(err, "failed to compare input files")
+			return fmt.Errorf("failed to compare input files: %w", err)
 		}
 
 		return writeReport(cmd, report)

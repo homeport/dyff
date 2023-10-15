@@ -27,7 +27,6 @@ import (
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/text"
-	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
 	"github.com/mitchellh/hashstructure"
 	yamlv3 "gopkg.in/yaml.v3"
@@ -961,7 +960,7 @@ func (compare *compare) calcNodeHash(node *yamlv3.Node) (hash uint64) {
 	}
 
 	if err != nil {
-		panic(wrap.Errorf(err, "failed to calculate hash of %#v", node.Value))
+		panic(fmt.Errorf("failed to calculate hash of %#v: %w", node.Value, err))
 	}
 
 	return hash

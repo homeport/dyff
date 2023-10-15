@@ -30,7 +30,6 @@ import (
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
-	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
 	yamlv3 "gopkg.in/yaml.v3"
@@ -118,7 +117,7 @@ func humanReadableFilename(filename string) string {
 // stored in the provided input file to the standard output
 func (w *OutputWriter) WriteToStdout(filename string) error {
 	if err := w.write(os.Stdout, filename); err != nil {
-		return wrap.Error(err, bunt.Sprint("failed to write output to _*stdout*_"))
+		return bunt.Errorf("failed to write output to _*stdout*_: %w", err)
 	}
 
 	return nil
@@ -133,13 +132,13 @@ func (w *OutputWriter) WriteInplace(filename string) error {
 	// Force plain mode to make sure there are no ANSI sequences
 	w.PlainMode = true
 	if err := w.write(bufWriter, filename); err != nil {
-		return wrap.Errorf(err, "failed to write output to %s", humanReadableFilename(filename))
+		return fmt.Errorf("failed to write output to %s: %w", humanReadableFilename(filename), err)
 	}
 
 	// Write the buffered output to the provided input file (override in place)
 	bufWriter.Flush()
 	if err := os.WriteFile(filename, buf.Bytes(), 0644); err != nil {
-		return wrap.Errorf(err, "failed to overwrite %s in place", humanReadableFilename(filename))
+		return fmt.Errorf("failed to overwrite %s in place: %w", humanReadableFilename(filename), err)
 	}
 
 	return nil
@@ -148,7 +147,7 @@ func (w *OutputWriter) WriteInplace(filename string) error {
 func (w *OutputWriter) write(writer io.Writer, filename string) error {
 	inputFile, err := ytbx.LoadFile(filename)
 	if err != nil {
-		return wrap.Errorf(err, "failed to load input from %s", humanReadableFilename(filename))
+		return fmt.Errorf("failed to load input from %s: %w", humanReadableFilename(filename), err)
 	}
 
 	for _, document := range inputFile.Documents {
@@ -215,14 +214,11 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 		}
 
 	default:
-		return wrap.Errorf(
-			fmt.Errorf(cmd.UsageString()),
-			"unknown output style %s", reportOptions.style,
-		)
+		return fmt.Errorf("unknown output style %s: %w", reportOptions.style, fmt.Errorf(cmd.UsageString()))
 	}
 
 	if err := reportWriter.WriteReport(os.Stdout); err != nil {
-		return wrap.Errorf(err, "failed to print report")
+		return fmt.Errorf("failed to print report: %w", err)
 	}
 
 	// If configured, make sure `dyff` exists with an exit status

@@ -57,10 +57,7 @@ Converts input document into JSON format while preserving the order of all keys.
 		var errors []error
 		for _, filename := range args {
 			if ytbx.IsStdin(filename) && jsonCmdSettings.inplace {
-				return wrap.Error(
-					fmt.Errorf("cannot use in-place flag in combination with input from STDIN"),
-					"incompatible flags",
-				)
+				return fmt.Errorf("incompatible flags: %w", fmt.Errorf("cannot use in-place flag in combination with input from STDIN"))
 			}
 
 			if jsonCmdSettings.inplace {

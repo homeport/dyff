@@ -21,7 +21,8 @@
 package cmd
 
 import (
-	"github.com/gonvenience/wrap"
+	"fmt"
+
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
 
@@ -60,7 +61,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		from, to, err := ytbx.LoadFiles(fromLocation, toLocation)
 		if err != nil {
-			return wrap.Errorf(err, "failed to load input files")
+			return fmt.Errorf("failed to load input files: %w", err)
 		}
 
 		// If the main change root flag is set, this (re-)sets the individual change roots of the two input files
@@ -72,14 +73,14 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		// Change root of 'from' input file if change root flag for 'from' is set
 		if betweenCmdSettings.chrootFrom != "" {
 			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, reportOptions.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
-				return wrap.Errorf(err, "failed to change root of %s to path %s", from.Location, betweenCmdSettings.chrootFrom)
+				return fmt.Errorf("failed to change root of %s to path %s: %w", from.Location, betweenCmdSettings.chrootFrom, err)
 			}
 		}
 
 		// Change root of 'to' input file if change root flag for 'to' is set
 		if betweenCmdSettings.chrootTo != "" {
 			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, reportOptions.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
-				return wrap.Errorf(err, "failed to change root of %s to path %s", to.Location, betweenCmdSettings.chrootTo)
+				return fmt.Errorf("failed to change root of %s to path %s: %w", to.Location, betweenCmdSettings.chrootTo, err)
 			}
 		}
 
@@ -90,7 +91,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		)
 
 		if err != nil {
-			return wrap.Errorf(err, "failed to compare input files")
+			return fmt.Errorf("failed to compare input files: %w", err)
 		}
 
 		if reportOptions.filters != nil {
