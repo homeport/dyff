@@ -13,7 +13,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/onsi/ginkgo/v2 v2.13.0
-	github.com/onsi/gomega v1.28.0
+	github.com/onsi/gomega v1.28.1
 	github.com/sergi/go-diff v1.3.1
 	github.com/spf13/cobra v1.7.0
 	github.com/texttheater/golang-levenshtein v1.0.1
@@ -24,7 +24,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230602150820-91b7bce49751 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-ciede2000 v0.0.0-20170301095244-782e8c62fec3 // indirect
