@@ -29,6 +29,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 	"unicode/utf8"
 
@@ -51,11 +52,12 @@ type stringWriter interface {
 // HumanReport is a reporter with human readable output in mind
 type HumanReport struct {
 	Report
-	MinorChangeThreshold float64
-	NoTableStyle         bool
-	DoNotInspectCerts    bool
-	OmitHeader           bool
-	UseGoPatchPaths      bool
+	MinorChangeThreshold  float64
+	MultilineContextLines int
+	NoTableStyle          bool
+	DoNotInspectCerts     bool
+	OmitHeader            bool
+	UseGoPatchPaths       bool
 }
 
 // WriteReport writes a human readable report to the provided writer
@@ -342,48 +344,53 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 		)
 
 	case isMultiLine(from, to):
-		if !bunt.UseColors() {
-			_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
-			report.writeTextBlocks(output, 0,
-				red("%s", createStringWithPrefix("  - ", from)),
-				green("%s", createStringWithPrefix("  + ", to)),
-			)
 
-		} else {
-			dmp := diffmatchpatch.New()
-			diff := dmp.DiffMain(from, to, true)
-			diff = dmp.DiffCleanupSemantic(diff)
-			diff = dmp.DiffCleanupEfficiency(diff)
+		// create line by line diff
+		dmp := diffmatchpatch.New()
+		oldIdx, newIdx, lines := dmp.DiffLinesToChars(from, to)
+		diff := dmp.DiffMain(oldIdx, newIdx, false)
+		diff = dmp.DiffCharsToLines(diff, lines)
 
-			var ins, del int
-			var buf bytes.Buffer
-			for _, d := range diff {
-				switch d.Type {
-				case diffmatchpatch.DiffInsert:
-					fmt.Fprint(&buf, green("%s", d.Text))
-					ins++
+		var ins, del int
+		var buf bytes.Buffer
+		multilineContextLines := report.MultilineContextLines
+		for _, d := range diff {
+			// color and format each diff by type
+			switch d.Type {
+			case diffmatchpatch.DiffInsert:
+				fmt.Fprint(&buf, green(createStringWithContinuousPrefix("  + ", d.Text)))
+				ins++
 
-				case diffmatchpatch.DiffDelete:
-					fmt.Fprint(&buf, red("%s", d.Text))
-					del++
+			case diffmatchpatch.DiffDelete:
+				fmt.Fprint(&buf, red(createStringWithContinuousPrefix("  - ", d.Text)))
+				del++
 
-				case diffmatchpatch.DiffEqual:
-					fmt.Fprint(&buf, dimgray("%s", d.Text))
+			case diffmatchpatch.DiffEqual:
+				// skip eqaul output if requested context is 0 or the equal text is empty
+				if multilineContextLines <= 0 || len(d.Text) == 0 {
+					continue
 				}
+				// add amount of unchanged lines as configured
+				lines := strings.Split(strings.TrimSuffix(d.Text, "\n"), "\n")
+				lower := int(math.Min(float64(len(lines)), float64(multilineContextLines)))
+				upper := len(lines) - multilineContextLines
+				var val string
+				if upper <= lower {
+					val = strings.Join(lines, "\n")
+				} else {
+					val = fmt.Sprintf("%s\n\n[%s unchanged)]\n\n%s\n",
+						strings.Join(lines[:lower], "\n"),
+						text.Plural((upper-lower), "line"),
+						strings.Join(lines[upper:], "\n"))
+				}
+				fmt.Fprint(&buf, dimgray(createStringWithContinuousPrefix("    ", val)))
 			}
-			fmt.Fprintln(&buf)
-
-			var insDelDetails []string
-			if ins > 0 {
-				insDelDetails = append(insDelDetails, text.Plural(ins, "insert"))
-			}
-			if del > 0 {
-				insDelDetails = append(insDelDetails, text.Plural(del, "deletion"))
-			}
-
-			_, _ = output.WriteString(yellow("%c value change in multiline text (%s)\n", MODIFICATION, strings.Join(insDelDetails, ", ")))
-			_, _ = output.WriteString(createStringWithPrefix("    ", buf.String()))
 		}
+		_, _ = output.WriteString(
+			yellow("%c value change in multiline text (%s, %s)\n",
+				MODIFICATION, text.Plural(ins, "insert"), text.Plural(del, "deletion")))
+		_, _ = output.WriteString(buf.String())
+		_, _ = output.WriteString("\n")
 
 	case isMinorChange(from, to, report.MinorChangeThreshold):
 		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
@@ -612,6 +619,20 @@ func isWhitespaceOnlyChange(from string, to string) bool {
 
 func showWhitespaceCharacters(text string) string {
 	return strings.Replace(strings.Replace(text, "\n", bold("↵\n"), -1), " ", bold("·"), -1)
+}
+
+// createStringWithContinuousPrefix adds the defined prefix to each line of the
+// objects string representation.
+// The resulting string will always end with a newline.
+func createStringWithContinuousPrefix(prefix string, obj interface{}) string {
+	trimmed := strings.TrimSuffix(fmt.Sprint(obj), "\n") // avoid add. additional empty newline if orig string ends with \n
+	var buf bytes.Buffer
+	for _, line := range strings.Split(trimmed, "\n") {
+		buf.WriteString(prefix)
+		buf.WriteString(line)
+		buf.WriteString("\n") // always adds a newline, even if orig string does not contain any
+	}
+	return buf.String()
 }
 
 func createStringWithPrefix(prefix string, obj interface{}) string {
