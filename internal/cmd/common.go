@@ -46,6 +46,8 @@ type reportConfig struct {
 	exitWithCode              bool
 	omitHeader                bool
 	useGoPatchPaths           bool
+	minorChangeThreshold      float64
+	multilineContextLines     int
 	additionalIdentifiers     []string
 	filters                   []string
 	excludes                  []string
@@ -62,6 +64,8 @@ var defaults = reportConfig{
 	exitWithCode:              false,
 	omitHeader:                false,
 	useGoPatchPaths:           false,
+	minorChangeThreshold:      0.1,
+	multilineContextLines:     4,
 	additionalIdentifiers:     nil,
 	filters:                   nil,
 	excludes:                  nil,
@@ -200,12 +204,13 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	switch strings.ToLower(reportOptions.style) {
 	case "human", "bosh":
 		reportWriter = &dyff.HumanReport{
-			Report:               report,
-			DoNotInspectCerts:    reportOptions.doNotInspectCerts,
-			NoTableStyle:         reportOptions.noTableStyle,
-			OmitHeader:           reportOptions.omitHeader,
-			UseGoPatchPaths:      reportOptions.useGoPatchPaths,
-			MinorChangeThreshold: 0.1,
+			Report:                report,
+			DoNotInspectCerts:     reportOptions.doNotInspectCerts,
+			NoTableStyle:          reportOptions.noTableStyle,
+			OmitHeader:            reportOptions.omitHeader,
+			UseGoPatchPaths:       reportOptions.useGoPatchPaths,
+			MinorChangeThreshold:  reportOptions.minorChangeThreshold,
+			MultilineContextLines: reportOptions.multilineContextLines,
 		}
 
 	case "brief", "short", "summary":
