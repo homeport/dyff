@@ -30,12 +30,14 @@ orderchanges  (document #1)
     + one, two, three, four, five, six
 
 multiline  (document #1)
-  ± value change
-    - Yes,         + Yes, strings
-      strings        can have multiple
-      can            lines
-      have
-      multiple
+  ± value change in multiline text (one insert, one deletion)
+    - Yes,
+    - strings
+    - can
+    - have
+    - multiple
+    + Yes, strings
+    + can have multiple
       lines
 
 

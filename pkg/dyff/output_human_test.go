@@ -199,6 +199,15 @@ variables.ROUTER_TLS_PEM.options
 				false,
 			)
 		})
+
+		It("should use human friendly compact diff of multiline text differences for complex files", func() {
+			compareAgainstExpected(
+				assets("multiline/from.yml"),
+				assets("multiline/to.yml"),
+				assets("multiline/expected-dyff-spruce.human"),
+				false,
+			)
+		})
 	})
 
 	Context("reported output issues (without colors)", func() {

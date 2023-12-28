@@ -124,11 +124,13 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 	Expect(err).To(BeNil())
 
 	reportWriter := &dyff.HumanReport{
-		Report:            report,
-		DoNotInspectCerts: false,
-		NoTableStyle:      false,
-		OmitHeader:        true,
-		UseGoPatchPaths:   useGoPatchPaths,
+		Report:                report,
+		DoNotInspectCerts:     false,
+		NoTableStyle:          false,
+		OmitHeader:            true,
+		UseGoPatchPaths:       useGoPatchPaths,
+		MinorChangeThreshold:  0.1,
+		MultilineContextLines: 4,
 	}
 
 	buffer := &bytes.Buffer{}
