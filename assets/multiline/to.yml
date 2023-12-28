@@ -1,0 +1,95 @@
+files:
+- name: simple
+  content: |
+    UnChanged line
+    This line changed 1
+    UnChanged line
+    This line changed 2
+    UnChanged line
+    This line changed 3
+
+- name: newline
+  # + to keep trailing newlines
+  content: |+
+    
+    
+    This line changed 1
+    UnChanged line
+
+    This line changed 2
+
+
+    UnChanged line
+    This line changed 3
+    
+    
+
+- name: complex
+  content: |
+    Begin line 1
+    Begin line 2
+    Begin line 3
+    Begin line 4
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    PreChange line 1
+    PreChange line 2
+    PreChange line 3
+    PreChange line 4
+    This line changed 1
+    This line changed 2
+    PostChange line 1
+    PostChange line 2
+    PostChange line 3
+    PostChange line 4
+    Truncated line
+    Truncated line
+    Truncated line
+    PreAdd line 1
+    PreAdd line 2
+    PreAdd line 3
+    PreAdd line 4
+    This line was added
+    This line was added
+    PostAdd line 1
+    PostAdd line 2
+    PostAdd line 3
+    PostAdd line 4
+    Truncated line
+    Truncated line
+    PreDelete line 1
+    PreDelete line 2
+    PreDelete line 3
+    PreDelete line 4
+    PostDelete line 1
+    PostDelete line 2
+    PostDelete line 3
+    PostDelete line 4
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    Truncated line
+    End line 1
+    End line 1
+    End line 1
+    End line 1
