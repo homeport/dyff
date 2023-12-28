@@ -12,13 +12,17 @@ files:
   # + to keep trailing newlines
   content: |+
     
-    
     This line changed 1
     UnChanged line
-
+    
     This line changed 2
-
-
+    UnChanged line
+    
+    
+    Moved line
+    
+    
+    
     UnChanged line
     This line changed 3
     
@@ -90,6 +94,6 @@ files:
     Truncated line
     Truncated line
     End line 1
-    End line 1
-    End line 1
-    End line 1
+    End line 2
+    End line 3
+    End line 4

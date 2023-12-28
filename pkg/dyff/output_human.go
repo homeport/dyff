@@ -371,14 +371,18 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 					continue
 				}
 				// add amount of unchanged lines as configured
-				lines := strings.Split(strings.TrimSuffix(d.Text, "\n"), "\n")
+				lines := strings.Split(d.Text, "\n")
 				lower := int(math.Min(float64(len(lines)), float64(multilineContextLines)))
 				upper := len(lines) - multilineContextLines
+				// if string ends with \n we need to display one more line on the upper limit
+				if strings.HasSuffix(d.Text, "\n") {
+					upper--
+				}
 				var val string
 				if upper <= lower {
 					val = strings.Join(lines, "\n")
 				} else {
-					val = fmt.Sprintf("%s\n\n[%s unchanged)]\n\n%s\n",
+					val = fmt.Sprintf("%s\n\n[%s unchanged)]\n\n%s",
 						strings.Join(lines[:lower], "\n"),
 						text.Plural((upper-lower), "line"),
 						strings.Join(lines[upper:], "\n"))
