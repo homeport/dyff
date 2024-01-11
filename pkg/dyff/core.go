@@ -212,6 +212,9 @@ func (compare *compare) nonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, t
 		case "!!null":
 			// Ignore different ways to define a null value
 
+		case "!!bool":
+			diffs, err = compare.boolValues(path, from, to)
+
 		default:
 			if from.Value != to.Value {
 				diffs, err = []Diff{{
@@ -605,6 +608,48 @@ func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3
 	}
 
 	return result, nil
+}
+
+func (compare *compare) boolValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+	boolFrom, err := toBool(from.Value)
+	if err != nil {
+		return nil, err
+	}
+	boolTo, err := toBool(to.Value)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]Diff, 0)
+	if boolFrom != boolTo {
+		result = append(result, Diff{
+			&path,
+			[]Detail{{
+				Kind: MODIFICATION,
+				From: from,
+				To:   to,
+			}},
+		})
+	}
+
+	return result, nil
+}
+
+// this uses the various values mentioned in https://yaml.org/type/bool.html
+var trueValues = [...]string{"y", "Y", "yes", "Yes", "YES", "true", "True", "TRUE", "on", "On", "ON"}
+var falseValues = [...]string{"n", "N", "no", "No", "NO", "false", "False", "FALSE", "off", "Off", "OFF"}
+
+func toBool(input string) (bool, error) {
+	for _, t := range trueValues {
+		if input == t {
+			return true, nil
+		}
+	}
+	for _, f := range falseValues {
+		if input == f {
+			return false, nil
+		}
+	}
+	return false, fmt.Errorf("not a valid boolean value: '%s'", input)
 }
 
 func (compare *compare) findOrderChangesInSimpleList(fromCommon, toCommon []*yamlv3.Node) []Detail {

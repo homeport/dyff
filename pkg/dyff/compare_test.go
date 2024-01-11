@@ -88,6 +88,16 @@ some:
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/name", dyff.MODIFICATION, 1, 2)))
 			})
 
+			It("should return that different representations of true are treated as the same", func() {
+				from := yml("---\nkey: true")
+
+				to := yml("---\nkey: True")
+
+				result, err := compare(from, to)
+				Expect(err).To(BeNil())
+				Expect(result).To(BeNil())
+			})
+
 			It("should return that a float was modified", func() {
 				from := yml(`---
 some:
