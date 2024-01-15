@@ -113,7 +113,9 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
 func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, useGoPatchPaths bool, showPathRoot bool) error {
 	_, _ = output.WriteString("\n")
+	_, _ = output.WriteString("@@ ")
 	_, _ = output.WriteString(pathToString(diff.Path, useGoPatchPaths, showPathRoot))
+	_, _ = output.WriteString(" @@")
 	_, _ = output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
@@ -128,7 +130,7 @@ func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Dif
 
 	// For the use case in which only a path-less diff is suppose to be printed,
 	// omit the indent in this case since there is only one element to show
-	indent := 2
+	indent := 0
 	if diff.Path != nil && len(diff.Path.PathElements) == 0 {
 		indent = 0
 	}
@@ -241,8 +243,8 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 
 		_, _ = output.WriteString(yellow("%c content change\n", MODIFICATION))
 		report.writeTextBlocks(&output, 0,
-			red("%s", createStringWithPrefix("  - ", hex.Dump(from))),
-			green("%s", createStringWithPrefix("  + ", hex.Dump(to))),
+			red("%s", createStringWithPrefix("- ", hex.Dump(from))),
+			green("%s", createStringWithPrefix("+ ", hex.Dump(to))),
 		)
 
 	default:
@@ -269,8 +271,8 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 			return "", err
 		}
 
-		_, _ = output.WriteString(red("%s", createStringWithPrefix("  - ", strings.TrimRight(from, "\n"))))
-		_, _ = output.WriteString(green("%s", createStringWithPrefix("  + ", strings.TrimRight(to, "\n"))))
+		_, _ = output.WriteString(red("%s", createStringWithPrefix("- ", strings.TrimRight(from, "\n"))))
+		_, _ = output.WriteString(green("%s", createStringWithPrefix("+ ", strings.TrimRight(to, "\n"))))
 	}
 
 	return output.String(), nil
@@ -313,11 +315,11 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
 		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
 		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
-			_, _ = output.WriteString(red("  - %s\n", strings.Join(from, singleLineSeparator)))
-			_, _ = output.WriteString(green("  + %s\n", strings.Join(to, singleLineSeparator)))
+			_, _ = output.WriteString(red("- %s\n", strings.Join(from, singleLineSeparator)))
+			_, _ = output.WriteString(green("+ %s\n", strings.Join(to, singleLineSeparator)))
 
 		} else {
-			_, _ = output.WriteString(CreateTableStyleString(" ", 2,
+			_, _ = output.WriteString(CreateTableStyleString(" ", 0,
 				red("%s", strings.Join(from, "\n")),
 				green("%s", strings.Join(to, "\n"))))
 		}
@@ -337,16 +339,16 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 	case isWhitespaceOnlyChange(from, to):
 		_, _ = output.WriteString(yellow("%c whitespace only change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
-			red("%s", createStringWithPrefix("  - ", showWhitespaceCharacters(from))),
-			green("%s", createStringWithPrefix("  + ", showWhitespaceCharacters(to))),
+			red("%s", createStringWithPrefix("- ", showWhitespaceCharacters(from))),
+			green("%s", createStringWithPrefix("+ ", showWhitespaceCharacters(to))),
 		)
 
 	case isMultiLine(from, to):
 		if !bunt.UseColors() {
 			_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
 			report.writeTextBlocks(output, 0,
-				red("%s", createStringWithPrefix("  - ", from)),
-				green("%s", createStringWithPrefix("  + ", to)),
+				red("%s", createStringWithPrefix("- ", from)),
+				green("%s", createStringWithPrefix("+ ", to)),
 			)
 
 		} else {
@@ -393,8 +395,8 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 
 	default:
 		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
-		_, _ = output.WriteString(red("%s", createStringWithPrefix("  - ", from)))
-		_, _ = output.WriteString(green("%s", createStringWithPrefix("  + ", to)))
+		_, _ = output.WriteString(red("%s", createStringWithPrefix("- ", from)))
+		_, _ = output.WriteString(green("%s", createStringWithPrefix("+ ", to)))
 	}
 }
 
@@ -417,13 +419,13 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 		}
 
 		report.writeTextBlocks(&buf, 0,
-			createStringWithPrefix(red("  - "), strings.Join(fromLines, "\n")),
-			createStringWithPrefix(green("  + "), strings.Join(toLines, "\n")))
+			createStringWithPrefix(red("- "), strings.Join(fromLines, "\n")),
+			createStringWithPrefix(green("+ "), strings.Join(toLines, "\n")))
 
 	} else {
 		report.writeTextBlocks(&buf, 0,
-			red("%s", createStringWithPrefix("  - ", from)),
-			green("%s", createStringWithPrefix("  + ", to)),
+			red("%s", createStringWithPrefix("- ", from)),
+			green("%s", createStringWithPrefix("+ ", to)),
 		)
 	}
 
@@ -464,12 +466,11 @@ func humanReadableType(node *yamlv3.Node) string {
 func highlightRemovals(diffs []diffmatchpatch.Diff) string {
 	var buf bytes.Buffer
 
-	buf.WriteString(red("  - "))
+	buf.WriteString(red("- "))
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
 			buf.WriteString(lightred("%s", part.Text))
-
 		case diffmatchpatch.DiffDelete:
 			buf.WriteString(bold("%s", red("%s", part.Text)))
 		}
@@ -482,7 +483,7 @@ func highlightRemovals(diffs []diffmatchpatch.Diff) string {
 func highlightAdditions(diffs []diffmatchpatch.Diff) string {
 	var buf bytes.Buffer
 
-	buf.WriteString(green("  + "))
+	buf.WriteString(green("+ "))
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
