@@ -162,6 +162,11 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 	var output bytes.Buffer
 
 	switch detail.To.Kind {
+	case yamlv3.DocumentNode:
+		_, _ = fmt.Fprint(&output, yellow("%c %s added:\n",
+			ADDITION,
+			text.Plural(len(detail.To.Content), "document"),
+		))
 	case yamlv3.SequenceNode:
 		_, _ = output.WriteString(yellow("%c %s added:\n",
 			ADDITION,
