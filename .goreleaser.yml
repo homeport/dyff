@@ -26,7 +26,7 @@ release:
   name_template: "{{.ProjectName}} release v{{.Version}}"
 
 changelog:
-  skip: false
+  disable: true
   sort: ""
   filters:
     exclude:
