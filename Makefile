@@ -30,7 +30,7 @@ clean:
 
 .PHONY: test
 test:
-	@ginkgo run \
+	@go run -mod=mod github.com/onsi/ginkgo/v2/ginkgo run \
 	  --coverprofile=unit.coverprofile \
 	  --randomize-all \
 	  --randomize-suites \
