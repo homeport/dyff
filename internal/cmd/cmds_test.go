@@ -54,7 +54,7 @@ var _ = Describe("command line tool flags", func() {
 	Context("yaml command", func() {
 		Context("creating yaml output", func() {
 			It("should not create YAML output that is not valid", func() {
-				filename := createTestFile(`{"a": ",", "foo": {"bar":"*"}}`)
+				filename := createTestFile(`{"a": ",", "foo": {"bar": "*", "dash": "-"}}`)
 				defer os.Remove(filename)
 
 				out, err := dyff("yaml", filename)
@@ -63,6 +63,7 @@ var _ = Describe("command line tool flags", func() {
 a: ","
 foo:
   bar: "*"
+  dash: "-"
 
 `))
 			})
