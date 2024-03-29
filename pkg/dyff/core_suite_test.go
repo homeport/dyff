@@ -125,6 +125,7 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 
 	reportWriter := &dyff.HumanReport{
 		Report:                report,
+		Indent:                2,
 		DoNotInspectCerts:     false,
 		NoTableStyle:          false,
 		OmitHeader:            true,
@@ -226,6 +227,7 @@ func path(path string) *ytbx.Path {
 func humanDiff(diff dyff.Diff) string {
 	reporter := dyff.HumanReport{
 		Report:            dyff.Report{Diffs: []dyff.Diff{diff}},
+		Indent:            2,
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
 		OmitHeader:        true,

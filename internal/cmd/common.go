@@ -205,12 +205,27 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	case "human", "bosh":
 		reportWriter = &dyff.HumanReport{
 			Report:                report,
+			Indent:                2,
 			DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 			NoTableStyle:          reportOptions.noTableStyle,
 			OmitHeader:            reportOptions.omitHeader,
 			UseGoPatchPaths:       reportOptions.useGoPatchPaths,
 			MinorChangeThreshold:  reportOptions.minorChangeThreshold,
 			MultilineContextLines: reportOptions.multilineContextLines,
+		}
+
+	case "markdown", "github":
+		reportWriter = &dyff.MarkdownReport{
+			HumanReport: dyff.HumanReport{
+				Report:                report,
+				Indent:                0,
+				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
+				NoTableStyle:          true,
+				OmitHeader:            true,
+				UseGoPatchPaths:       reportOptions.useGoPatchPaths,
+				MinorChangeThreshold:  reportOptions.minorChangeThreshold,
+				MultilineContextLines: reportOptions.multilineContextLines,
+			},
 		}
 
 	case "brief", "short", "summary":

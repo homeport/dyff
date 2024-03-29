@@ -52,6 +52,7 @@ type stringWriter interface {
 // HumanReport is a reporter with human readable output in mind
 type HumanReport struct {
 	Report
+	Indent                int
 	MinorChangeThreshold  float64
 	MultilineContextLines int
 	NoTableStyle          bool
@@ -130,7 +131,7 @@ func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Dif
 
 	// For the use case in which only a path-less diff is suppose to be printed,
 	// omit the indent in this case since there is only one element to show
-	indent := 2
+	indent := report.Indent
 	if diff.Path != nil && len(diff.Path.PathElements) == 0 {
 		indent = 0
 	}
@@ -211,7 +212,7 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 		return "", err
 	}
 
-	report.writeTextBlocks(&output, 2, yamlOutput)
+	report.writeTextBlocks(&output, report.Indent, yamlOutput)
 
 	return output.String(), nil
 }
@@ -243,8 +244,8 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 
 		_, _ = output.WriteString(yellow("%c content change\n", MODIFICATION))
 		report.writeTextBlocks(&output, 0,
-			red("%s", createStringWithPrefix("  - ", hex.Dump(from))),
-			green("%s", createStringWithPrefix("  + ", hex.Dump(to))),
+			red("%s", createStringWithPrefix("- ", hex.Dump(from), report.Indent)),
+			green("%s", createStringWithPrefix("+ ", hex.Dump(to), report.Indent)),
 		)
 
 	default:
@@ -271,8 +272,8 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 			return "", err
 		}
 
-		_, _ = output.WriteString(red("%s", createStringWithPrefix("  - ", strings.TrimRight(from, "\n"))))
-		_, _ = output.WriteString(green("%s", createStringWithPrefix("  + ", strings.TrimRight(to, "\n"))))
+		_, _ = output.WriteString(red("%s", createStringWithPrefix("- ", strings.TrimRight(from, "\n"), report.Indent)))
+		_, _ = output.WriteString(green("%s", createStringWithPrefix("+ ", strings.TrimRight(to, "\n"), report.Indent)))
 	}
 
 	return output.String(), nil
@@ -315,8 +316,8 @@ func (report *HumanReport) generateHumanDetailOutputOrderchange(detail Detail) (
 		fromSingleLineLength := stringArrayLen(from) + ((len(from) - 1) * plainTextLength(singleLineSeparator))
 		toStringleLineLength := stringArrayLen(to) + ((len(to) - 1) * plainTextLength(singleLineSeparator))
 		if estimatedLength := max(fromSingleLineLength, toStringleLineLength); estimatedLength < threshold {
-			_, _ = output.WriteString(red("  - %s\n", strings.Join(from, singleLineSeparator)))
-			_, _ = output.WriteString(green("  + %s\n", strings.Join(to, singleLineSeparator)))
+			_, _ = output.WriteString(red(strings.Repeat(" ", report.Indent)+"- %s\n", strings.Join(from, singleLineSeparator)))
+			_, _ = output.WriteString(green(strings.Repeat(" ", report.Indent)+"+ %s\n", strings.Join(to, singleLineSeparator)))
 
 		} else {
 			_, _ = output.WriteString(CreateTableStyleString(" ", 2,
@@ -339,8 +340,8 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 	case isWhitespaceOnlyChange(from, to):
 		_, _ = output.WriteString(yellow("%c whitespace only change\n", MODIFICATION))
 		report.writeTextBlocks(output, 0,
-			red("%s", createStringWithPrefix("  - ", showWhitespaceCharacters(from))),
-			green("%s", createStringWithPrefix("  + ", showWhitespaceCharacters(to))),
+			red("%s", createStringWithPrefix("- ", showWhitespaceCharacters(from), report.Indent)),
+			green("%s", createStringWithPrefix("+ ", showWhitespaceCharacters(to), report.Indent)),
 		)
 
 	case isMultiLine(from, to):
@@ -358,11 +359,11 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 			// color and format each diff by type
 			switch d.Type {
 			case diffmatchpatch.DiffInsert:
-				fmt.Fprint(&buf, green(createStringWithContinuousPrefix("  + ", d.Text)))
+				fmt.Fprint(&buf, green(createStringWithContinuousPrefix("+ ", d.Text, report.Indent)))
 				ins++
 
 			case diffmatchpatch.DiffDelete:
-				fmt.Fprint(&buf, red(createStringWithContinuousPrefix("  - ", d.Text)))
+				fmt.Fprint(&buf, red(createStringWithContinuousPrefix("- ", d.Text, report.Indent)))
 				del++
 
 			case diffmatchpatch.DiffEqual:
@@ -387,7 +388,7 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 						text.Plural((upper-lower), "line"),
 						strings.Join(lines[upper:], "\n"))
 				}
-				fmt.Fprint(&buf, dimgray(createStringWithContinuousPrefix("    ", val)))
+				fmt.Fprint(&buf, dimgray(createStringWithContinuousPrefix("  ", val, report.Indent)))
 			}
 		}
 		_, _ = output.WriteString(
@@ -399,13 +400,13 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 	case isMinorChange(from, to, report.MinorChangeThreshold):
 		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
 		diffs := diffmatchpatch.New().DiffMain(from, to, false)
-		_, _ = output.WriteString(highlightRemovals(diffs))
-		_, _ = output.WriteString(highlightAdditions(diffs))
+		_, _ = output.WriteString(highlightRemovals(diffs, report.Indent))
+		_, _ = output.WriteString(highlightAdditions(diffs, report.Indent))
 
 	default:
 		_, _ = output.WriteString(yellow("%c value change\n", MODIFICATION))
-		_, _ = output.WriteString(red("%s", createStringWithPrefix("  - ", from)))
-		_, _ = output.WriteString(green("%s", createStringWithPrefix("  + ", to)))
+		_, _ = output.WriteString(red("%s", createStringWithPrefix("- ", from, report.Indent)))
+		_, _ = output.WriteString(green("%s", createStringWithPrefix("+ ", to, report.Indent)))
 	}
 }
 
@@ -428,13 +429,13 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 		}
 
 		report.writeTextBlocks(&buf, 0,
-			createStringWithPrefix(red("  - "), strings.Join(fromLines, "\n")),
-			createStringWithPrefix(green("  + "), strings.Join(toLines, "\n")))
+			createStringWithPrefix(red("- "), strings.Join(fromLines, "\n"), report.Indent),
+			createStringWithPrefix(green("+ "), strings.Join(toLines, "\n"), report.Indent))
 
 	} else {
 		report.writeTextBlocks(&buf, 0,
-			red("%s", createStringWithPrefix("  - ", from)),
-			green("%s", createStringWithPrefix("  + ", to)),
+			red("%s", createStringWithPrefix("- ", from, report.Indent)),
+			green("%s", createStringWithPrefix("+ ", to, report.Indent)),
 		)
 	}
 
@@ -472,10 +473,10 @@ func humanReadableType(node *yamlv3.Node) string {
 	panic(fmt.Errorf("unknown and therefore unsupported kind %v", node.Kind))
 }
 
-func highlightRemovals(diffs []diffmatchpatch.Diff) string {
+func highlightRemovals(diffs []diffmatchpatch.Diff, indent int) string {
 	var buf bytes.Buffer
 
-	buf.WriteString(red("  - "))
+	buf.WriteString(red("%s- ", strings.Repeat(" ", indent)))
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
@@ -490,10 +491,10 @@ func highlightRemovals(diffs []diffmatchpatch.Diff) string {
 	return buf.String()
 }
 
-func highlightAdditions(diffs []diffmatchpatch.Diff) string {
+func highlightAdditions(diffs []diffmatchpatch.Diff, indent int) string {
 	var buf bytes.Buffer
 
-	buf.WriteString(green("  + "))
+	buf.WriteString(green("%s+ ", strings.Repeat(" ", indent)))
 	for _, part := range diffs {
 		switch part.Type {
 		case diffmatchpatch.DiffEqual:
@@ -628,10 +629,11 @@ func showWhitespaceCharacters(text string) string {
 // createStringWithContinuousPrefix adds the defined prefix to each line of the
 // objects string representation.
 // The resulting string will always end with a newline.
-func createStringWithContinuousPrefix(prefix string, obj interface{}) string {
+func createStringWithContinuousPrefix(prefix string, obj interface{}, indent int) string {
 	trimmed := strings.TrimSuffix(fmt.Sprint(obj), "\n") // avoid add. additional empty newline if orig string ends with \n
 	var buf bytes.Buffer
 	for _, line := range strings.Split(trimmed, "\n") {
+		buf.WriteString(strings.Repeat(" ", indent))
 		buf.WriteString(prefix)
 		buf.WriteString(line)
 		buf.WriteString("\n") // always adds a newline, even if orig string does not contain any
@@ -639,14 +641,15 @@ func createStringWithContinuousPrefix(prefix string, obj interface{}) string {
 	return buf.String()
 }
 
-func createStringWithPrefix(prefix string, obj interface{}) string {
+func createStringWithPrefix(prefix string, obj interface{}, indent int) string {
 	var buf bytes.Buffer
 	for i, line := range strings.Split(fmt.Sprintf("%v", obj), "\n") {
 		if i == 0 {
+			buf.WriteString(strings.Repeat(" ", indent))
 			buf.WriteString(prefix)
 
 		} else {
-			buf.WriteString(strings.Repeat(" ", plainTextLength(prefix)))
+			buf.WriteString(strings.Repeat(" ", plainTextLength(prefix)+indent))
 		}
 
 		buf.WriteString(line)
