@@ -1,0 +1,26 @@
+
+@@ [1mdata[0m.[1mpinniped.yaml[0m @@
+! [38;2;199;196;63m± value change in multiline text (one insert, two deletions)[0m
+[38;2;105;105;105m  discovery:[0m
+[38;2;105;105;105m    url: null[0m
+[38;2;105;105;105m  api:[0m
+[38;2;105;105;105m    servingCertificate:[0m
+[38;2;105;105;105m      durationSeconds: 2592000[0m
+[38;2;185;49;27m-     renewBeforeSeconds: 2160000[0m
+[38;2;88;191;56m+     renewBeforeSeconds: 12160000[0m
+[38;2;105;105;105m  apiGroupSuffix: pinniped.dev[0m
+[38;2;105;105;105m  # aggregatedAPIServerPort may be set here, although other YAML references to the default port (10250) may also need to be updated[0m
+[38;2;105;105;105m  # impersonationProxyServerPort may be set here, although other YAML references to the default port (8444) may also need to be updated[0m
+[38;2;105;105;105m  names:[0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [five lines unchanged)][0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m    impersonationTLSCertificateSecret: pinniped-concierge-impersonation-proxy-tls-serving-certificate[0m
+[38;2;105;105;105m    impersonationCACertificateSecret: pinniped-concierge-impersonation-proxy-ca-certificate[0m
+[38;2;105;105;105m    impersonationSignerSecret: pinniped-concierge-impersonation-proxy-signer-ca-certificate[0m
+[38;2;105;105;105m    agentServiceAccount: pinniped-concierge-kube-cert-agent[0m
+[38;2;185;49;27m- labels: {"app": "pinniped-concierge"}[0m
+[38;2;105;105;105m  kubeCertAgent:[0m
+[38;2;105;105;105m    namePrefix: pinniped-concierge-kube-cert-agent-[0m
+[38;2;105;105;105m    image: projects.registry.vmware.com/pinniped/pinniped-server:latest[0m
+

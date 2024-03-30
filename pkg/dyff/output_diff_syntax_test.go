@@ -33,7 +33,7 @@ import (
 	"github.com/homeport/dyff/pkg/dyff"
 )
 
-var _ = Describe("human readable report", func() {
+var _ = Describe("diffSyntax report", func() {
 	Context("reporting differences", func() {
 		BeforeEach(func() {
 			SetColorSettings(OFF, OFF)
@@ -45,33 +45,33 @@ var _ = Describe("human readable report", func() {
 
 		It("should show a nice string difference", func() {
 			content := singleDiff("/some/yaml/structure/string", dyff.MODIFICATION, "fOObar?", "Foobar!")
-			Expect(humanDiff(content)).To(BeEquivalentTo(`
-some.yaml.structure.string
-  ± value change
-    - fOObar?
-    + Foobar!
+			Expect(diffSyntaxDiff(content)).To(BeEquivalentTo(`
+@@ some.yaml.structure.string @@
+! ± value change
+- fOObar?
++ Foobar!
 
 `))
 		})
 
 		It("should show a nice integer difference", func() {
 			content := singleDiff("/some/yaml/structure/int", dyff.MODIFICATION, 12, 147)
-			Expect(humanDiff(content)).To(BeEquivalentTo(`
-some.yaml.structure.int
-  ± value change
-    - 12
-    + 147
+			Expect(diffSyntaxDiff(content)).To(BeEquivalentTo(`
+@@ some.yaml.structure.int @@
+! ± value change
+- 12
++ 147
 
 `))
 		})
 
 		It("should show a type difference", func() {
 			content := singleDiff("/some/yaml/structure/test", dyff.MODIFICATION, 12, 12.0)
-			Expect(humanDiff(content)).To(BeEquivalentTo(`
-some.yaml.structure.test
-  ± type change from int to float
-    - 12
-    + 12
+			Expect(diffSyntaxDiff(content)).To(BeEquivalentTo(`
+@@ some.yaml.structure.test @@
+! ± type change from int to float
+- 12
++ 12
 
 `))
 		})
@@ -103,56 +103,44 @@ input: |+
 				"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n",
 				"This is a text with"+"\n"+"newlines and stuff"+"\n"+"to show case whitespace"+"\n"+"issues.\n\n")))
 
-			Expect(humanDiff(result[0])).To(BeEquivalentTo("\ninput\n  ± whitespace only change\n    - This·is·a·text·with↵         + This·is·a·text·with↵\n" +
-				"      newlines·and·stuff↵            newlines·and·stuff↵\n" +
-				"      to·show·case·whitespace↵       to·show·case·whitespace↵\n" +
-				"      issues.↵                       issues.↵\n" +
-				"                                     ↵\n\n\n"))
+			Expect(diffSyntaxDiff(result[0])).To(BeEquivalentTo("\n@@ input @@\n" +
+				"! ± whitespace only change\n" +
+				"- This·is·a·text·with↵\n" +
+				"  newlines·and·stuff↵\n" +
+				"  to·show·case·whitespace↵\n" +
+				"  issues.↵\n" +
+				"  \n\n" +
+				"+ This·is·a·text·with↵\n" +
+				"  newlines·and·stuff↵\n" +
+				"  to·show·case·whitespace↵\n" +
+				"  issues.↵\n" +
+				"  ↵\n\n"))
 		})
 
 		It("should show a binary data difference in hex dump style", func() {
-			compareAgainstExpectedHuman("../../assets/binary/from.yml",
+			compareAgainstExpectedDiffSyntax("../../assets/binary/from.yml",
 				"../../assets/binary/to.yml",
-				"../../assets/binary/dyff.expected",
+				"../../assets/binary/expected-dyff.github",
 				false,
 			)
 		})
 
 		It("should show the testbed results as expected", func() {
-			compareAgainstExpectedHuman("../../assets/testbed/from.yml",
+			compareAgainstExpectedDiffSyntax("../../assets/testbed/from.yml",
 				"../../assets/testbed/to.yml",
-				"../../assets/testbed/expected-dyff-spruce.human",
+				"../../assets/testbed/expected-dyff-spruce.github",
 				false,
 			)
 
-			compareAgainstExpectedHuman("../../assets/testbed/from.yml",
+			compareAgainstExpectedDiffSyntax("../../assets/testbed/from.yml",
 				"../../assets/testbed/to.yml",
-				"../../assets/testbed/expected-dyff-gopatch.human",
+				"../../assets/testbed/expected-dyff-gopatch.github",
 				true,
 			)
 		})
 	})
 
-	Context("nicely colored human readable differences", func() {
-		BeforeEach(func() {
-			SetColorSettings(ON, ON)
-		})
-
-		AfterEach(func() {
-			SetColorSettings(AUTO, AUTO)
-		})
-
-		It("should show nicely colored difference output", func() {
-			compareAgainstExpectedHuman(
-				"../../assets/colors/from.yml",
-				"../../assets/colors/to.yml",
-				"../../assets/colors/dyff.expected",
-				false,
-			)
-		})
-	})
-
-	Context("human path rendering", func() {
+	Context("human path rendering with github compatibility", func() {
 		BeforeEach(func() {
 			SetColorSettings(ON, ON)
 		})
@@ -169,20 +157,20 @@ input: |+
 			Expect(err).ToNot(HaveOccurred())
 
 			content := singleDiff(path.String(), dyff.MODIFICATION, 12, 12.0)
-			actual := humanDiff(content)
+			actual := diffSyntaxDiff(content)
 
 			Expect(fmt.Sprintf("%#v", RemoveAllEscapeSequences(actual))).To(
 				BeEquivalentTo(fmt.Sprintf("%#v", `
-variables.ROUTER_TLS_PEM.options
-  ± type change from int to float
-    - 12
-    + 12
+@@ variables.ROUTER_TLS_PEM.options @@
+! ± type change from int to float
+- 12
++ 12
 
 `)))
 		})
 	})
 
-	Context("human friendly multiline text differences", func() {
+	Context("github compatible multiline text differences", func() {
 		BeforeEach(func() {
 			SetColorSettings(ON, ON)
 		})
@@ -191,20 +179,20 @@ variables.ROUTER_TLS_PEM.options
 			SetColorSettings(AUTO, AUTO)
 		})
 
-		It("should use human friendly compact diff of multiline text differences", func() {
-			compareAgainstExpectedHuman(
+		It("should use github compatible compact diff of multiline text differences", func() {
+			compareAgainstExpectedDiffSyntax(
 				assets("kubernetes/configmaps/from.yml"),
 				assets("kubernetes/configmaps/to.yml"),
-				assets("kubernetes/configmaps/expected-dyff-spruce.human"),
+				assets("kubernetes/configmaps/expected-dyff-spruce.github"),
 				false,
 			)
 		})
 
-		It("should use human friendly compact diff of multiline text differences for complex files", func() {
-			compareAgainstExpectedHuman(
+		It("should use github compatible compact diff of multiline text differences for complex files", func() {
+			compareAgainstExpectedDiffSyntax(
 				assets("multiline/from.yml"),
 				assets("multiline/to.yml"),
-				assets("multiline/expected-dyff-spruce.human"),
+				assets("multiline/expected-dyff-spruce.github"),
 				false,
 			)
 		})
@@ -220,9 +208,9 @@ variables.ROUTER_TLS_PEM.options
 		})
 
 		It("should use correct indentions for all kind of changes", func() {
-			compareAgainstExpectedHuman("../../assets/issues/issue-89/from.yml",
+			compareAgainstExpectedDiffSyntax("../../assets/issues/issue-89/from.yml",
 				"../../assets/issues/issue-89/to.yml",
-				"../../assets/issues/issue-89/expected-dyff-spruce.human",
+				"../../assets/issues/issue-89/expected-dyff-spruce.github",
 				false,
 			)
 		})
@@ -237,11 +225,11 @@ variables.ROUTER_TLS_PEM.options
 			SetColorSettings(AUTO, AUTO)
 		})
 
-		It("should not parse markdown in multiline text diff output", func() {
-			compareAgainstExpectedHuman(
+		It("should not parse diffSyntax in multiline text diff output", func() {
+			compareAgainstExpectedDiffSyntax(
 				assets("issues", "issue-225", "from.yml"),
 				assets("issues", "issue-225", "to.yml"),
-				assets("issues", "issue-225", "expected-dyff-spruce.human"),
+				assets("issues", "issue-225", "expected-dyff-spruce.github"),
 				false,
 			)
 		})

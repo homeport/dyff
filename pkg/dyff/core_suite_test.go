@@ -112,7 +112,7 @@ func (matcher *extendedStringMatcher) NegatedFailureMessage(actual interface{}) 
 	)
 }
 
-func compareAgainstExpected(fromPath string, toPath string, expectedPath string, useGoPatchPaths bool, compareOptions ...dyff.CompareOption) {
+func compareAgainstExpectedHuman(fromPath string, toPath string, expectedPath string, useGoPatchPaths bool, compareOptions ...dyff.CompareOption) {
 	from, to, err := ytbx.LoadFiles(fromPath, toPath)
 	Expect(err).To(BeNil())
 
@@ -141,7 +141,45 @@ func compareAgainstExpected(fromPath string, toPath string, expectedPath string,
 
 	expected := fmt.Sprintf("%#v", string(rawBytes))
 	actual := fmt.Sprintf("%#v", buffer.String())
-	Expect(expected).To(BeLike(actual))
+	Expect(actual).To(BeLike(expected))
+}
+
+func compareAgainstExpectedDiffSyntax(fromPath string, toPath string, expectedPath string, useGoPatchPaths bool, compareOptions ...dyff.CompareOption) {
+	from, to, err := ytbx.LoadFiles(fromPath, toPath)
+	Expect(err).To(BeNil())
+
+	rawBytes, err := os.ReadFile(expectedPath)
+	Expect(err).To(BeNil())
+
+	report, err := dyff.CompareInputFiles(from, to, compareOptions...)
+	Expect(report).ToNot(BeNil())
+	Expect(err).To(BeNil())
+
+	reportWriter := &dyff.DiffSyntaxReport{
+		PathPrefix:            "@@",
+		RootDescriptionPrefix: "#",
+		ChangeTypePrefix:      "!",
+		HumanReport: dyff.HumanReport{
+			Report:                report,
+			Indent:                0,
+			DoNotInspectCerts:     false,
+			NoTableStyle:          true,
+			OmitHeader:            true,
+			UseGoPatchPaths:       useGoPatchPaths,
+			MinorChangeThreshold:  0.1,
+			MultilineContextLines: 4,
+			PrefixMultiline:       true,
+		},
+	}
+
+	buffer := &bytes.Buffer{}
+	writer := bufio.NewWriter(buffer)
+	Expect(reportWriter.WriteReport(writer)).To(BeNil())
+	Expect(writer.Flush()).To(BeNil())
+
+	expected := fmt.Sprintf("%#v", string(rawBytes))
+	actual := fmt.Sprintf("%#v", buffer.String())
+	Expect(actual).To(BeLike(expected))
 }
 
 func yml(input string) *yamlv3.Node {
@@ -231,6 +269,29 @@ func humanDiff(diff dyff.Diff) string {
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
 		OmitHeader:        true,
+	}
+
+	var buf bytes.Buffer
+	if err := reporter.WriteReport(&buf); err != nil {
+		Fail(err.Error())
+	}
+
+	return buf.String()
+}
+
+func diffSyntaxDiff(diff dyff.Diff) string {
+	reporter := dyff.DiffSyntaxReport{
+		PathPrefix:            "@@",
+		RootDescriptionPrefix: "#",
+		ChangeTypePrefix:      "!",
+		HumanReport: dyff.HumanReport{
+			Report:            dyff.Report{Diffs: []dyff.Diff{diff}},
+			Indent:            0,
+			DoNotInspectCerts: false,
+			NoTableStyle:      true,
+			OmitHeader:        true,
+			PrefixMultiline:   true,
+		},
 	}
 
 	var buf bytes.Buffer

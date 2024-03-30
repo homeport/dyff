@@ -59,6 +59,7 @@ type HumanReport struct {
 	DoNotInspectCerts     bool
 	OmitHeader            bool
 	UseGoPatchPaths       bool
+	PrefixMultiline       bool
 }
 
 // WriteReport writes a human readable report to the provided writer
@@ -243,10 +244,17 @@ func (report *HumanReport) generateHumanDetailOutputModification(detail Detail) 
 		}
 
 		_, _ = output.WriteString(yellow("%c content change\n", MODIFICATION))
-		report.writeTextBlocks(&output, 0,
-			red("%s", createStringWithPrefix("- ", hex.Dump(from), report.Indent)),
-			green("%s", createStringWithPrefix("+ ", hex.Dump(to), report.Indent)),
-		)
+		if report.PrefixMultiline {
+			report.writeTextBlocks(&output, 0,
+				red("%s", createStringWithContinuousPrefix("- ", hex.Dump(from), report.Indent)),
+				green("%s", createStringWithContinuousPrefix("+ ", hex.Dump(to), report.Indent)),
+			)
+		} else {
+			report.writeTextBlocks(&output, 0,
+				red("%s", createStringWithPrefix("- ", hex.Dump(from), report.Indent)),
+				green("%s", createStringWithPrefix("+ ", hex.Dump(to), report.Indent)),
+			)
+		}
 
 	default:
 		if fromType != toType {
@@ -428,9 +436,15 @@ func (report *HumanReport) highlightByLine(from, to string) string {
 			}
 		}
 
-		report.writeTextBlocks(&buf, 0,
-			createStringWithPrefix(red("- "), strings.Join(fromLines, "\n"), report.Indent),
-			createStringWithPrefix(green("+ "), strings.Join(toLines, "\n"), report.Indent))
+		if report.PrefixMultiline {
+			report.writeTextBlocks(&buf, 0,
+				createStringWithContinuousPrefix(red("- "), strings.Join(fromLines, "\n"), report.Indent),
+				createStringWithContinuousPrefix(green("+ "), strings.Join(toLines, "\n"), report.Indent))
+		} else {
+			report.writeTextBlocks(&buf, 0,
+				createStringWithPrefix(red("- "), strings.Join(fromLines, "\n"), report.Indent),
+				createStringWithPrefix(green("+ "), strings.Join(toLines, "\n"), report.Indent))
+		}
 
 	} else {
 		report.writeTextBlocks(&buf, 0,

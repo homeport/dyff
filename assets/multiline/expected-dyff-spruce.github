@@ -1,0 +1,94 @@
+
+@@ [1mfiles[0m.[1;3msimple[0m.[1mcontent[0m @@
+! [38;2;199;196;63m± value change in multiline text (three inserts, three deletions)[0m
+[38;2;105;105;105m  UnChanged line[0m
+[38;2;185;49;27m- This line will change 1[0m
+[38;2;88;191;56m+ This line changed 1[0m
+[38;2;105;105;105m  UnChanged line[0m
+[38;2;185;49;27m- This line will change 2[0m
+[38;2;88;191;56m+ This line changed 2[0m
+[38;2;105;105;105m  UnChanged line[0m
+[38;2;185;49;27m- This line will change 3[0m
+[38;2;88;191;56m+ This line changed 3[0m
+
+@@ [1mfiles[0m.[1;3mnewline[0m.[1mcontent[0m @@
+! [38;2;199;196;63m± value change in multiline text (four inserts, four deletions)[0m
+[38;2;105;105;105m  [0m
+[38;2;185;49;27m- [0m
+[38;2;185;49;27m- This line will change 1[0m
+[38;2;88;191;56m+ This line changed 1[0m
+[38;2;105;105;105m  UnChanged line[0m
+[38;2;105;105;105m  [0m
+[38;2;185;49;27m- This line will change 2[0m
+[38;2;88;191;56m+ This line changed 2[0m
+[38;2;105;105;105m  UnChanged line[0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [0m
+[38;2;185;49;27m- [0m
+[38;2;105;105;105m  Moved line[0m
+[38;2;88;191;56m+ [0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  UnChanged line[0m
+[38;2;185;49;27m- This line will change 3[0m
+[38;2;88;191;56m+ This line changed 3[0m
+[38;2;88;191;56m+ [0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [0m
+
+@@ [1mfiles[0m.[1;3mcomplex[0m.[1mcontent[0m @@
+! [38;2;199;196;63m± value change in multiline text (two inserts, two deletions)[0m
+[38;2;105;105;105m  Begin line 1[0m
+[38;2;105;105;105m  Begin line 2[0m
+[38;2;105;105;105m  Begin line 3[0m
+[38;2;105;105;105m  Begin line 4[0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [four lines unchanged)][0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  PreChange line 1[0m
+[38;2;105;105;105m  PreChange line 2[0m
+[38;2;105;105;105m  PreChange line 3[0m
+[38;2;105;105;105m  PreChange line 4[0m
+[38;2;185;49;27m- This line will change 1[0m
+[38;2;185;49;27m- This line will change 2[0m
+[38;2;88;191;56m+ This line changed 1[0m
+[38;2;88;191;56m+ This line changed 2[0m
+[38;2;105;105;105m  PostChange line 1[0m
+[38;2;105;105;105m  PostChange line 2[0m
+[38;2;105;105;105m  PostChange line 3[0m
+[38;2;105;105;105m  PostChange line 4[0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [three lines unchanged)][0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  PreAdd line 1[0m
+[38;2;105;105;105m  PreAdd line 2[0m
+[38;2;105;105;105m  PreAdd line 3[0m
+[38;2;105;105;105m  PreAdd line 4[0m
+[38;2;88;191;56m+ This line was added[0m
+[38;2;88;191;56m+ This line was added[0m
+[38;2;105;105;105m  PostAdd line 1[0m
+[38;2;105;105;105m  PostAdd line 2[0m
+[38;2;105;105;105m  PostAdd line 3[0m
+[38;2;105;105;105m  PostAdd line 4[0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [two lines unchanged)][0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  PreDelete line 1[0m
+[38;2;105;105;105m  PreDelete line 2[0m
+[38;2;105;105;105m  PreDelete line 3[0m
+[38;2;105;105;105m  PreDelete line 4[0m
+[38;2;185;49;27m- This line will be deleted[0m
+[38;2;185;49;27m- This line will be deleted[0m
+[38;2;185;49;27m- This line will be deleted[0m
+[38;2;105;105;105m  PostDelete line 1[0m
+[38;2;105;105;105m  PostDelete line 2[0m
+[38;2;105;105;105m  PostDelete line 3[0m
+[38;2;105;105;105m  PostDelete line 4[0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  [22 lines unchanged)][0m
+[38;2;105;105;105m  [0m
+[38;2;105;105;105m  End line 1[0m
+[38;2;105;105;105m  End line 2[0m
+[38;2;105;105;105m  End line 3[0m
+[38;2;105;105;105m  End line 4[0m
+
