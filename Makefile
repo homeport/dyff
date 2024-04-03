@@ -26,7 +26,7 @@ all: clean test
 .PHONY: clean
 clean:
 	@rm -rf dist unit.coverprofile
-	@go clean -i -cache $(shell go list ./...)
+	@go clean -i -cache
 
 .PHONY: test
 test:
