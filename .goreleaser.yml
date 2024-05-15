@@ -43,7 +43,7 @@ brews:
   commit_author:
     name: GoReleaser Bot
     email: goreleaser@carlosbecker.com
-  folder: HomebrewFormula
+  directory: HomebrewFormula
   homepage: "https://github.com/homeport/dyff"
   description: "δyƒƒ /ˈdʏf/ - A diff tool for YAML files, and sometimes JSON"
   license: "MIT"
