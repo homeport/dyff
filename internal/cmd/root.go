@@ -75,6 +75,23 @@ func ResetSettings() {
 	jsonCmdSettings = jsonCmdOptions{}
 }
 
+// rearrange will rearrange the OS args to match `dyff between --flags from to`
+// to mitigate an issue in `kubectl`, which puts the `from` and `to` at the
+// second and third position in the command arguments.
+func rearrange() []string {
+	var paths, args []string
+	for _, entry := range os.Args {
+		if info, err := os.Stat(entry); err == nil && info.IsDir() {
+			paths = append(paths, entry)
+
+		} else {
+			args = append(args, entry)
+		}
+	}
+
+	return append(args, paths...)
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
@@ -82,20 +99,8 @@ func Execute() error {
 	// that `kubectl` intends to use `dyff` for its `diff` command. Therefore,
 	// enable Kubernetes specific entity detection and fix the order issue.
 	if strings.Contains(os.Getenv("KUBECTL_EXTERNAL_DIFF"), name) {
-		// Rearrange the arguments to match `dyff between --flags from to` to
-		// mitigate an issue in `kubectl`, which puts the `from` and `to` at
-		// the second and third position in the command arguments.
-		var paths, args []string
-		for _, entry := range os.Args {
-			if info, err := os.Stat(entry); err == nil && info.IsDir() {
-				paths = append(paths, entry)
-
-			} else {
-				args = append(args, entry)
-			}
-		}
-
-		os.Args = append(args, paths...)
+		// Make sure the OS args are in a supported order
+		os.Args = rearrange()
 
 		// Enable Kubernetes specific entity detection implicitly
 		reportOptions.kubernetesEntityDetection = true
@@ -110,8 +115,7 @@ func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
 		// Special case ExitCode, which means that we will exit immediately
 		// with the given exit code
-		switch err.(type) {
-		case ExitCode:
+		if err, ok := err.(ExitCode); ok {
 			return err
 		}
 
