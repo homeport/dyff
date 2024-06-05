@@ -422,13 +422,23 @@ func (matcher *diffMatcher) Match(actual interface{}) (success bool, err error) 
 }
 
 func (matcher *diffMatcher) FailureMessage(actual interface{}) string {
-	return fmt.Sprintf("Expected\n\t%s\nto be same as\n\t%s",
+	return fmt.Sprintf(
+		`Expected
+	%s
+to be same as
+	%s
+`,
 		spew.Sdump(actual),
 		spew.Sdump(matcher.expected))
 }
 
 func (matcher *diffMatcher) NegatedFailureMessage(actual interface{}) string {
-	return fmt.Sprintf("Expected\n\t%s\nnot to be same as\n\t%s",
+	return fmt.Sprintf(
+		`Expected
+	%s
+not to be same as
+	%s
+`,
 		spew.Sdump(actual),
 		spew.Sdump(matcher.expected),
 	)
