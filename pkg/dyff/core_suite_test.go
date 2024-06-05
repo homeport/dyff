@@ -88,25 +88,35 @@ type extendedStringMatcher struct {
 func (matcher *extendedStringMatcher) Match(actual interface{}) (success bool, err error) {
 	actualString, ok := actual.(string)
 	if !ok {
-		return false, fmt.Errorf("BeLike matcher expected a string, not %T", actual)
+		return false, fmt.Errorf("BeLike matcher expects a string, not %T", actual)
 	}
 
 	expectedString, ok := matcher.expected.(string)
 	if !ok {
-		return false, fmt.Errorf("BeLike matcher expected a string, not %T", actual)
+		return false, fmt.Errorf("BeLike matcher expects a string, not %T", matcher.expected)
 	}
 
 	return actualString == expectedString, nil
 }
 
 func (matcher *extendedStringMatcher) FailureMessage(actual interface{}) string {
-	return fmt.Sprintf("Expected\n\t%#v\nto be like\n\t%#v",
+	return fmt.Sprintf(
+		`Expected
+	%#v
+to be like
+	%#v
+`,
 		actual,
 		matcher.expected)
 }
 
 func (matcher *extendedStringMatcher) NegatedFailureMessage(actual interface{}) string {
-	return fmt.Sprintf("Expected\n\t%#v\nnot to be like\n\t%#v",
+	return fmt.Sprintf(
+		`Expected
+	%#v
+not to be like
+	%#v
+`,
 		actual,
 		matcher.expected,
 	)
