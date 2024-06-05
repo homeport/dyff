@@ -462,7 +462,7 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 
 	// Special case if both lists only contain one entry, then directly compare
 	// the two entries with each other
-	if fromLength == 1 && fromLength == toLength {
+	if fromLength == 1 && toLength == 1 {
 		return compare.objects(
 			ytbx.NewPathWithIndexedListElement(path, 0),
 			followAlias(from.Content[0]),
