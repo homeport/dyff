@@ -1,0 +1,8 @@
+
+@@ [1mdata[0m @@
+! [38;2;199;196;63m± value change in multiline text (one insert, no deletions)[0m
+[38;2;105;105;105m  string foo = "bar";[0m
+[38;2;88;191;56m+ string x_forwarded_host = 53;[0m
+[38;2;88;191;56m+ string worker_status = 54;[0m
+[38;2;88;191;56m+ uint64 worker_cpu_time_micro = 55;[0m
+
