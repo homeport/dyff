@@ -61,7 +61,7 @@ SYSTEM_UNAME="$(uname | tr '[:upper:]' '[:lower:]')"
 SYSTEM_ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/aarch64/arm64/')"
 
 # Download and install
-DOWNLOAD_URI="$(curl --silent --location "https://api.github.com/repos/${ORG}/${REPO}/releases/tags/${SELECTED_TAG}" | jq --raw-output ".assets[] | select( (.name | contains(\"${SYSTEM_UNAME}\")) and (.name | contains(\"${SYSTEM_ARCH}\")) ) | .browser_download_url")"
+DOWNLOAD_URI="$(curl --silent --location "https://api.github.com/repos/${ORG}/${REPO}/releases/tags/${SELECTED_TAG}" | jq --raw-output "first(.assets[] | select( (.name | contains(\"${SYSTEM_UNAME}\")) and (.name | contains(\"${SYSTEM_ARCH}\")) ) | .browser_download_url)")"
 if [[ -z ${DOWNLOAD_URI} ]]; then
   echo -e "Unsupported operating system \\033[1m${SYSTEM_UNAME}\\033[0m or machine type \\033[1m${SYSTEM_ARCH}\\033[0m: Please check \\033[4;94mhttps://github.com/${ORG}/${REPO}/releases\\033[0m manually."
   exit 1
