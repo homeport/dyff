@@ -1,20 +1,22 @@
 ---
+version: 2
+
 builds:
-  - env:
-    - CGO_ENABLED=0
-    goos:
-    - windows
-    - linux
-    - darwin
-    goarch:
-    - amd64
-    - arm64
-    main: ./cmd/dyff/main.go
-    flags:
-    - -trimpath
-    ldflags:
-    - -s -w -extldflags "-static" -X github.com/homeport/dyff/internal/cmd.version={{.Version}}
-    mod_timestamp: '{{ .CommitTimestamp }}'
+- env:
+  - CGO_ENABLED=0
+  goos:
+  - windows
+  - linux
+  - darwin
+  goarch:
+  - amd64
+  - arm64
+  main: ./cmd/dyff/main.go
+  flags:
+  - -trimpath
+  ldflags:
+  - -s -w -extldflags "-static" -X github.com/homeport/dyff/internal/cmd.version={{.Version}}
+  mod_timestamp: '{{ .CommitTimestamp }}'
 
 checksum:
   name_template: 'checksums.txt'
@@ -26,12 +28,12 @@ release:
   name_template: "{{.ProjectName}} release v{{.Version}}"
 
 changelog:
-  disable: true
-  sort: ""
+  disable: false
+  use: github
   filters:
     exclude:
-    - '^docs:'
-    - '^test:'
+    - "Merge pull request"
+    - "dependabot"
 
 brews:
 - repository:
