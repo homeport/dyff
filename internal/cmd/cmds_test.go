@@ -580,6 +580,17 @@ spec.replicas  (apps/v1/Deployment/test)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo("\n"))
 		})
+
+		It("should ignore the 'whitespace only' changes", func() {
+			out, err := dyff("between",
+				"--omit-header",
+				"--ignore-whitespace-changes",
+				assets("issues", "issue-222", "from.yml"),
+				assets("issues", "issue-222", "to.yml"))
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo("\n"))
+		})
 	})
 
 	Context("last-applied command", func() {

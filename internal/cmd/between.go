@@ -86,6 +86,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		report, err := dyff.CompareInputFiles(from, to,
 			dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges),
+			dyff.IgnoreWhitespaceChanges(reportOptions.ignoreWhitespaceChanges),
 			dyff.KubernetesEntityDetection(reportOptions.kubernetesEntityDetection),
 			dyff.AdditionalIdentifiers(reportOptions.additionalIdentifiers...),
 		)

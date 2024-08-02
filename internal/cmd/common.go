@@ -40,6 +40,7 @@ import (
 type reportConfig struct {
 	style                     string
 	ignoreOrderChanges        bool
+	ignoreWhitespaceChanges   bool
 	kubernetesEntityDetection bool
 	noTableStyle              bool
 	doNotInspectCerts         bool
@@ -58,6 +59,7 @@ type reportConfig struct {
 var defaults = reportConfig{
 	style:                     "human",
 	ignoreOrderChanges:        false,
+	ignoreWhitespaceChanges:   false,
 	kubernetesEntityDetection: true,
 	noTableStyle:              false,
 	doNotInspectCerts:         false,
@@ -78,6 +80,7 @@ var reportOptions reportConfig
 func applyReportOptionsFlags(cmd *cobra.Command) {
 	// Compare options
 	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", defaults.ignoreOrderChanges, "ignore order changes in lists")
+	cmd.Flags().BoolVar(&reportOptions.ignoreWhitespaceChanges, "ignore-whitespace-changes", defaults.ignoreWhitespaceChanges, "ignore leading or trailing whitespace changes")
 	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", defaults.kubernetesEntityDetection, "detect kubernetes entities")
 	cmd.Flags().StringArrayVar(&reportOptions.additionalIdentifiers, "additional-identifier", defaults.additionalIdentifiers, "use additional identifier candidates in named entry lists")
 	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", defaults.filters, "filter reports to a subset of differences based on supplied arguments")
