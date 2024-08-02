@@ -38,6 +38,7 @@ type CompareOption func(*compareSettings)
 type compareSettings struct {
 	NonStandardIdentifierGuessCountThreshold int
 	IgnoreOrderChanges                       bool
+	IgnoreWhitespaceChanges                  bool
 	KubernetesEntityDetection                bool
 	AdditionalIdentifiers                    []string
 }
@@ -68,6 +69,13 @@ func NonStandardIdentifierGuessCountThreshold(nonStandardIdentifierGuessCountThr
 func IgnoreOrderChanges(value bool) CompareOption {
 	return func(settings *compareSettings) {
 		settings.IgnoreOrderChanges = value
+	}
+}
+
+// IgnoreWhitespaceChanges disables the detection for whitespace only changes
+func IgnoreWhitespaceChanges(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.IgnoreWhitespaceChanges = value
 	}
 }
 
@@ -595,19 +603,24 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdent
 }
 
 func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
-	result := make([]Diff, 0)
 	if strings.Compare(from.Value, to.Value) != 0 {
-		result = append(result, Diff{
+		// leave and don't report any differences if ignore whitespaces changes is
+		// configured and it is really only a whitespace only change between the strings
+		if compare.settings.IgnoreWhitespaceChanges && isWhitespaceOnlyChange(from.Value, to.Value) {
+			return nil, nil
+		}
+
+		return []Diff{{
 			&path,
 			[]Detail{{
 				Kind: MODIFICATION,
 				From: from,
 				To:   to,
 			}},
-		})
+		}}, nil
 	}
 
-	return result, nil
+	return nil, nil
 }
 
 func (compare *compare) boolValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
@@ -1134,4 +1147,8 @@ func grab(node *yamlv3.Node, pathString string) (*yamlv3.Node, error) {
 		},
 		pathString,
 	)
+}
+
+func isWhitespaceOnlyChange(from string, to string) bool {
+	return strings.Trim(from, " \n") == strings.Trim(to, " \n")
 }

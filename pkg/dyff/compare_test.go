@@ -217,6 +217,15 @@ some:
 					dyff.REMOVAL, yml(`version: v1`), nil,
 					dyff.ADDITION, nil, yml(`release: v1`))))
 			})
+
+			It("should ignore leading and trailing whitespace changes if configured", func() {
+				from := yml(`{"foo": "bar"}`)
+				to := yml(`{"foo": "bar "}`)
+
+				diffs, err := compare(from, to, dyff.IgnoreWhitespaceChanges(true))
+				Expect(err).To(BeNil())
+				Expect(diffs).To(BeNil())
+			})
 		})
 
 		Context("Given two YAML structures with simple lists", func() {

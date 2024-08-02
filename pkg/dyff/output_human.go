@@ -632,10 +632,6 @@ func isMultiLine(from string, to string) bool {
 	return strings.Contains(from, "\n") || strings.Contains(to, "\n")
 }
 
-func isWhitespaceOnlyChange(from string, to string) bool {
-	return strings.Trim(from, " \n") == strings.Trim(to, " \n")
-}
-
 func showWhitespaceCharacters(text string) string {
 	return strings.Replace(strings.Replace(text, "\n", bold("↵\n"), -1), " ", bold("·"), -1)
 }
