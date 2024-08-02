@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2021 The Homeport Team
+# Copyright © 2024 The Homeport Team
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ fi
 
 if [[ $# -eq 0 ]]; then
   # Find the latest version using the GitHub API
-  SELECTED_TAG="$(curl --silent --location https://api.github.com/repos/${ORG}/${REPO}/releases | jq --raw-output 'map(select((.assets | length) > 0)) | .[0].tag_name')"
+  SELECTED_TAG="$(curl --silent --location "https://api.github.com/repos/${ORG}/${REPO}/releases" | jq --raw-output 'map(select((.assets | length) > 0)) | .[0].tag_name')"
 else
   # Use provided argument as tag to download
   SELECTED_TAG="$1"
