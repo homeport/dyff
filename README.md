@@ -108,7 +108,7 @@ All orders of keys in hashes are preserved during processing and output to the t
 The `homeport/tap` has macOS and GNU/Linux pre-built binaries available:
 
 ```bash
-brew install homeport/tap/dyff
+brew install homeport/homebrew-tap/dyff
 ```
 
 ### MacPorts
