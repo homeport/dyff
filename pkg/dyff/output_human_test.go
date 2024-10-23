@@ -131,6 +131,15 @@ input: |+
 				true,
 			)
 		})
+
+		It("should report each file level change separately for better readability", func() {
+			compareAgainstExpectedHuman(
+				assets("kubernetes/multi-docs-file-level/from.yaml"),
+				assets("kubernetes/multi-docs-file-level/to.yaml"),
+				assets("kubernetes/multi-docs-file-level/expected-dyff.human"),
+				false,
+			)
+		})
 	})
 
 	Context("nicely colored human readable differences", func() {
