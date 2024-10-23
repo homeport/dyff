@@ -283,8 +283,8 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		return nil, err
 	}
 
-	removals := []*yamlv3.Node{}
-	additions := []*yamlv3.Node{}
+	var removals []doc
+	var additions []doc
 
 	for _, name := range fromNames {
 		var fromItem = fromLookUpMap[name]
@@ -304,7 +304,7 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
-			removals = append(removals, fromItem.node)
+			removals = append(removals, fromItem)
 		}
 	}
 
@@ -312,53 +312,51 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		var toItem = toLookUpMap[name]
 		if _, ok := fromLookUpMap[name]; !ok {
 			// `to` contains a `key` that `from` does not have -> addition
-			additions = append(additions, toItem.node)
+			additions = append(additions, toItem)
 		}
 	}
 
-	diff := Diff{Details: []Detail{}}
-
-	if len(removals) > 0 {
-		diff.Details = append(diff.Details,
-			Detail{
+	for _, removal := range removals {
+		result = append(result, Diff{
+			Path: &ytbx.Path{Root: &from, DocumentIdx: removal.idx},
+			Details: []Detail{{
 				Kind: REMOVAL,
 				From: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: removals,
+					Content: []*yamlv3.Node{removal.node},
 				},
 				To: nil,
-			},
-		)
+			}},
+		})
 	}
 
-	if len(additions) > 0 {
-		diff.Details = append(diff.Details,
-			Detail{
+	for _, addition := range additions {
+		result = append(result, Diff{
+			Path: &ytbx.Path{Root: &to, DocumentIdx: addition.idx},
+			Details: []Detail{{
 				Kind: ADDITION,
 				From: nil,
 				To: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: additions,
+					Content: []*yamlv3.Node{addition.node},
 				},
-			},
-		)
+			}},
+		})
 	}
 
 	if !compare.settings.IgnoreOrderChanges && len(fromNames) == len(toNames) {
 		for i := range fromNames {
 			if fromNames[i] != toNames[i] {
-				diff.Details = append(diff.Details, Detail{
-					Kind: ORDERCHANGE,
-					From: AsSequenceNode(fromNames...),
-					To:   AsSequenceNode(toNames...),
+				result = append(result, Diff{
+					Details: []Detail{{
+						Kind: ORDERCHANGE,
+						From: AsSequenceNode(fromNames...),
+						To:   AsSequenceNode(toNames...),
+					}},
 				})
 				break
 			}
 		}
-	}
-
-	if len(diff.Details) > 0 {
-		result = append([]Diff{diff}, result...)
 	}
 
 	return result, nil

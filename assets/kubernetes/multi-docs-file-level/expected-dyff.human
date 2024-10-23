@@ -1,0 +1,28 @@
+
+metadata  (v1/Service/foo)
+  + one map entry added:
+    annotations:
+      foo: bar
+
+(root level)  (v1/Service/foo-2)
+- one document removed:
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: foo-2
+
+(root level)  (v1/Service/bar)
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: bar
+
+(root level)  (v1/Service/baz)
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: baz
+
