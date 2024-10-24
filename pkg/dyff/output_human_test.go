@@ -140,6 +140,15 @@ input: |+
 				false,
 			)
 		})
+
+		It("should detect renames for kubernetes documents", func() {
+			compareAgainstExpectedHuman(
+				assets("kubernetes/rename/from.yaml"),
+				assets("kubernetes/rename/to.yaml"),
+				assets("kubernetes/rename/expected-dyff.human"),
+				false,
+			)
+		})
 	})
 
 	Context("nicely colored human readable differences", func() {

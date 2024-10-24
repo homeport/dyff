@@ -1,0 +1,34 @@
+
+data.pinniped.yaml
+  ± value change in multiline text (one insert, no deletions)
+      discovery:
+        url: null
+      api:
+        servingCertificate:
+      
+      [two lines unchanged)]
+      
+      apiGroupSuffix: pinniped.dev
+      # aggregatedAPIServerPort may be set here, although other YAML references to the default port (10250) may also need to be updated
+      # impersonationProxyServerPort may be set here, although other YAML references to the default port (8444) may also need to be updated
+      names:
+    +   # Example comment
+        servingCertificateSecret: pinniped-concierge-api-tls-serving-certificate
+        credentialIssuer: pinniped-concierge-config
+        apiService: pinniped-concierge-api
+        impersonationLoadBalancerService: pinniped-concierge-impersonation-proxy-load-balancer
+      
+      [five lines unchanged)]
+      
+      labels: {"app": "pinniped-concierge"}
+      kubeCertAgent:
+        namePrefix: pinniped-concierge-kube-cert-agent-
+        image: projects.registry.vmware.com/pinniped/pinniped-server:latest
+  
+  
+
+metadata.name
+  ± value change
+    - pinniped-concierge-config-9bfbmfgt2f
+    + pinniped-concierge-config-296567ccmt
+

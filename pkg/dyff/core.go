@@ -22,6 +22,7 @@ package dyff
 
 import (
 	"fmt"
+	"github.com/homeport/dyff/pkg/dyff/rename"
 	"sort"
 	"strings"
 
@@ -136,11 +137,12 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 			from.Documents, from.Names = fromDocs, fromNames
 			to.Documents, to.Names = toDocs, toNames
 
-			// Compare the document nodes, in case of an error it will fall back to the default
-			// implementation and continue to compare the files without any special semantics
-			if result, err := cmpr.documentNodes(from, to); err == nil {
-				return Report{from, to, result}, nil
+			// Compare the document nodes
+			result, err := cmpr.documentNodes(from, to)
+			if err != nil {
+				return Report{}, fmt.Errorf("comparing Kubernetes resources: %w", err)
 			}
+			return Report{from, to, result}, nil
 		}
 	}
 
@@ -295,13 +297,11 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 				followAlias(fromItem.node),
 				followAlias(toItem.node),
 			)
-
 			if err != nil {
 				return nil, err
 			}
 
 			result = append(result, diffs...)
-
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
 			removals = append(removals, fromItem)
@@ -316,29 +316,64 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		}
 	}
 
-	for _, removal := range removals {
+	// Detect content names by heuristic method
+	detector := newDocumentChanges(
+		mapSlice(removals, func(d doc) *renameCandidate {
+			return &renameCandidate{
+				path: &ytbx.Path{Root: &from, DocumentIdx: d.idx},
+				doc:  d.node,
+			}
+		}),
+		mapSlice(additions, func(d doc) *renameCandidate {
+			return &renameCandidate{
+				path: &ytbx.Path{Root: &to, DocumentIdx: d.idx},
+				doc:  d.node,
+			}
+		}),
+	)
+	err = rename.DetectRenames(detector, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Push rename detection results
+	for _, modified := range detector.modifiedPairs {
+		diffs, err := compare.objects(
+			*modified.to.path,
+			followAlias(modified.from.doc),
+			followAlias(modified.to.doc),
+		)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, diffs...)
+
+		// Exclude from order change calculation
+		fromNames, _ = reject(fromNames, modified.from.Name())
+		toNames, _ = reject(toNames, modified.to.Name())
+	}
+	for _, removal := range detector.deleted {
 		result = append(result, Diff{
-			Path: &ytbx.Path{Root: &from, DocumentIdx: removal.idx},
+			Path: removal.path,
 			Details: []Detail{{
 				Kind: REMOVAL,
 				From: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: []*yamlv3.Node{removal.node},
+					Content: []*yamlv3.Node{removal.doc},
 				},
 				To: nil,
 			}},
 		})
 	}
-
-	for _, addition := range additions {
+	for _, addition := range detector.added {
 		result = append(result, Diff{
-			Path: &ytbx.Path{Root: &to, DocumentIdx: addition.idx},
+			Path: addition.path,
 			Details: []Detail{{
 				Kind: ADDITION,
 				From: nil,
 				To: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: []*yamlv3.Node{addition.node},
+					Content: []*yamlv3.Node{addition.doc},
 				},
 			}},
 		})

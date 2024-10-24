@@ -4,13 +4,24 @@ metadata:
   name: foo
   annotations:
     foo: bar
+spec:
+  selector:
+    kubernetes.io/app: foo
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: bar
+spec:
+  selector:
+    kubernetes.io/app: bar
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: baz
+spec:
+  selector:
+    kubernetes.io/app: baz
