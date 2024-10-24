@@ -2,8 +2,15 @@ apiVersion: v1
 kind: Service
 metadata:
   name: foo
+spec:
+  selector:
+    kubernetes.io/app: foo
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: foo-2
+spec:
+  selector:
+    kubernetes.io/app: foo-2

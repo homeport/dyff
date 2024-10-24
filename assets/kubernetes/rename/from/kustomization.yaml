@@ -1,0 +1,4 @@
+configMapGenerator:
+  - name: pinniped-concierge-config
+    files:
+      - pinniped.yaml
