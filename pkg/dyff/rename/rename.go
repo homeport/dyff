@@ -1,4 +1,5 @@
 // Package rename contains modified code from go-git's rename detection logic.
+// https://github.com/go-git/go-git/blob/master/plumbing/object/rename.go
 //
 // go-git is licensed under Apache License 2.0, and you may obtain a copy of their original code and license from:
 // https://github.com/go-git/go-git
@@ -208,6 +209,7 @@ func buildSimilarityMatrix(srcs, dsts []File, renameScore int) (similarityMatrix
 	matrix := make(similarityMatrix, 0, matrixSize)
 	srcSizes := make([]int64, len(srcs))
 	dstSizes := make([]int64, len(dsts))
+	dstIndices := make([]*similarityIndex, len(dsts))
 	dstTooLarge := make(map[int]bool)
 
 	// Consider each pair of files, if the score is above the minimum
@@ -265,13 +267,17 @@ outerLoop:
 				}
 			}
 
-			di, err := fileSimilarityIndex(dst)
-			if err != nil {
-				if errors.Is(err, errIndexFull) {
-					dstTooLarge[dstIdx] = true
+			di := dstIndices[dstIdx]
+			if di == nil {
+				di, err = fileSimilarityIndex(dst)
+				if err != nil {
+					if errors.Is(err, errIndexFull) {
+						dstTooLarge[dstIdx] = true
+						continue
+					}
+					return nil, err
 				}
-
-				return nil, err
+				dstIndices[dstIdx] = di
 			}
 
 			contentScore := s.score(di, 10000)
