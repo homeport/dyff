@@ -1,0 +1,5 @@
+# Source: pinniped-concierge/templates/configmap-pinniped-concierge-config.yaml
+configMapGenerator:
+  - name: pinniped-concierge-config
+    files:
+      - pinniped.yaml

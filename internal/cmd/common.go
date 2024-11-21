@@ -97,6 +97,8 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&reportOptions.noTableStyle, "no-table-style", "l", defaults.noTableStyle, "do not place blocks next to each other, always use one row per text block")
 	cmd.Flags().BoolVarP(&reportOptions.doNotInspectCerts, "no-cert-inspection", "x", defaults.doNotInspectCerts, "disable x509 certificate inspection, compare as raw text")
 	cmd.Flags().BoolVarP(&reportOptions.useGoPatchPaths, "use-go-patch-style", "g", defaults.useGoPatchPaths, "use Go-Patch style paths in outputs")
+	cmd.Flags().Float64VarP(&reportOptions.minorChangeThreshold, "minor-change-threshold", "", defaults.minorChangeThreshold, "minor change threshold")
+	cmd.Flags().IntVarP(&reportOptions.multilineContextLines, "multi-line-context-lines", "", defaults.multilineContextLines, "multi-line context lines")
 
 	// Deprecated
 	cmd.Flags().BoolVar(&reportOptions.exitWithCode, "set-exit-status", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
