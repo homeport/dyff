@@ -591,6 +591,25 @@ spec.replicas  (apps/v1/Deployment/test)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo("\n"))
 		})
+
+		It("should ignore the changes in values", func() {
+			expected := `
+(file level)
+  - one document removed:
+    ---
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: test
+
+`
+			By("using the --ignore-value-changes", func() {
+				out, err := dyff("between", "--omit-header", "--ignore-value-changes", assets("issues", "issue-232", "from.yml"), assets("issues", "issue-232", "to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(out).To(BeEquivalentTo(expected))
+			})
+
+		})
 	})
 
 	Context("last-applied command", func() {
