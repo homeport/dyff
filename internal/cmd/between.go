@@ -111,6 +111,10 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			report = report.ExcludeRegexp(reportOptions.excludeRegexps...)
 		}
 
+		if reportOptions.ignoreValueChanges {
+			report = report.IgnoreValueChanges()
+		}
+
 		return writeReport(cmd, report)
 	},
 }
