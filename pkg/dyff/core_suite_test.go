@@ -35,7 +35,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/ytbx"
 	yamlv3 "gopkg.in/yaml.v3"
@@ -424,23 +423,23 @@ func (matcher *diffMatcher) Match(actual interface{}) (success bool, err error) 
 func (matcher *diffMatcher) FailureMessage(actual interface{}) string {
 	return fmt.Sprintf(
 		`Expected
-	%s
+	%v
 to be same as
-	%s
+	%v
 `,
-		spew.Sdump(actual),
-		spew.Sdump(matcher.expected))
+		actual,
+		matcher.expected)
 }
 
 func (matcher *diffMatcher) NegatedFailureMessage(actual interface{}) string {
 	return fmt.Sprintf(
 		`Expected
-	%s
+	%v
 not to be same as
-	%s
+	%v
 `,
-		spew.Sdump(actual),
-		spew.Sdump(matcher.expected),
+		actual,
+		matcher.expected,
 	)
 }
 
