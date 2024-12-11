@@ -831,6 +831,19 @@ listY: [ Yo, Yo, Yo ]
 
 				Expect(report.ExcludeRegexp("/does/not/exist")).To(BeEquivalentTo(report))
 			})
+
+			It("should ignore changes in values", func() {
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/yaml/map/add", dyff.ADDITION, nil, "added"),
+					singleDiff("/yaml/map/removed", dyff.REMOVAL, nil, "removed"),
+					singleDiff("/yaml/map/changed", dyff.MODIFICATION, "foobar", "barfoo"),
+				}}
+
+				Expect(report.IgnoreValueChanges()).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/yaml/map/add", dyff.ADDITION, nil, "added"),
+					singleDiff("/yaml/map/removed", dyff.REMOVAL, nil, "removed"),
+				}}))
+			})
 		})
 
 		Context("change root for comparison", func() {
