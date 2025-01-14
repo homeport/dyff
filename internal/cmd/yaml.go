@@ -21,10 +21,10 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gonvenience/bunt"
-	"github.com/gonvenience/wrap"
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
 )
@@ -56,7 +56,7 @@ Converts input document into YAML format while preserving the order of all keys.
 			OmitIndentHelper: yamlCmdSettings.omitIndentHelper,
 		}
 
-		var errors []error
+		var errs []error
 		for _, filename := range args {
 			if ytbx.IsStdin(filename) && yamlCmdSettings.inplace {
 				return fmt.Errorf("incompatible flags: %w", bunt.Errorf("cannot use in-place flag in combination with input from _*stdin*_"))
@@ -64,17 +64,17 @@ Converts input document into YAML format while preserving the order of all keys.
 
 			if yamlCmdSettings.inplace {
 				if err := writer.WriteInplace(filename); err != nil {
-					errors = append(errors, err)
+					errs = append(errs, err)
 				}
 			} else {
 				if err := writer.WriteToStdout(filename); err != nil {
-					errors = append(errors, err)
+					errs = append(errs, err)
 				}
 			}
 		}
 
-		if len(errors) > 0 {
-			return wrap.Errors(errors, "failed to process input files")
+		if len(errs) > 0 {
+			return fmt.Errorf("failed to process input files: %w", errors.Join(errs...))
 		}
 
 		return nil

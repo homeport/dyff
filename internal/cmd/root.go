@@ -31,15 +31,32 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ExitCode is just a way to transport the exit code to the main package
-type ExitCode struct {
-	Value int
-	Cause error
+// ExitCode is an error interface that has exit code (value) details
+type ExitCode interface {
+	Value() int
+	Cause() error
+	Error() string
 }
 
-func (e ExitCode) Error() string {
-	if e.Cause != nil {
-		return e.Cause.Error()
+// errorWithExitCode is just a way to transport the exit code to the main package
+type errorWithExitCode struct {
+	value int
+	cause error
+}
+
+var _ ExitCode = errorWithExitCode{}
+
+func (e errorWithExitCode) Value() int {
+	return e.value
+}
+
+func (e errorWithExitCode) Cause() error {
+	return e.cause
+}
+
+func (e errorWithExitCode) Error() string {
+	if e.cause != nil {
+		return e.cause.Error()
 	}
 
 	return ""
@@ -115,14 +132,14 @@ func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
 		// Special case ExitCode, which means that we will exit immediately
 		// with the given exit code
-		if err, ok := err.(ExitCode); ok {
+		if _, ok := err.(errorWithExitCode); ok {
 			return err
 		}
 
 		// In any other case, create a default ExitCode with `error` value
-		return ExitCode{
-			Value: 255,
-			Cause: err,
+		return errorWithExitCode{
+			value: 255,
+			cause: err,
 		}
 	}
 
