@@ -21,12 +21,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
-	"github.com/gonvenience/wrap"
 
 	"github.com/homeport/dyff/internal/cmd"
 )
@@ -35,30 +36,32 @@ func main() {
 	if err := cmd.Execute(); err != nil {
 		switch err := err.(type) {
 		case cmd.ExitCode:
-			if err.Cause != nil {
-				var headline, content string
-				switch typed := err.Cause.(type) {
-				case wrap.ContextError:
-					headline = bunt.Sprintf("*Error:* _%s_", typed.Context())
-					content = typed.Cause().Error()
+			var headline, content string
 
-				case error:
-					headline = "Error occurred"
-					content = err.Error()
-				}
+			if unwrapped := errors.Unwrap(err.Cause()); unwrapped != nil {
+				headline = strings.Split(err.Error(), ":")[0]
+				content = unwrapped.Error()
 
-				fmt.Fprint(
-					os.Stderr,
-					neat.ContentBox(
-						headline,
-						content,
-						neat.HeadlineColor(bunt.Coral),
-						neat.ContentColor(bunt.DimGray),
-					),
-				)
+			} else {
+				headline = "Error occurred"
+				content = err.Cause().Error()
 			}
 
-			os.Exit(err.Value)
+			fmt.Fprint(
+				os.Stderr,
+				neat.ContentBox(
+					headline,
+					content,
+					neat.HeadlineColor(bunt.Coral),
+					neat.ContentColor(bunt.DimGray),
+				),
+			)
+
+			os.Exit(err.Value())
+
+		default: // fail safe for somehow an non exit code error slips through
+			fmt.Fprint(os.Stderr, err.Error())
+			os.Exit(1)
 		}
 	}
 }

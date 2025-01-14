@@ -477,7 +477,7 @@ example_two
 
 			exitCode, ok := err.(ExitCode)
 			Expect(ok).To(BeTrue())
-			Expect(exitCode.Value).To(Equal(0))
+			Expect(exitCode.Value()).To(Equal(0))
 		})
 
 		It("should create exit code one if there are changes", func() {
@@ -492,7 +492,7 @@ example_two
 
 			exitCode, ok := err.(ExitCode)
 			Expect(ok).To(BeTrue())
-			Expect(exitCode.Value).To(Equal(1))
+			Expect(exitCode.Value()).To(Equal(1))
 		})
 
 		It("should fail with an exit code other than zero or one in case of an error", func() {
@@ -501,7 +501,7 @@ example_two
 
 			exitCode, ok := err.(ExitCode)
 			Expect(ok).To(BeTrue())
-			Expect(exitCode.Value).To(Equal(255))
+			Expect(exitCode.Value()).To(Equal(255))
 		})
 
 		It("should accept a list of paths and filter the report based on these", func() {

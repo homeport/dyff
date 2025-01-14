@@ -289,10 +289,10 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	if reportOptions.exitWithCode {
 		switch len(report.Diffs) {
 		case 0:
-			return ExitCode{Value: 0}
+			return errorWithExitCode{value: 0}
 
 		default:
-			return ExitCode{Value: 1}
+			return errorWithExitCode{value: 1}
 		}
 	}
 
