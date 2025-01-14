@@ -98,3 +98,26 @@ func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
 		return true
 	})
 }
+
+func (r Report) IgnoreValueChanges() (result Report) {
+	result = Report{
+		From: r.From,
+		To:   r.To,
+	}
+
+	for _, diff := range r.Diffs {
+		var hasValChange = false
+		for _, detail := range diff.Details {
+			if detail.Kind == MODIFICATION {
+				hasValChange = true
+				break
+			}
+  		}
+
+		if !hasValChange {
+			result.Diffs = append(result.Diffs, diff)
+		}
+	}
+
+	return result	
+}
