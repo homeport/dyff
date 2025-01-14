@@ -23,6 +23,8 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Spellcheck
       run: |
