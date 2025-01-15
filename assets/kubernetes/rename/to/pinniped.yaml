@@ -1,0 +1,24 @@
+discovery:
+  url: null
+api:
+  servingCertificate:
+    durationSeconds: 2592000
+    renewBeforeSeconds: 2160000
+apiGroupSuffix: pinniped.dev
+# aggregatedAPIServerPort may be set here, although other YAML references to the default port (10250) may also need to be updated
+# impersonationProxyServerPort may be set here, although other YAML references to the default port (8444) may also need to be updated
+names:
+  # Example comment
+  servingCertificateSecret: pinniped-concierge-api-tls-serving-certificate
+  credentialIssuer: pinniped-concierge-config
+  apiService: pinniped-concierge-api
+  impersonationLoadBalancerService: pinniped-concierge-impersonation-proxy-load-balancer
+  impersonationClusterIPService: pinniped-concierge-impersonation-proxy-cluster-ip
+  impersonationTLSCertificateSecret: pinniped-concierge-impersonation-proxy-tls-serving-certificate
+  impersonationCACertificateSecret: pinniped-concierge-impersonation-proxy-ca-certificate
+  impersonationSignerSecret: pinniped-concierge-impersonation-proxy-signer-ca-certificate
+  agentServiceAccount: pinniped-concierge-kube-cert-agent
+labels: {"app": "pinniped-concierge"}
+kubeCertAgent:
+  namePrefix: pinniped-concierge-kube-cert-agent-
+  image: projects.registry.vmware.com/pinniped/pinniped-server:latest
