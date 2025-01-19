@@ -3,14 +3,14 @@ module github.com/homeport/dyff
 go 1.22.0
 
 require (
-	github.com/gonvenience/bunt v1.3.5
-	github.com/gonvenience/neat v1.3.13
-	github.com/gonvenience/term v1.0.2
+	github.com/gonvenience/bunt v1.4.0
+	github.com/gonvenience/neat v1.3.15
+	github.com/gonvenience/term v1.0.3
 	github.com/gonvenience/text v1.0.7
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/onsi/ginkgo/v2 v2.22.1
+	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/spf13/cobra v1.8.1
 	github.com/texttheater/golang-levenshtein v1.0.1
@@ -26,7 +26,6 @@ require github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gonvenience/wrap v1.2.0 // indirect
@@ -46,6 +45,6 @@ require (
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.28.0 // indirect
+	golang.org/x/tools v0.29.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
