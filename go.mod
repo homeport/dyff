@@ -7,7 +7,7 @@ require (
 	github.com/gonvenience/neat v1.3.15
 	github.com/gonvenience/term v1.0.3
 	github.com/gonvenience/text v1.0.8
-	github.com/gonvenience/ytbx v1.4.4
+	github.com/gonvenience/ytbx v1.4.5
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/onsi/ginkgo/v2 v2.22.2
@@ -28,7 +28,6 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/gonvenience/wrap v1.2.1 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
