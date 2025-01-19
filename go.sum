@@ -18,8 +18,8 @@ github.com/gonvenience/neat v1.3.15 h1:qRMZzVP/HtLsQLKZGW8NGZIXdH1TMHsPjMJe2tvzD
 github.com/gonvenience/neat v1.3.15/go.mod h1:TMdu+WVzfRU46GvcMAYALdvlWxiUxP1yqpZn/hKUhP8=
 github.com/gonvenience/term v1.0.3 h1:8MleXhMCCzLeWXmiEA/IQ/ZoaKBL5mHrmRVJsU1nWtI=
 github.com/gonvenience/term v1.0.3/go.mod h1:VJaaP9pwAlSYSlyv1O7schD/GZJRg8HUmiulQmGOABw=
-github.com/gonvenience/text v1.0.7 h1:YmIqmgTwxnACYCG59DykgMbomwteYyNhAmEUEJtPl14=
-github.com/gonvenience/text v1.0.7/go.mod h1:OAjH+mohRszffLY6OjgQcUXiSkbrIavooFpfIt1ZwAs=
+github.com/gonvenience/text v1.0.8 h1:yIxiyXnKDqfe8JDPldZYaeYHU19XOPNN5VFPETCyNI0=
+github.com/gonvenience/text v1.0.8/go.mod h1:pUCCo022AtxoY2LJfJPNBzBc0oC2/Vp+tx8UaIc5RR8=
 github.com/gonvenience/wrap v1.2.1 h1:k8cbG42+Z+qPS7WO87IKculFVgffEdI753G3SW0tJwQ=
 github.com/gonvenience/wrap v1.2.1/go.mod h1:2kZvOb+r839tTaTj1//JZJ+BpN/4R8Y8vDeRJuUWCWg=
 github.com/gonvenience/ytbx v1.4.4 h1:jQopwyaLsVGuwdxSiN4WkXjsEaFNPJ3V4lUj7eyEpzo=
