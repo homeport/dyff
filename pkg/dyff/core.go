@@ -22,6 +22,7 @@ package dyff
 
 import (
 	"fmt"
+	"github.com/homeport/dyff/pkg/dyff/rename"
 	"sort"
 	"strings"
 
@@ -136,11 +137,12 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 			from.Documents, from.Names = fromDocs, fromNames
 			to.Documents, to.Names = toDocs, toNames
 
-			// Compare the document nodes, in case of an error it will fall back to the default
-			// implementation and continue to compare the files without any special semantics
-			if result, err := cmpr.documentNodes(from, to); err == nil {
-				return Report{from, to, result}, nil
+			// Compare the document nodes
+			result, err := cmpr.documentNodes(from, to)
+			if err != nil {
+				return Report{}, fmt.Errorf("comparing Kubernetes resources: %w", err)
 			}
+			return Report{from, to, result}, nil
 		}
 	}
 
@@ -283,8 +285,8 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		return nil, err
 	}
 
-	removals := []*yamlv3.Node{}
-	additions := []*yamlv3.Node{}
+	var removals []doc
+	var additions []doc
 
 	for _, name := range fromNames {
 		var fromItem = fromLookUpMap[name]
@@ -295,16 +297,14 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 				followAlias(fromItem.node),
 				followAlias(toItem.node),
 			)
-
 			if err != nil {
 				return nil, err
 			}
 
 			result = append(result, diffs...)
-
 		} else {
 			// `from` contain the `key`, but `to` does not -> removal
-			removals = append(removals, fromItem.node)
+			removals = append(removals, fromItem)
 		}
 	}
 
@@ -312,53 +312,86 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		var toItem = toLookUpMap[name]
 		if _, ok := fromLookUpMap[name]; !ok {
 			// `to` contains a `key` that `from` does not have -> addition
-			additions = append(additions, toItem.node)
+			additions = append(additions, toItem)
 		}
 	}
 
-	diff := Diff{Details: []Detail{}}
+	// Detect content names by heuristic method
+	detector := newDocumentChanges(
+		mapSlice(removals, func(d doc) *renameCandidate {
+			return &renameCandidate{
+				path: &ytbx.Path{Root: &from, DocumentIdx: d.idx},
+				doc:  d.node,
+			}
+		}),
+		mapSlice(additions, func(d doc) *renameCandidate {
+			return &renameCandidate{
+				path: &ytbx.Path{Root: &to, DocumentIdx: d.idx},
+				doc:  d.node,
+			}
+		}),
+	)
+	err = rename.DetectRenames(detector, nil)
+	if err != nil {
+		return nil, err
+	}
 
-	if len(removals) > 0 {
-		diff.Details = append(diff.Details,
-			Detail{
+	// Push rename detection results
+	for _, modified := range detector.modifiedPairs {
+		diffs, err := compare.objects(
+			*modified.to.path,
+			followAlias(modified.from.doc),
+			followAlias(modified.to.doc),
+		)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, diffs...)
+
+		// Exclude from order change calculation
+		fromNames, _ = reject(fromNames, modified.from.Name())
+		toNames, _ = reject(toNames, modified.to.Name())
+	}
+	for _, removal := range detector.deleted {
+		result = append(result, Diff{
+			Path: removal.path,
+			Details: []Detail{{
 				Kind: REMOVAL,
 				From: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: removals,
+					Content: []*yamlv3.Node{removal.doc},
 				},
 				To: nil,
-			},
-		)
+			}},
+		})
 	}
-
-	if len(additions) > 0 {
-		diff.Details = append(diff.Details,
-			Detail{
+	for _, addition := range detector.added {
+		result = append(result, Diff{
+			Path: addition.path,
+			Details: []Detail{{
 				Kind: ADDITION,
 				From: nil,
 				To: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: additions,
+					Content: []*yamlv3.Node{addition.doc},
 				},
-			},
-		)
+			}},
+		})
 	}
 
 	if !compare.settings.IgnoreOrderChanges && len(fromNames) == len(toNames) {
 		for i := range fromNames {
 			if fromNames[i] != toNames[i] {
-				diff.Details = append(diff.Details, Detail{
-					Kind: ORDERCHANGE,
-					From: AsSequenceNode(fromNames...),
-					To:   AsSequenceNode(toNames...),
+				result = append(result, Diff{
+					Details: []Detail{{
+						Kind: ORDERCHANGE,
+						From: AsSequenceNode(fromNames...),
+						To:   AsSequenceNode(toNames...),
+					}},
 				})
 				break
 			}
 		}
-	}
-
-	if len(diff.Details) > 0 {
-		result = append([]Diff{diff}, result...)
 	}
 
 	return result, nil

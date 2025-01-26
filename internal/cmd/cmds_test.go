@@ -594,13 +594,13 @@ spec.replicas  (apps/v1/Deployment/test)
 
 		It("should ignore the changes in values", func() {
 			expected := `
-(file level)
-  - one document removed:
-    ---
-    apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: test
+(root level)  (v1/Namespace/test)
+- one document removed:
+  ---
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: test
 
 `
 			By("using the --ignore-value-changes", func() {
@@ -608,7 +608,6 @@ spec.replicas  (apps/v1/Deployment/test)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(out).To(BeEquivalentTo(expected))
 			})
-
 		})
 	})
 
