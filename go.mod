@@ -4,6 +4,7 @@ go 1.22.0
 
 require (
 	github.com/gonvenience/bunt v1.4.0
+	github.com/gonvenience/idem v0.0.1
 	github.com/gonvenience/neat v1.3.15
 	github.com/gonvenience/term v1.0.3
 	github.com/gonvenience/text v1.0.8
@@ -29,7 +30,7 @@ require (
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
+	github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-ciede2000 v0.0.0-20170301095244-782e8c62fec3 // indirect

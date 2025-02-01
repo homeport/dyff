@@ -22,13 +22,14 @@ package dyff
 
 import (
 	"fmt"
-	"github.com/homeport/dyff/pkg/dyff/rename"
 	"sort"
 	"strings"
 
 	"github.com/gonvenience/bunt"
+	"github.com/gonvenience/idem"
 	"github.com/gonvenience/text"
 	"github.com/gonvenience/ytbx"
+
 	"github.com/mitchellh/hashstructure"
 	yamlv3 "gopkg.in/yaml.v3"
 )
@@ -316,32 +317,38 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		}
 	}
 
-	// Detect content names by heuristic method
-	detector := newDocumentChanges(
-		mapSlice(removals, func(d doc) *renameCandidate {
-			return &renameCandidate{
-				path: &ytbx.Path{Root: &from, DocumentIdx: d.idx},
-				doc:  d.node,
-			}
+	candidateName := func(mappingNode *yamlv3.Node) string {
+		name, _ := k8sItem.Name(mappingNode)
+		return name
+	}
+
+	changes := idem.NewDocumentChanges(
+		mapItemsToSlice(removals, func(d doc) *idem.RenameCandidate {
+			return idem.NewRenameCandidate(
+				candidateName(d.node),
+				&ytbx.Path{Root: &from, DocumentIdx: d.idx},
+				d.node,
+			)
 		}),
-		mapSlice(additions, func(d doc) *renameCandidate {
-			return &renameCandidate{
-				path: &ytbx.Path{Root: &to, DocumentIdx: d.idx},
-				doc:  d.node,
-			}
+		mapItemsToSlice(additions, func(d doc) *idem.RenameCandidate {
+			return idem.NewRenameCandidate(
+				candidateName(d.node),
+				&ytbx.Path{Root: &to, DocumentIdx: d.idx},
+				d.node,
+			)
 		}),
 	)
-	err = rename.DetectRenames(detector, nil)
-	if err != nil {
+
+	if err := idem.DetectRenames(changes, nil); err != nil {
 		return nil, err
 	}
 
 	// Push rename detection results
-	for _, modified := range detector.modifiedPairs {
+	for _, modified := range changes.ModifiedPairs() {
 		diffs, err := compare.objects(
-			*modified.to.path,
-			followAlias(modified.from.doc),
-			followAlias(modified.to.doc),
+			*modified.To.Path,
+			followAlias(modified.From.Doc),
+			followAlias(modified.To.Doc),
 		)
 		if err != nil {
 			return nil, err
@@ -349,31 +356,33 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		result = append(result, diffs...)
 
 		// Exclude from order change calculation
-		fromNames, _ = reject(fromNames, modified.from.Name())
-		toNames, _ = reject(toNames, modified.to.Name())
+		fromNames, _ = reject(fromNames, modified.From.Name())
+		toNames, _ = reject(toNames, modified.To.Name())
 	}
-	for _, removal := range detector.deleted {
+
+	for _, removal := range changes.DeletedList {
 		result = append(result, Diff{
-			Path: removal.path,
+			Path: removal.Path,
 			Details: []Detail{{
 				Kind: REMOVAL,
 				From: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: []*yamlv3.Node{removal.doc},
+					Content: []*yamlv3.Node{removal.Doc},
 				},
 				To: nil,
 			}},
 		})
 	}
-	for _, addition := range detector.added {
+
+	for _, addition := range changes.AddedList {
 		result = append(result, Diff{
-			Path: addition.path,
+			Path: addition.Path,
 			Details: []Detail{{
 				Kind: ADDITION,
 				From: nil,
 				To: &yamlv3.Node{
 					Kind:    yamlv3.DocumentNode,
-					Content: []*yamlv3.Node{addition.doc},
+					Content: []*yamlv3.Node{addition.Doc},
 				},
 			}},
 		})

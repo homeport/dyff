@@ -12,6 +12,8 @@ github.com/go-task/slim-sprig/v3 v3.0.0 h1:sUs3vkvUymDpBKi3qH1YSqBQk9+9D/8M2mN1v
 github.com/go-task/slim-sprig/v3 v3.0.0/go.mod h1:W848ghGpv3Qj3dhTPRyJypKRiqCdHZiAzKg9hl15HA8=
 github.com/gonvenience/bunt v1.4.0 h1:xRAANCgSmQwGoHIyWg80yFgomTiblBayUUSBBPjDHK4=
 github.com/gonvenience/bunt v1.4.0/go.mod h1:J9S2b1ZmUKdvybPxhq0hhrIvAwxcUXJjerudNa2Fhdw=
+github.com/gonvenience/idem v0.0.1 h1:SMqv4DI2ErBOsoohVyqBOeCCLrag6N7iClwJbmZBTYo=
+github.com/gonvenience/idem v0.0.1/go.mod h1:Br/o1pWtrbiPTuZrn7nPV6TJQL0qbaoGNmJZ8+A7MyU=
 github.com/gonvenience/neat v1.3.15 h1:qRMZzVP/HtLsQLKZGW8NGZIXdH1TMHsPjMJe2tvzDqk=
 github.com/gonvenience/neat v1.3.15/go.mod h1:TMdu+WVzfRU46GvcMAYALdvlWxiUxP1yqpZn/hKUhP8=
 github.com/gonvenience/term v1.0.3 h1:8MleXhMCCzLeWXmiEA/IQ/ZoaKBL5mHrmRVJsU1nWtI=
@@ -22,8 +24,8 @@ github.com/gonvenience/ytbx v1.4.6 h1:sXf0/kCBEAbrOBsj8aRpDvdRRkVl/3UZmNLKy4oFY+
 github.com/gonvenience/ytbx v1.4.6/go.mod h1:LHhrtuB5ghXlU+l1NJJR3Wt1ZnpbQScqyshpXisYplE=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad h1:a6HEuzUHeKH6hwfN/ZoQgRgVIWFJljSWa/zetS2WTvg=
-github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad/go.mod h1:vavhavw2zAxS5dIdcRluK6cSGGPlZynqzFM8NdvU144=
+github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf h1:BvBLUD2hkvLI3dJTJMiopAq8/wp43AAZKTP7qdpptbU=
+github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf/go.mod h1:vavhavw2zAxS5dIdcRluK6cSGGPlZynqzFM8NdvU144=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
