@@ -42,6 +42,7 @@ type compareSettings struct {
 	IgnoreOrderChanges                       bool
 	IgnoreWhitespaceChanges                  bool
 	KubernetesEntityDetection                bool
+	DetectRenames                            bool
 	AdditionalIdentifiers                    []string
 }
 
@@ -85,6 +86,13 @@ func IgnoreWhitespaceChanges(value bool) CompareOption {
 func KubernetesEntityDetection(value bool) CompareOption {
 	return func(settings *compareSettings) {
 		settings.KubernetesEntityDetection = value
+	}
+}
+
+// DetectRenames enabled detection of renames so that it correlates two entries based on their identifier field
+func DetectRenames(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.DetectRenames = value
 	}
 }
 
@@ -339,8 +347,10 @@ func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 		}),
 	)
 
-	if err := idem.DetectRenames(changes, nil); err != nil {
-		return nil, err
+	if compare.settings.DetectRenames {
+		if err := idem.DetectRenames(changes, nil); err != nil {
+			return nil, err
+		}
 	}
 
 	// Push rename detection results

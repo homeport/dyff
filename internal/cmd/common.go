@@ -48,6 +48,7 @@ type reportConfig struct {
 	omitHeader                bool
 	useGoPatchPaths           bool
 	ignoreValueChanges        bool
+	detectRenames             bool
 	minorChangeThreshold      float64
 	multilineContextLines     int
 	additionalIdentifiers     []string
@@ -67,6 +68,8 @@ var defaults = reportConfig{
 	exitWithCode:              false,
 	omitHeader:                false,
 	useGoPatchPaths:           false,
+	ignoreValueChanges:        false,
+	detectRenames:             true,
 	minorChangeThreshold:      0.1,
 	multilineContextLines:     4,
 	additionalIdentifiers:     nil,
@@ -88,7 +91,9 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", defaults.excludes, "exclude reports from a set of differences based on supplied arguments")
 	cmd.Flags().StringSliceVar(&reportOptions.filterRegexps, "filter-regexp", defaults.filterRegexps, "filter reports to a subset of differences based on supplied regular expressions")
 	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", defaults.excludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
-	cmd.Flags().BoolVarP(&reportOptions.ignoreValueChanges, "ignore-value-changes", "v", false, "exclude changes in values")
+	cmd.Flags().BoolVarP(&reportOptions.ignoreValueChanges, "ignore-value-changes", "v", defaults.ignoreValueChanges, "exclude changes in values")
+	cmd.Flags().BoolVar(&reportOptions.detectRenames, "detect-renames", defaults.detectRenames, "enable detection for renames (document level for Kubernetes resources)")
+
 	// Main output preferences
 	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
 	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", defaults.omitHeader, "omit the dyff summary header")

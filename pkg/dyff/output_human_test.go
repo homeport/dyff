@@ -147,6 +147,7 @@ input: |+
 				assets("kubernetes/rename/to.yaml"),
 				assets("kubernetes/rename/expected-dyff.human"),
 				false,
+				dyff.DetectRenames(true),
 			)
 		})
 	})
