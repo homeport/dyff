@@ -22,8 +22,8 @@ github.com/gonvenience/text v1.0.8 h1:yIxiyXnKDqfe8JDPldZYaeYHU19XOPNN5VFPETCyNI
 github.com/gonvenience/text v1.0.8/go.mod h1:pUCCo022AtxoY2LJfJPNBzBc0oC2/Vp+tx8UaIc5RR8=
 github.com/gonvenience/ytbx v1.4.6 h1:sXf0/kCBEAbrOBsj8aRpDvdRRkVl/3UZmNLKy4oFY+I=
 github.com/gonvenience/ytbx v1.4.6/go.mod h1:LHhrtuB5ghXlU+l1NJJR3Wt1ZnpbQScqyshpXisYplE=
-github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
-github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf h1:BvBLUD2hkvLI3dJTJMiopAq8/wp43AAZKTP7qdpptbU=
 github.com/google/pprof v0.0.0-20250128161936-077ca0a936bf/go.mod h1:vavhavw2zAxS5dIdcRluK6cSGGPlZynqzFM8NdvU144=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
