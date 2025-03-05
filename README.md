@@ -23,6 +23,10 @@ Input files can be local files (filesystem path), remote files (URI), or the sta
 
 All orders of keys in hashes are preserved during processing and output to the terminal, most notably in the sub-commands to convert YAML to JSON and vice versa.
 
+## Command documentation
+
+See [command documentation](.docs/commands/dyff.md) for details about each command and its flags.
+
 ## Use cases and examples
 
 - Show differences between the live configuration of Kubernetes resources and what would be applied (`kubectl` version >= `v1.20.0`):
@@ -38,7 +42,7 @@ All orders of keys in hashes are preserved during processing and output to the t
   ![dyff between example with kubectl diff](.docs/dyff-between-kubectl-diff.png?raw=true "dyff in kubectl diff example")
 
   The `--set-exit-code` flag is required so that the `dyff` exit code matches `kubectl` expectations. An exit code `0` refers to no differences, `1` in case differences are detected. Other exit codes are treated as program issues.
-  
+
   _Note:_ Versions of `kubectl` older than `v1.20.0` did not split the environment variable into field, therefore you cannot use command arguments. In this case, you need to wrap the `dyff` command with its argument into a helper shell script and use this instead.
 
 - Show the differences between two versions of [`cf-deployment`](https://github.com/cloudfoundry/cf-deployment/) YAMLs:
@@ -118,16 +122,6 @@ On macOS, `dyff` is also [available via MacPorts](https://ports.macports.org/por
 ```bash
 sudo port install dyff
 ```
-
-### Snap
-
-It is [available in the `snapcraft` store](https://snapcraft.io/dyff) in the Productivity section.
-
-```bash
-snap install dyff
-```
-
-_Please note:_ Since `dyff` needs to use `strict` confinement due to otherwise manual clearance requirements, there are some limits to its usage. Most notably, users reported that in `strict` confinement reading files from the temporary directory does not work. This makes it impossible to use it in the `kubectl diff` use case. Consider using `brew`, or pre-built binaries instead.
 
 ### Pre-built binaries in GitHub
 

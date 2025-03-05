@@ -83,6 +83,11 @@ is preserved during the conversion.
 `,
 }
 
+// NewRootCmd returns the root command (for generating documentation)
+func NewRootCmd() *cobra.Command {
+	return rootCmd
+}
+
 // ResetSettings resets command settings to default. This is only required by
 // the test suite to make sure that the flag parsing works correctly.
 func ResetSettings() {
