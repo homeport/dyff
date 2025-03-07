@@ -1,4 +1,4 @@
-// Copyright © 2019 The Homeport Team
+// Copyright © 2025 The Homeport Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,50 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package main
+package cmd
 
-import (
-	"errors"
-	"fmt"
-	"os"
-	"strings"
+// ExitCode is an error interface that has exit code (value) details
+type ExitCode interface {
+	Value() int
+	Cause() error
+	Error() string
+}
 
-	"github.com/gonvenience/bunt"
-	"github.com/gonvenience/neat"
+// errorWithExitCode is just a way to transport the exit code to the main package
+type errorWithExitCode struct {
+	value int
+	cause error
+}
 
-	"github.com/homeport/dyff/internal/cmd"
-)
+var _ ExitCode = errorWithExitCode{}
 
-func main() {
-	if err := cmd.Execute(); err != nil {
-		switch err := err.(type) {
-		case cmd.ExitCode:
-			var headline, content string
+func (e errorWithExitCode) Value() int {
+	return e.value
+}
 
-			if unwrapped := errors.Unwrap(err.Cause()); unwrapped != nil {
-				headline = strings.Split(err.Error(), ":")[0]
-				content = unwrapped.Error()
+func (e errorWithExitCode) Cause() error {
+	return e.cause
+}
 
-			} else {
-				headline = "Error occurred"
-				content = err.Error()
-			}
-
-			fmt.Fprint(
-				os.Stderr,
-				neat.ContentBox(
-					headline,
-					content,
-					neat.HeadlineColor(bunt.Coral),
-					neat.ContentColor(bunt.DimGray),
-				),
-			)
-
-			os.Exit(err.Value())
-
-		default: // fail safe for when somehow a non exit-code error slips through
-			fmt.Fprint(os.Stderr, err.Error())
-			os.Exit(1)
-		}
+func (e errorWithExitCode) Error() string {
+	if e.cause != nil {
+		return e.cause.Error()
 	}
+
+	return ""
 }
