@@ -3,7 +3,7 @@ module github.com/homeport/dyff
 go 1.23.0
 
 require (
-	github.com/gonvenience/bunt v1.4.0
+	github.com/gonvenience/bunt v1.4.1
 	github.com/gonvenience/idem v0.0.2
 	github.com/gonvenience/neat v1.3.16
 	github.com/gonvenience/term v1.0.4
