@@ -2,6 +2,8 @@ module github.com/homeport/dyff
 
 go 1.23.0
 
+toolchain go1.24.1
+
 require (
 	github.com/gonvenience/bunt v1.4.1
 	github.com/gonvenience/idem v0.0.2
@@ -42,7 +44,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
