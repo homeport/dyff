@@ -15,7 +15,7 @@ instance_groups:
     resource_pool: concourse_resource_pool
     networks:
       - name: concourse
-        static_ips: [XX.XX.XX.XX]  # ADD THE STATIC IP ADDRESSES FOR YOUR web INSTACES HERE IF APPLICABLE, OTHERWISE DELETE THIS SECTION
+        static_ips: [XX.XX.XX.XX]  # ADD THE STATIC IP ADDRESSES FOR YOUR web INSTANCES HERE IF APPLICABLE, OTHERWISE DELETE THIS SECTION
     jobs:
       - release: concourse
         name: atc
@@ -80,9 +80,9 @@ resource_pools:
 - name: concourse_resource_pool
   stemcell:
     name: bosh-vsphere-esxi-ubuntu-trusty-go_agent  # UPDATE ACCORDINGLY WITH THE STEMCELL ID FOR THE TARGETED IaaS
-    version: '3232.2'   # UDPATE ACCORDINGLY WITH THE UPLOADED STEMCELL VERSION
+    version: '3232.2'   # UPDATE ACCORDINGLY WITH THE UPLOADED STEMCELL VERSION
   network: concourse
-  cloud_properties:    # UDPATE THIS SECTION ACCORDINGLY BASED ON YOUR VM DEFINITIONS AND CLUSTER INFO
+  cloud_properties:    # UPDATE THIS SECTION ACCORDINGLY BASED ON YOUR VM DEFINITIONS AND CLUSTER INFO
     ram: 4096
     disk: 32768
     cpu: 2
@@ -94,7 +94,7 @@ compilation:
   reuse_compilation_vms: true
   workers: 3
   network: concourse
-  cloud_properties:   # UDPATE THIS SECTION ACCORDINGLY BASED ON YOUR VM DEFINITIONS AND CLUSTER INFO
+  cloud_properties:   # UPDATE THIS SECTION ACCORDINGLY BASED ON YOUR VM DEFINITIONS AND CLUSTER INFO
     ram: 4096
     disk: 32768
     cpu: 2

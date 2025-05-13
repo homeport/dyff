@@ -194,7 +194,7 @@ func compareAgainstExpectedDiffSyntax(fromPath string, toPath string, expectedPa
 }
 
 func yml(input string) *yamlv3.Node {
-	// If input is a file loacation, load this as YAML
+	// If input is a file location, load this as YAML
 	if _, err := os.Open(input); err == nil {
 		var content ytbx.InputFile
 		var err error

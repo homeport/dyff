@@ -382,7 +382,7 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 				del++
 
 			case diffmatchpatch.DiffEqual:
-				// skip eqaul output if requested context is 0 or the equal text is empty
+				// skip equal output if requested context is 0 or the equal text is empty
 				if multilineContextLines <= 0 || len(d.Text) == 0 {
 					continue
 				}
