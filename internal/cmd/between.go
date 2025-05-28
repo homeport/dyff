@@ -112,6 +112,22 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			report = report.ExcludeRegexp(reportOptions.excludeRegexps...)
 		}
 
+		if reportOptions.filterDocuments != nil {
+			report = report.FilterDocument(reportOptions.filterDocuments...)
+		}
+
+		if reportOptions.filterDocumentRegexps != nil {
+			report = report.FilterDocumentRegexp(reportOptions.filterDocumentRegexps...)
+		}
+
+		if reportOptions.excludeDocuments != nil {
+			report = report.ExcludeDocument(reportOptions.excludeDocuments...)
+		}
+
+		if reportOptions.excludeDocumentRegexps != nil {
+			report = report.ExcludeDocumentRegexp(reportOptions.excludeDocumentRegexps...)
+		}
+
 		if reportOptions.ignoreValueChanges {
 			report = report.IgnoreValueChanges()
 		}
