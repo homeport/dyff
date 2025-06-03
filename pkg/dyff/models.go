@@ -45,6 +45,12 @@ type Detail struct {
 	Kind rune
 }
 
+type K8sMetadata struct {
+	APIVersion string
+	Kind       string
+	Metadata   map[string]string
+}
+
 // Diff encapsulates everything noteworthy about a difference
 type Diff struct {
 	Path    *ytbx.Path
