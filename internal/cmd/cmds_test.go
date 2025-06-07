@@ -631,7 +631,7 @@ spec.replicas  (apps/v1/Deployment/test)
 
 `
 
-			By("using the --detect-kubernetes-generated-name flag", func() {
+			By("using the --detect-kubernetes-generate-name flag", func() {
 				out, err := dyff("between", "--omit-header", "--detect-kubernetes-generate-name", assets("issues", "issue-491", "from.yml"), assets("issues", "issue-491", "to.yml"))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(out).To(BeEquivalentTo(expected))
