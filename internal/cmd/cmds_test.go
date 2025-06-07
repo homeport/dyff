@@ -609,6 +609,34 @@ spec.replicas  (apps/v1/Deployment/test)
 				Expect(out).To(BeEquivalentTo(expected))
 			})
 		})
+
+		It("should use match on generateName if enabled", func() {
+			expected := `
+(root level)
++ one document added:
+  ---
+  apiVersion: batch/v1
+  kind: Job
+  metadata:
+    generateName: a-generated-name-
+  spec:
+    template:
+      spec:
+        serviceAccountName: a-service-account
+        containers:
+        - name: job
+          image: "nginx:latest"
+        restartPolicy: Never
+    backoffLimit: 2
+
+`
+
+			By("using the --detect-kubernetes-generated-name flag", func() {
+				out, err := dyff("between", "--omit-header", "--detect-kubernetes-generate-name", assets("issues", "issue-491", "from.yml"), assets("issues", "issue-491", "to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(out).To(BeEquivalentTo(expected))
+			})
+		})
 	})
 
 	Context("last-applied command", func() {

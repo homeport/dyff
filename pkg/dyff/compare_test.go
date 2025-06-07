@@ -1098,6 +1098,30 @@ b: bar
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Diffs).To(HaveLen(0))
 			})
+
+			It("should match on generateName if enabled", func() {
+				from := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/from",
+					Documents: multiDoc(
+						`{"apiVersion": "batch/v1", "kind": "Job", "metadata": {"generateName": "x"}}`,
+						`{"apiVersion": "v1", "kind": "Service", "metadata": {"name": "y"}}`,
+					),
+				}
+
+				to := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/to",
+					Documents: multiDoc(
+						`{"apiVersion": "batch/v1", "kind": "Job", "metadata": {"generateName": "x"}}`,
+						``,
+						`{"apiVersion": "v1", "kind": "Service", "metadata": {"name": "y"}}`,
+						``,
+					),
+				}
+
+				result, err := dyff.CompareInputFiles(from, to, dyff.KubernetesEntityDetectionMatchGenerateName(true))
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result.Diffs).To(HaveLen(0))
+			})
 		})
 
 		Context("input files containing complex objects with custom keys", func() {
