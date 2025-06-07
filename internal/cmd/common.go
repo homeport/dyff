@@ -38,24 +38,25 @@ import (
 )
 
 type reportConfig struct {
-	style                     string
-	ignoreOrderChanges        bool
-	ignoreWhitespaceChanges   bool
-	kubernetesEntityDetection bool
-	noTableStyle              bool
-	doNotInspectCerts         bool
-	exitWithCode              bool
-	omitHeader                bool
-	useGoPatchPaths           bool
-	ignoreValueChanges        bool
-	detectRenames             bool
-	minorChangeThreshold      float64
-	multilineContextLines     int
-	additionalIdentifiers     []string
-	filters                   []string
-	excludes                  []string
-	filterRegexps             []string
-	excludeRegexps            []string
+	style                                      string
+	ignoreOrderChanges                         bool
+	ignoreWhitespaceChanges                    bool
+	kubernetesEntityDetection                  bool
+	kubernetesEntityDetectionMatchGenerateName bool
+	noTableStyle                               bool
+	doNotInspectCerts                          bool
+	exitWithCode                               bool
+	omitHeader                                 bool
+	useGoPatchPaths                            bool
+	ignoreValueChanges                         bool
+	detectRenames                              bool
+	minorChangeThreshold                       float64
+	multilineContextLines                      int
+	additionalIdentifiers                      []string
+	filters                                    []string
+	excludes                                   []string
+	filterRegexps                              []string
+	excludeRegexps                             []string
 }
 
 var defaults = reportConfig{
@@ -63,20 +64,21 @@ var defaults = reportConfig{
 	ignoreOrderChanges:        false,
 	ignoreWhitespaceChanges:   false,
 	kubernetesEntityDetection: true,
-	noTableStyle:              false,
-	doNotInspectCerts:         false,
-	exitWithCode:              false,
-	omitHeader:                false,
-	useGoPatchPaths:           false,
-	ignoreValueChanges:        false,
-	detectRenames:             true,
-	minorChangeThreshold:      0.1,
-	multilineContextLines:     4,
-	additionalIdentifiers:     nil,
-	filters:                   nil,
-	excludes:                  nil,
-	filterRegexps:             nil,
-	excludeRegexps:            nil,
+	kubernetesEntityDetectionMatchGenerateName: false,
+	noTableStyle:          false,
+	doNotInspectCerts:     false,
+	exitWithCode:          false,
+	omitHeader:            false,
+	useGoPatchPaths:       false,
+	ignoreValueChanges:    false,
+	detectRenames:         true,
+	minorChangeThreshold:  0.1,
+	multilineContextLines: 4,
+	additionalIdentifiers: nil,
+	filters:               nil,
+	excludes:              nil,
+	filterRegexps:         nil,
+	excludeRegexps:        nil,
 }
 
 var reportOptions reportConfig
@@ -86,6 +88,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", defaults.ignoreOrderChanges, "ignore order changes in lists")
 	cmd.Flags().BoolVar(&reportOptions.ignoreWhitespaceChanges, "ignore-whitespace-changes", defaults.ignoreWhitespaceChanges, "ignore leading or trailing whitespace changes")
 	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", defaults.kubernetesEntityDetection, "detect kubernetes entities")
+	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetectionMatchGenerateName, "detect-kubernetes-generate-name", "", defaults.kubernetesEntityDetectionMatchGenerateName, "also match generated names for kubernetes entities (e.g. 'batch/v1/Job/metadata.generateName=foo')")
 	cmd.Flags().StringArrayVar(&reportOptions.additionalIdentifiers, "additional-identifier", defaults.additionalIdentifiers, "use additional identifier candidates in named entry lists")
 	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", defaults.filters, "filter reports to a subset of differences based on supplied arguments")
 	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", defaults.excludes, "exclude reports from a set of differences based on supplied arguments")

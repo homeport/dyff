@@ -88,6 +88,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges),
 			dyff.IgnoreWhitespaceChanges(reportOptions.ignoreWhitespaceChanges),
 			dyff.KubernetesEntityDetection(reportOptions.kubernetesEntityDetection),
+			dyff.KubernetesEntityDetectionMatchGenerateName(reportOptions.kubernetesEntityDetectionMatchGenerateName),
 			dyff.AdditionalIdentifiers(reportOptions.additionalIdentifiers...),
 			dyff.DetectRenames(reportOptions.detectRenames),
 		)
