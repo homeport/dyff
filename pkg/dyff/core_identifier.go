@@ -37,7 +37,7 @@ type listItemIdentifier interface {
 	// case it cannot find such an entry or required fields are missing
 	FindNodeByName(sequenceNode *yamlv3.Node, name string) (*yamlv3.Node, error)
 
-	// String returns a reprensation or explanation of the identifier itself
+	// String returns a representation or explanation of the identifier itself
 	String() string
 }
 
@@ -83,9 +83,15 @@ func (sf *singleField) String() string {
 
 // k8sItemIdentifier is an identifier aiming for Kubernetes items that have an
 // api version, kind, and name field to be used
-type k8sItemIdentifier struct{}
+type k8sItemIdentifier struct {
+	KubernetesEntityDetectionMatchGenerateName bool
+}
 
-var k8sItem listItemIdentifier = &k8sItemIdentifier{}
+func newk8sItem(matchGenerateName bool) listItemIdentifier {
+	return &k8sItemIdentifier{
+		KubernetesEntityDetectionMatchGenerateName: matchGenerateName,
+	}
+}
 
 func (i *k8sItemIdentifier) FindNodeByName(sequenceNode *yamlv3.Node, name string) (*yamlv3.Node, error) {
 	for _, mappingNode := range sequenceNode.Content {
@@ -127,11 +133,43 @@ func (i *k8sItemIdentifier) Name(node *yamlv3.Node) (string, error) {
 		elem = append(elem, namespace.Value)
 	}
 
-	name, err := grab(node, "metadata.name")
-	if err != nil {
-		return "", err
+	nameMatchPreferences := []struct {
+		fieldName      string
+		enabled        bool
+		fieldFormatter func(string) string
+	}{
+		{
+			fieldName:      "metadata.name",
+			enabled:        true,
+			fieldFormatter: func(s string) string { return s },
+		},
+		{
+			fieldName:      "metadata.generateName",
+			enabled:        i.KubernetesEntityDetectionMatchGenerateName,
+			fieldFormatter: func(s string) string { return fmt.Sprintf("%s=%s", s, s) },
+		},
 	}
-	elem = append(elem, name.Value)
+
+	var lastError error
+	for _, nameMatchPreference := range nameMatchPreferences {
+		// skip the matcher if it's not enabled
+		if !nameMatchPreference.enabled {
+			continue
+		}
+
+		if found, err := grab(node, nameMatchPreference.fieldName); err == nil {
+			lastError = nil
+			elem = append(elem, nameMatchPreference.fieldFormatter(found.Value))
+
+			break
+		} else {
+			lastError = err
+		}
+	}
+
+	if lastError != nil {
+		return "", lastError
+	}
 
 	return strings.Join(elem, "/"), nil
 }
