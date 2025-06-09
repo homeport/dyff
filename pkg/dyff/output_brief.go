@@ -39,6 +39,7 @@ const (
 // BriefReport is a reporter that only prints a summary
 type BriefReport struct {
 	Report
+	ColorTheme *ColorTheme // nil = use default theme
 }
 
 // WriteReport writes a brief summary to the provided writer

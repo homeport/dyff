@@ -93,3 +93,29 @@ func colored(color colorful.Color, format string, a ...interface{}) string {
 		bunt.Foreground(color),
 	)
 }
+
+// Theme-aware color methods
+
+// green returns a green-colored string using the theme's addition color
+func (theme *ColorTheme) green(format string, a ...interface{}) string {
+	if theme == nil {
+		theme = DefaultColorTheme()
+	}
+	return colored(theme.Addition, render(format, a...))
+}
+
+// red returns a red-colored string using the theme's removal color
+func (theme *ColorTheme) red(format string, a ...interface{}) string {
+	if theme == nil {
+		theme = DefaultColorTheme()
+	}
+	return colored(theme.Removal, render(format, a...))
+}
+
+// yellow returns a yellow-colored string using the theme's modification color
+func (theme *ColorTheme) yellow(format string, a ...interface{}) string {
+	if theme == nil {
+		theme = DefaultColorTheme()
+	}
+	return colored(theme.Modification, render(format, a...))
+}

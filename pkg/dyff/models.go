@@ -24,6 +24,7 @@ import (
 	"io"
 
 	"github.com/gonvenience/ytbx"
+	"github.com/lucasb-eyer/go-colorful"
 	yamlv3 "gopkg.in/yaml.v3"
 )
 
@@ -62,4 +63,25 @@ type Report struct {
 // ReportWriter defines the interface required for types that can write reports
 type ReportWriter interface {
 	WriteReport(out io.Writer) error
+}
+
+// ColorTheme defines custom colors for diff output
+type ColorTheme struct {
+	// Addition represents the color for added content (default: #58BF38)
+	Addition colorful.Color
+
+	// Modification represents the color for modified content (default: #C7C43F)
+	Modification colorful.Color
+
+	// Removal represents the color for removed content (default: #B9311B)
+	Removal colorful.Color
+}
+
+// DefaultColorTheme returns the default dyff color theme
+func DefaultColorTheme() *ColorTheme {
+	return &ColorTheme{
+		Addition:     colorful.Color{R: 0.3450980392, G: 0.7490196078, B: 0.2196078431}, // #58BF38
+		Modification: colorful.Color{R: 0.7803921569, G: 0.7686274510, B: 0.2470588235}, // #C7C43F
+		Removal:      colorful.Color{R: 0.7254901961, G: 0.1921568627, B: 0.1058823529}, // #B9311B
+	}
 }
