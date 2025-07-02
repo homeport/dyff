@@ -151,8 +151,10 @@ func (w *OutputWriter) WriteInplace(filename string) error {
 	}
 
 	// Write the buffered output to the provided input file (override in place)
-	bufWriter.Flush()
-	if err := os.WriteFile(filename, buf.Bytes(), 0644); err != nil {
+	if err := bufWriter.Flush(); err != nil {
+		return fmt.Errorf("failed to flush buffer for %s: %w", humanReadableFilename(filename), err)
+	}
+	if err := os.WriteFile(filename, buf.Bytes(), 0600); err != nil {
 		return fmt.Errorf("failed to overwrite %s in place: %w", humanReadableFilename(filename), err)
 	}
 
