@@ -22,9 +22,10 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"os"
 
 	"github.com/homeport/dyff/pkg/dyff"
 )
@@ -39,6 +40,8 @@ type betweenCmdOptions struct {
 
 var betweenCmdSettings betweenCmdOptions
 
+var configFile string
+
 // betweenCmd represents the between command
 var betweenCmd = &cobra.Command{
 	Use:   "between [flags] <from> <to>",
@@ -49,7 +52,21 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 `,
 	Args:    cobra.ExactArgs(2),
 	Aliases: []string{"bw"},
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if _, err := os.Stat(configFile); err == nil {
+			viper.SetConfigFile(configFile)
+			if err := viper.ReadInConfig(); err != nil {
+				fmt.Printf("Error reading config file: %v\n", err)
+				os.Exit(1)
+			}
+		}
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Decode config file
+		if err := viper.Unmarshal(&reportOptions); err != nil {
+			return fmt.Errorf("failed to decode config file: %w", err)
+		}
+
 		var fromLocation, toLocation string
 		if betweenCmdSettings.swap {
 			fromLocation = args[1]
@@ -72,47 +89,47 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		// Change root of 'from' input file if change root flag for 'from' is set
 		if betweenCmdSettings.chrootFrom != "" {
-			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, reportOptions.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
+			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, reportOptions.UseGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
 				return fmt.Errorf("failed to change root of %s to path %s: %w", from.Location, betweenCmdSettings.chrootFrom, err)
 			}
 		}
 
 		// Change root of 'to' input file if change root flag for 'to' is set
 		if betweenCmdSettings.chrootTo != "" {
-			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, reportOptions.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
+			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, reportOptions.UseGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
 				return fmt.Errorf("failed to change root of %s to path %s: %w", to.Location, betweenCmdSettings.chrootTo, err)
 			}
 		}
 
 		report, err := dyff.CompareInputFiles(from, to,
-			dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges),
-			dyff.IgnoreWhitespaceChanges(reportOptions.ignoreWhitespaceChanges),
-			dyff.KubernetesEntityDetection(reportOptions.kubernetesEntityDetection),
-			dyff.AdditionalIdentifiers(reportOptions.additionalIdentifiers...),
-			dyff.DetectRenames(reportOptions.detectRenames),
+			dyff.IgnoreOrderChanges(reportOptions.IgnoreOrderChanges),
+			dyff.IgnoreWhitespaceChanges(reportOptions.IgnoreWhitespaceChanges),
+			dyff.KubernetesEntityDetection(reportOptions.KubernetesEntityDetection),
+			dyff.AdditionalIdentifiers(reportOptions.AdditionalIdentifiers...),
+			dyff.DetectRenames(reportOptions.DetectRenames),
 		)
 
 		if err != nil {
 			return fmt.Errorf("failed to compare input files: %w", err)
 		}
 
-		if reportOptions.filters != nil {
-			report = report.Filter(reportOptions.filters...)
+		if reportOptions.Filters != nil {
+			report = report.Filter(reportOptions.Filters...)
 		}
 
-		if reportOptions.filterRegexps != nil {
-			report = report.FilterRegexp(reportOptions.filterRegexps...)
+		if reportOptions.FilterRegexps != nil {
+			report = report.FilterRegexp(reportOptions.FilterRegexps...)
 		}
 
-		if reportOptions.excludes != nil {
-			report = report.Exclude(reportOptions.excludes...)
+		if reportOptions.Excludes != nil {
+			report = report.Exclude(reportOptions.Excludes...)
 		}
 
-		if reportOptions.excludeRegexps != nil {
-			report = report.ExcludeRegexp(reportOptions.excludeRegexps...)
+		if reportOptions.ExcludeRegexps != nil {
+			report = report.ExcludeRegexp(reportOptions.ExcludeRegexps...)
 		}
 
-		if reportOptions.ignoreValueChanges {
+		if reportOptions.IgnoreValueChanges {
 			report = report.IgnoreValueChanges()
 		}
 
@@ -133,4 +150,5 @@ func init() {
 	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
 	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
 	betweenCmd.Flags().BoolVar(&betweenCmdSettings.translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
+	betweenCmd.PersistentFlags().StringVar(&configFile, "config", ".dyffconfig.yml", "set dyff options from a yaml config file.")
 }

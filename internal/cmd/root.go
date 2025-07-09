@@ -94,13 +94,13 @@ func Execute() error {
 		os.Args = rearrange()
 
 		// Enable Kubernetes specific entity detection implicitly
-		reportOptions.kubernetesEntityDetection = true
+		reportOptions.KubernetesEntityDetection = true
 
 		// Add implicit exclude for metadata.managedFields as this cannot
 		// be configured via a command-line flag using KUBECTL_EXTERNAL_DIFF
 		// due to an bug/feature in kubectl that ignore command-line flags
 		// in the diff environment variable with non alpha-numeric characters
-		reportOptions.excludeRegexps = append(reportOptions.excludeRegexps, "^/metadata/managedFields")
+		reportOptions.ExcludeRegexps = append(reportOptions.ExcludeRegexps, "^/metadata/managedFields")
 	}
 
 	if err := rootCmd.Execute(); err != nil {
