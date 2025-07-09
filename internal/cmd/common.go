@@ -49,6 +49,7 @@ type reportConfig struct {
 	useGoPatchPaths           bool
 	ignoreValueChanges        bool
 	detectRenames             bool
+	chompBlockScalars         bool
 	minorChangeThreshold      float64
 	multilineContextLines     int
 	additionalIdentifiers     []string
@@ -70,6 +71,7 @@ var defaults = reportConfig{
 	useGoPatchPaths:           false,
 	ignoreValueChanges:        false,
 	detectRenames:             true,
+	chompBlockScalars:         true,
 	minorChangeThreshold:      0.1,
 	multilineContextLines:     4,
 	additionalIdentifiers:     nil,
@@ -93,6 +95,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", defaults.excludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
 	cmd.Flags().BoolVarP(&reportOptions.ignoreValueChanges, "ignore-value-changes", "v", defaults.ignoreValueChanges, "exclude changes in values")
 	cmd.Flags().BoolVar(&reportOptions.detectRenames, "detect-renames", defaults.detectRenames, "enable detection for renames (document level for Kubernetes resources)")
+	cmd.Flags().BoolVar(&reportOptions.chompBlockScalars, "chomp-block-scalars", defaults.chompBlockScalars, "chomp block scalars for comparison, otherwise compare unformatted strings")
 
 	// Main output preferences
 	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
