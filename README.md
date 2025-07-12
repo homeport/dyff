@@ -105,6 +105,69 @@ See [command documentation](.docs/commands/dyff.md) for details about each comma
     dyff yaml https://raw.githubusercontent.com/homeport/dyff/main/assets/bosh-yaml/manifest.json
     ```
 
+## Using dyff as a Library
+
+`dyff` can be used as a Go library to compare YAML/JSON files programmatically and apply custom color themes to the output.
+
+### Basic Usage
+
+```go
+import (
+    "github.com/homeport/dyff/pkg/dyff"
+    "github.com/gonvenience/ytbx"
+)
+
+// Load input files
+from, _ := ytbx.LoadFile("from.yaml")
+to, _ := ytbx.LoadFile("to.yaml")
+
+// Generate comparison report
+report, _ := dyff.CompareInputFiles(from, to)
+
+// Create a human-readable report
+humanReport := &dyff.HumanReport{
+    Report: report,
+}
+
+// Write report to stdout
+humanReport.WriteReport(os.Stdout)
+```
+
+### Custom Color Themes
+
+When using dyff as a library, you can customize the colors used for additions, modifications, and removals:
+
+```go
+import (
+    "github.com/homeport/dyff/pkg/dyff"
+    "github.com/lucasb-eyer/go-colorful"
+)
+
+// Create custom color theme
+theme := &dyff.ColorTheme{
+    Addition:     colorful.Color{R: 0.0, G: 1.0, B: 0.0},  // Bright green
+    Modification: colorful.Color{R: 1.0, G: 0.5, B: 0.0},  // Orange
+    Removal:      colorful.Color{R: 1.0, G: 0.0, B: 0.0},  // Bright red
+}
+
+// Apply to HumanReport
+report := &dyff.HumanReport{
+    Report:     comparisonReport,
+    ColorTheme: theme,
+}
+
+// Use the same theme with brief output
+briefReport := &dyff.BriefReport{
+    Report:     comparisonReport,
+    ColorTheme: theme,
+}
+```
+
+The default color theme uses:
+- Addition: #58BF38 (green)
+- Modification: #C7C43F (yellow)
+- Removal: #B9311B (red)
+
 ## Installation
 
 ### Homebrew
