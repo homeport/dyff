@@ -22,6 +22,7 @@ package dyff
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	yamlv3 "gopkg.in/yaml.v3"
@@ -136,6 +137,57 @@ func (i *k8sItemIdentifier) Name(node *yamlv3.Node) (string, error) {
 	return strings.Join(elem, "/"), nil
 }
 
-func (lf *k8sItemIdentifier) String() string {
+func (i *k8sItemIdentifier) String() string {
 	return "resource"
+}
+
+func K8sMetaFromName(name string) (*K8sMetadata, error) {
+	parts := strings.Split(name, "/")
+
+	switch len(parts) {
+	case 3:
+		// Minimum case. Must be APIVersion/Kind/Name
+		// where APIVersion has no group
+		return &K8sMetadata{
+			APIVersion: parts[0],
+			Kind:       parts[1],
+			Metadata: map[string]string{
+				"name": parts[2],
+			},
+		}, nil
+	case 4:
+		// Could be APIVersion/Kind/Namespace/Name or APIVersion/Kind/Name
+		// if APIVersion has a group i.e. apps
+		if regexp.MustCompile(`^v\d+([a-z]+\d+)?$`).MatchString(parts[0]) {
+			return &K8sMetadata{
+				APIVersion: parts[0],
+				Kind:       parts[1],
+				Metadata: map[string]string{
+					"namespace": parts[2],
+					"name":      parts[3],
+				},
+			}, nil
+		}
+		return &K8sMetadata{
+			APIVersion: parts[0] + "/" + parts[1],
+			Kind:       parts[2],
+			Metadata: map[string]string{
+				"name": parts[3],
+			},
+		}, nil
+
+	case 5:
+		// Maximum case. Must be APIVersion/Group/Kind/Namespace/Name
+		// where APIVersion has a group i.e. apps
+		return &K8sMetadata{
+			APIVersion: parts[0] + "/" + parts[1],
+			Kind:       parts[2],
+			Metadata: map[string]string{
+				"namespace": parts[3],
+				"name":      parts[4],
+			},
+		}, nil
+	}
+
+	return nil, fmt.Errorf("invalid resource name %q", name)
 }
