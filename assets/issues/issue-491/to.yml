@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: a-service-account
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: a-generated-name-
+spec:
+  template:
+    spec:
+      serviceAccountName: a-service-account
+      containers:
+        - name: job
+          image: nginx:latest
+      restartPolicy: Never
+  backoffLimit: 2
