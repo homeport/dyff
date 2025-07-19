@@ -38,12 +38,13 @@ import (
 type CompareOption func(*compareSettings)
 
 type compareSettings struct {
-	NonStandardIdentifierGuessCountThreshold int
-	IgnoreOrderChanges                       bool
-	IgnoreWhitespaceChanges                  bool
-	KubernetesEntityDetection                bool
-	DetectRenames                            bool
-	AdditionalIdentifiers                    []string
+	NonStandardIdentifierGuessCountThreshold   int
+	IgnoreOrderChanges                         bool
+	IgnoreWhitespaceChanges                    bool
+	KubernetesEntityDetection                  bool
+	KubernetesEntityDetectionMatchGenerateName bool
+	DetectRenames                              bool
+	AdditionalIdentifiers                      []string
 }
 
 type compare struct {
@@ -89,6 +90,12 @@ func KubernetesEntityDetection(value bool) CompareOption {
 	}
 }
 
+func KubernetesEntityDetectionMatchGenerateName(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.KubernetesEntityDetectionMatchGenerateName = value
+	}
+}
+
 // DetectRenames enabled detection of renames so that it correlates two entries based on their identifier field
 func DetectRenames(value bool) CompareOption {
 	return func(settings *compareSettings) {
@@ -103,9 +110,10 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 	// initialize the comparator with the tool defaults
 	cmpr := compare{
 		settings: compareSettings{
-			NonStandardIdentifierGuessCountThreshold: 3,
-			IgnoreOrderChanges:                       false,
-			KubernetesEntityDetection:                true,
+			NonStandardIdentifierGuessCountThreshold:   3,
+			IgnoreOrderChanges:                         false,
+			KubernetesEntityDetection:                  true,
+			KubernetesEntityDetectionMatchGenerateName: false,
 		},
 	}
 
@@ -117,13 +125,15 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 	// in case Kubernetes mode is enabled, try to compare documents in the YAML
 	// file by their names rather than just by the order of the documents
 	if cmpr.settings.KubernetesEntityDetection {
+		k8sItemIdentifier := newk8sItem(cmpr.settings.KubernetesEntityDetectionMatchGenerateName)
+
 		var fromDocs, toDocs []*yamlv3.Node
 		var fromNames, toNames []string
 
 		for i := range from.Documents {
 			if entry := from.Documents[i]; !isEmptyDocument(entry) {
 				fromDocs = append(fromDocs, entry)
-				if name, err := k8sItem.Name(entry.Content[0]); err == nil {
+				if name, err := k8sItemIdentifier.Name(entry.Content[0]); err == nil {
 					fromNames = append(fromNames, name)
 				}
 			}
@@ -132,7 +142,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 		for i := range to.Documents {
 			if entry := to.Documents[i]; !isEmptyDocument(entry) {
 				toDocs = append(toDocs, entry)
-				if name, err := k8sItem.Name(entry.Content[0]); err == nil {
+				if name, err := k8sItemIdentifier.Name(entry.Content[0]); err == nil {
 					toNames = append(toNames, name)
 				}
 			}
@@ -259,6 +269,7 @@ func (compare *compare) nonNilSameKindNodes(path ytbx.Path, from *yamlv3.Node, t
 
 func (compare *compare) documentNodes(from, to ytbx.InputFile) ([]Diff, error) {
 	var result []Diff
+	k8sItem := newk8sItem(compare.settings.KubernetesEntityDetectionMatchGenerateName)
 
 	type doc struct {
 		node *yamlv3.Node
@@ -963,6 +974,7 @@ func (compare *compare) getIdentifierFromKubernetesEntityList(listA, listB *yaml
 		return nil, fmt.Errorf("entity detection for Kubernetes resource is not enabled")
 	}
 
+	k8sItem := newk8sItem(compare.settings.KubernetesEntityDetectionMatchGenerateName)
 	allHaveMetadataName := func(sequenceNode *yamlv3.Node) bool {
 		var numWithMetadata int
 		for _, entry := range sequenceNode.Content {
