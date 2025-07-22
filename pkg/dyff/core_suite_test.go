@@ -135,6 +135,7 @@ func compareAgainstExpectedHuman(fromPath string, toPath string, expectedPath st
 	reportWriter := &dyff.HumanReport{
 		Report:                report,
 		Indent:                2,
+		UseIndentLines:        true,
 		DoNotInspectCerts:     false,
 		NoTableStyle:          false,
 		OmitHeader:            true,
@@ -171,6 +172,7 @@ func compareAgainstExpectedDiffSyntax(fromPath string, toPath string, expectedPa
 		HumanReport: dyff.HumanReport{
 			Report:                report,
 			Indent:                0,
+			UseIndentLines:        true,
 			DoNotInspectCerts:     false,
 			NoTableStyle:          true,
 			OmitHeader:            true,
@@ -275,6 +277,7 @@ func humanDiff(diff dyff.Diff) string {
 	reporter := dyff.HumanReport{
 		Report:            dyff.Report{Diffs: []dyff.Diff{diff}},
 		Indent:            2,
+		UseIndentLines:    true,
 		DoNotInspectCerts: false,
 		NoTableStyle:      false,
 		OmitHeader:        true,
@@ -296,6 +299,7 @@ func diffSyntaxDiff(diff dyff.Diff) string {
 		HumanReport: dyff.HumanReport{
 			Report:            dyff.Report{Diffs: []dyff.Diff{diff}},
 			Indent:            0,
+			UseIndentLines:    true,
 			DoNotInspectCerts: false,
 			NoTableStyle:      true,
 			OmitHeader:        true,

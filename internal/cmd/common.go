@@ -39,6 +39,7 @@ import (
 
 type reportConfig struct {
 	style                     string
+	useIndentLines            bool
 	ignoreOrderChanges        bool
 	ignoreWhitespaceChanges   bool
 	kubernetesEntityDetection bool
@@ -60,6 +61,7 @@ type reportConfig struct {
 
 var defaults = reportConfig{
 	style:                     "human",
+	useIndentLines:            true,
 	ignoreOrderChanges:        false,
 	ignoreWhitespaceChanges:   false,
 	kubernetesEntityDetection: true,
@@ -96,6 +98,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 
 	// Main output preferences
 	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
+	cmd.Flags().BoolVarP(&reportOptions.useIndentLines, "use-indent-lines", "u", defaults.useIndentLines, "use indent lines in the output")
 	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", defaults.omitHeader, "omit the dyff summary header")
 	cmd.Flags().BoolVarP(&reportOptions.exitWithCode, "set-exit-code", "s", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
 
@@ -217,6 +220,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 		reportWriter = &dyff.HumanReport{
 			Report:                report,
 			Indent:                2,
+			UseIndentLines:        true,
 			DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 			NoTableStyle:          reportOptions.noTableStyle,
 			OmitHeader:            reportOptions.omitHeader,
@@ -234,6 +238,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				UseIndentLines:        true,
 				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
@@ -252,6 +257,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				UseIndentLines:        true,
 				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
@@ -270,6 +276,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				UseIndentLines:        true,
 				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,

@@ -26,8 +26,8 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-func yamlStringInRedishColors(input interface{}) (string, error) {
-	return neat.NewOutputProcessor(true, true, &map[string]colorful.Color{
+func yamlStringInRedishColors(input interface{}, useIndentLines bool) (string, error) {
+	return neat.NewOutputProcessor(useIndentLines, true, &map[string]colorful.Color{
 		"keyColor":           bunt.FireBrick,
 		"indentLineColor":    {R: 0.2, G: 0, B: 0},
 		"scalarDefaultColor": bunt.LightCoral,
@@ -41,8 +41,8 @@ func yamlStringInRedishColors(input interface{}) (string, error) {
 	}).ToYAML(input)
 }
 
-func yamlStringInGreenishColors(input interface{}) (string, error) {
-	return neat.NewOutputProcessor(true, true, &map[string]colorful.Color{
+func yamlStringInGreenishColors(input interface{}, useIndentLines bool) (string, error) {
+	return neat.NewOutputProcessor(useIndentLines, true, &map[string]colorful.Color{
 		"keyColor":           bunt.Green,
 		"indentLineColor":    {R: 0, G: 0.2, B: 0},
 		"scalarDefaultColor": bunt.LimeGreen,
