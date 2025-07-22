@@ -217,6 +217,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 		reportWriter = &dyff.HumanReport{
 			Report:                report,
 			Indent:                2,
+			UseIndentLines:        true,
 			DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 			NoTableStyle:          reportOptions.noTableStyle,
 			OmitHeader:            reportOptions.omitHeader,
@@ -234,6 +235,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				UseIndentLines:        true,
 				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
@@ -252,6 +254,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				UseIndentLines:        true,
 				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
@@ -270,6 +273,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				UseIndentLines:        true,
 				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
