@@ -159,7 +159,7 @@ Starting with Go 1.17, you can install `dyff` from source using `go install`:
 go install github.com/homeport/dyff/cmd/dyff@latest
 ```
 
-_Please note:_ This will install `dyff` based on the latest available code base. Even though the goal is that the latest commit on the `main` branch should always be a stable and usable version, this is not the recommended way to install and use `dyff`. If you find an issue with this version, please make sure to note the commit SHA or date in the GitHub issue to indcate that it is not based on a released version. The version output will show `dyff version (development)` for `go install` based builds.
+_Please note:_ This will install `dyff` based on the latest available code base. Even though the goal is that the latest commit on the `main` branch should always be a stable and usable version, this is not the recommended way to install and use `dyff`. If you find an issue with this version, please make sure to note the commit SHA or date in the GitHub issue to indicate that it is not based on a released version. The version output will show `dyff version (development)` for `go install` based builds.
 
 ## Contributing
 
