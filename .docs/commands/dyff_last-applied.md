@@ -28,6 +28,7 @@ dyff last-applied [flags]
   -v, --ignore-value-changes                exclude changes in values
       --detect-renames                      enable detection for renames (document level for Kubernetes resources) (default true)
   -o, --output string                       specify the output style, supported styles: human, brief, github, gitlab, gitea (default "human")
+      --use-indent-lines                    use indent lines in the output (default true)
   -b, --omit-header                         omit the dyff summary header
   -s, --set-exit-code                       set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error
   -l, --no-table-style                      do not place blocks next to each other, always use one row per text block
