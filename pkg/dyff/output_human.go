@@ -53,6 +53,7 @@ type stringWriter interface {
 type HumanReport struct {
 	Report
 	Indent                int
+	UseIndentLines        bool
 	MinorChangeThreshold  float64
 	MultilineContextLines int
 	NoTableStyle          bool
@@ -184,7 +185,7 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 	}
 
 	ytbx.RestructureObject(detail.To)
-	yamlOutput, err := yamlStringInGreenishColors(detail.To)
+	yamlOutput, err := yamlStringInGreenishColors(detail.To, report.UseIndentLines)
 	if err != nil {
 		return "", err
 	}
@@ -214,7 +215,7 @@ func (report *HumanReport) generateHumanDetailOutputRemoval(detail Detail) (stri
 	}
 
 	ytbx.RestructureObject(detail.From)
-	yamlOutput, err := yamlStringInRedishColors(detail.From)
+	yamlOutput, err := yamlStringInRedishColors(detail.From, report.UseIndentLines)
 	if err != nil {
 		return "", err
 	}
