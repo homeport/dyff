@@ -6,6 +6,7 @@
 [![Codecov](https://img.shields.io/codecov/c/github/homeport/dyff/main.svg)](https://codecov.io/gh/homeport/dyff)
 [![Go Reference](https://pkg.go.dev/badge/github.com/homeport/dyff.svg)](https://pkg.go.dev/github.com/homeport/dyff)
 [![Release](https://img.shields.io/github/release/homeport/dyff.svg)](https://github.com/homeport/dyff/releases/latest)
+[![Packaging status](https://repology.org/badge/tiny-repos/dyff.svg)](https://repology.org/project/dyff/versions)
 
 ![dyff](.docs/logo.png?raw=true "dyff logo - the letters d, y, and f in the colors green, yellow and red")
 
@@ -106,6 +107,21 @@ See [command documentation](.docs/commands/dyff.md) for details about each comma
     ```
 
 ## Installation
+
+### FreeBSD
+
+Install via ports:
+
+```bash
+cd /usr/ports/textproc/dyff
+make install clean
+```
+
+Install via package (pkg):
+
+```bash
+pkg install dyff
+```
 
 ### Homebrew
 
