@@ -13,7 +13,7 @@ require (
 	github.com/gonvenience/ytbx v1.4.7
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/mitchellh/hashstructure v1.1.0
-	github.com/onsi/ginkgo/v2 v2.23.4
+	github.com/onsi/ginkgo/v2 v2.24.0
 	github.com/onsi/gomega v1.38.0
 	github.com/spf13/cobra v1.9.1
 	github.com/texttheater/golang-levenshtein v1.0.1
@@ -28,6 +28,7 @@ require github.com/sergi/go-diff v1.4.0
 
 require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
+	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
