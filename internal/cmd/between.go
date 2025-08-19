@@ -90,6 +90,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			dyff.KubernetesEntityDetection(reportOptions.kubernetesEntityDetection),
 			dyff.AdditionalIdentifiers(reportOptions.additionalIdentifiers...),
 			dyff.DetectRenames(reportOptions.detectRenames),
+			dyff.MarshalJsonStrings(reportOptions.marshalJsonStrings),
 		)
 
 		if err != nil {
