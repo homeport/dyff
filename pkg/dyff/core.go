@@ -43,6 +43,7 @@ type compareSettings struct {
 	KubernetesEntityDetection                bool
 	DetectRenames                            bool
 	AdditionalIdentifiers                    []string
+	DetailedListDiff                         bool
 }
 
 type compare struct {
@@ -92,6 +93,13 @@ func KubernetesEntityDetection(value bool) CompareOption {
 func DetectRenames(value bool) CompareOption {
 	return func(settings *compareSettings) {
 		settings.DetectRenames = value
+	}
+}
+
+// DetailedListDiff enabled detailed list diffs for named lists
+func DetailedListDiff(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.DetailedListDiff = value
 	}
 }
 
@@ -601,16 +609,57 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdent
 	fromNames := make([]string, 0, fromLength)
 	toNames := make([]string, 0, fromLength)
 
-	// Find entries that are common to both lists to compare them separately, and
-	// find entries that are only in from, but not to and are therefore removed
+	// Collect names for both lists
 	for _, fromEntry := range from.Content {
 		name, err := identifier.Name(fromEntry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to identify name: %w", err)
 		}
+		fromNames = append(fromNames, name)
+	}
 
-		if toEntry, err := identifier.FindNodeByName(to, name); err == nil {
-			// `from` and `to` have the same entry identified by identifier and name -> require comparison
+	// Collect names for both lists
+	for _, toEntry := range to.Content {
+		name, err := identifier.Name(toEntry)
+		if err == nil {
+			toNames = append(toNames, name)
+		}
+	}
+
+	// Build lookup maps for quick access
+	fromMap := make(map[string]*yamlv3.Node, len(from.Content))
+	for _, fromEntry := range from.Content {
+		name, err := identifier.Name(fromEntry)
+		if err == nil {
+			fromMap[name] = fromEntry
+		}
+	}
+	// Build lookup map for the `to` list
+	toMap := make(map[string]*yamlv3.Node, len(to.Content))
+
+	// Fill the `to` map with the entries from the `to` list
+	for _, toEntry := range to.Content {
+		name, err := identifier.Name(toEntry)
+		if err == nil {
+			toMap[name] = toEntry
+		}
+	}
+
+	// Find removals, additions, and (if DetailedListDiff) modifications
+	// Sort the keys to ensure deterministic order
+	fromKeys := make([]string, 0, len(fromMap))
+	for name := range fromMap {
+		fromKeys = append(fromKeys, name)
+	}
+	sort.Strings(fromKeys)
+
+	for _, name := range fromKeys {
+		fromEntry := fromMap[name]
+		toEntry, exists := toMap[name]
+		if !exists {
+			removals = append(removals, fromEntry)
+		} else if compare.settings.DetailedListDiff {
+			// Compare entries in detail if enabled
 			diffs, err := compare.objects(
 				ytbx.NewPathWithNamedListElement(path, identifier, name),
 				followAlias(fromEntry),
@@ -620,27 +669,23 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdent
 				return nil, err
 			}
 			result = append(result, diffs...)
-			fromNames = append(fromNames, name)
-
-		} else {
-			// `from` has an entry (identified by identifier and name), but `to` does not -> removal
+		} else if !nodesEqual(followAlias(fromEntry), followAlias(toEntry)) {
+			// For grouped output, treat as removal+addition if not equal
 			removals = append(removals, fromEntry)
+			additions = append(additions, toEntry)
 		}
 	}
 
-	// Find entries that are only in to, but not from and are therefore added
-	for _, toEntry := range to.Content {
-		name, err := identifier.Name(toEntry)
-		if err != nil {
-			return nil, fmt.Errorf("failed to identify name: %w", err)
-		}
+	// Sort the keys to ensure deterministic order
+	toKeys := make([]string, 0, len(toMap))
+	for name := range toMap {
+		toKeys = append(toKeys, name)
+	}
+	sort.Strings(toKeys)
 
-		if _, err := identifier.FindNodeByName(from, name); err == nil {
-			// `to` and `from` have the same entry identified by identifier and name (comparison already covered by previous range)
-			toNames = append(toNames, name)
-
-		} else {
-			// `to` has an entry (identified by identifier and name), but `from` does not -> addition
+	for _, name := range toKeys {
+		toEntry := toMap[name]
+		if _, exists := fromMap[name]; !exists {
 			additions = append(additions, toEntry)
 		}
 	}
@@ -1210,4 +1255,20 @@ func grab(node *yamlv3.Node, pathString string) (*yamlv3.Node, error) {
 
 func isWhitespaceOnlyChange(from string, to string) bool {
 	return strings.Trim(from, " \n") == strings.Trim(to, " \n")
+}
+
+// nodesEqual checks if two yamlv3.Node trees are equal
+func nodesEqual(a, b *yamlv3.Node) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	if a.Kind != b.Kind || a.Tag != b.Tag || a.Value != b.Value || len(a.Content) != len(b.Content) {
+		return false
+	}
+	for i := range a.Content {
+		if !nodesEqual(a.Content[i], b.Content[i]) {
+			return false
+		}
+	}
+	return true
 }
