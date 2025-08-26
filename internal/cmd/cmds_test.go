@@ -553,7 +553,8 @@ spec.replicas  (apps/v1/Deployment/test)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(`
 (root level)
-+ four map entries added:
++ one document added:
+  ---
   kind: ConfigMap
   apiVersion: v1
   metadata:
