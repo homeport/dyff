@@ -82,5 +82,5 @@
 - - name: one
 - - name: two
 ! + one list entry added:
-+   - name: three
++ - name: three
 
