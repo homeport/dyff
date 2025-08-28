@@ -57,6 +57,7 @@ type reportConfig struct {
 	excludes                  []string
 	filterRegexps             []string
 	excludeRegexps            []string
+	simpleListDiff            bool
 }
 
 var defaults = reportConfig{
@@ -79,6 +80,7 @@ var defaults = reportConfig{
 	excludes:                  nil,
 	filterRegexps:             nil,
 	excludeRegexps:            nil,
+	simpleListDiff:            false,
 }
 
 var reportOptions reportConfig
@@ -95,6 +97,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", defaults.excludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
 	cmd.Flags().BoolVarP(&reportOptions.ignoreValueChanges, "ignore-value-changes", "v", defaults.ignoreValueChanges, "exclude changes in values")
 	cmd.Flags().BoolVar(&reportOptions.detectRenames, "detect-renames", defaults.detectRenames, "enable detection for renames (document level for Kubernetes resources)")
+	cmd.Flags().BoolVar(&reportOptions.simpleListDiff, "simple-list-diff", defaults.simpleListDiff, "show simple overview of changes (removed/added) instead of detailed per-entry diffs for named lists")
 
 	// Main output preferences
 	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
