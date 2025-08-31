@@ -113,6 +113,7 @@ func CompareInputFiles(from ytbx.InputFile, to ytbx.InputFile, compareOptions ..
 			NonStandardIdentifierGuessCountThreshold: 3,
 			IgnoreOrderChanges:                       false,
 			KubernetesEntityDetection:                true,
+			DetailedListDiff:                         true,
 		},
 	}
 
@@ -812,20 +813,70 @@ func AsSequenceNode(list ...string) *yamlv3.Node {
 func findOrderChangesInNamedEntryLists(fromNames, toNames []string) []Detail {
 	orderchanges := make([]Detail, 0)
 
-	idxLookupMap := make(map[string]int, len(toNames))
+	// Create maps to track positions
+	fromPosMap := make(map[string]int, len(fromNames))
+	toPosMap := make(map[string]int, len(toNames))
+
+	for idx, name := range fromNames {
+		fromPosMap[name] = idx
+	}
 	for idx, name := range toNames {
-		idxLookupMap[name] = idx
+		toPosMap[name] = idx
 	}
 
-	// Try to find order changes ...
-	for idx, name := range fromNames {
-		if idxLookupMap[name] != idx {
+	// Find items that exist in both lists
+	commonItems := make([]string, 0)
+	for _, name := range fromNames {
+		if _, exists := toPosMap[name]; exists {
+			commonItems = append(commonItems, name)
+		}
+	}
+
+	// Check if the relative order of common items changed
+	if len(commonItems) >= 2 {
+		orderChanged := false
+		for i := 0; i < len(commonItems)-1; i++ {
+			for j := i + 1; j < len(commonItems); j++ {
+				item1, item2 := commonItems[i], commonItems[j]
+
+				// Check if the relative order of item1 and item2 changed
+				fromOrder := fromPosMap[item1] < fromPosMap[item2]
+				toOrder := toPosMap[item1] < toPosMap[item2]
+
+				if fromOrder != toOrder {
+					orderChanged = true
+					break
+				}
+			}
+			if orderChanged {
+				break
+			}
+		}
+
+		if orderChanged {
+			// Create sequences showing only the common items in their original order
+			fromCommonSeq := make([]string, 0, len(commonItems))
+			toCommonSeq := make([]string, 0, len(commonItems))
+
+			// Add common items in the order they appear in fromNames
+			for _, name := range fromNames {
+				if _, exists := toPosMap[name]; exists {
+					fromCommonSeq = append(fromCommonSeq, name)
+				}
+			}
+
+			// Add common items in the order they appear in toNames
+			for _, name := range toNames {
+				if _, exists := fromPosMap[name]; exists {
+					toCommonSeq = append(toCommonSeq, name)
+				}
+			}
+
 			orderchanges = append(orderchanges, Detail{
 				Kind: ORDERCHANGE,
-				From: AsSequenceNode(fromNames...),
-				To:   AsSequenceNode(toNames...),
+				From: AsSequenceNode(fromCommonSeq...),
+				To:   AsSequenceNode(toCommonSeq...),
 			})
-			break
 		}
 	}
 

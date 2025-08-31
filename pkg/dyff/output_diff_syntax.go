@@ -25,6 +25,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/gonvenience/ytbx"
@@ -46,6 +47,13 @@ func (report *DiffSyntaxReport) WriteReport(out io.Writer) error {
 
 	// Only show the document index if there is more than one document to show
 	showPathRoot := len(report.From.Documents) > 1
+
+	// Sort diffs by path for consistent output ordering
+	sort.Slice(report.Diffs, func(i, j int) bool {
+		pathI := getPlainPathString(report.Diffs[i].Path)
+		pathJ := getPlainPathString(report.Diffs[j].Path)
+		return pathI < pathJ
+	})
 
 	// Loop over the diff and generate each report into the buffer
 	for _, diff := range report.Diffs {
