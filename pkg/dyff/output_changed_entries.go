@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/gonvenience/neat"
@@ -41,46 +42,37 @@ func (report *ChangedEntriesReport) WriteReport(out io.Writer) error {
 	writer := bufio.NewWriter(out)
 	defer writer.Flush()
 
-	changedEntries := report.extractChangedEntries()
+	documents := report.buildChangedDocuments()
 
-	if len(changedEntries) == 0 {
+	if len(documents) == 0 {
 		_, _ = writer.WriteString("No changed entries found.\n")
 		return nil
 	}
 
-	for listPath, entries := range changedEntries {
-		// Clean up the list path for display (remove leading slash)
-		displayPath := strings.TrimPrefix(listPath, "/")
-		_, _ = writer.WriteString(fmt.Sprintf("# Changed entries from '%s':\n", displayPath))
-
-		for _, entry := range entries {
-			// Convert the node to YAML using RestructureObject and neat
-			ytbx.RestructureObject(entry)
-			yamlOutput, err := neat.NewOutputProcessor(false, true, nil).ToYAML(entry)
-			if err != nil {
-				return fmt.Errorf("failed to convert entry to YAML: %w", err)
-			}
-
-			// Add leading dash to make it a proper YAML list entry
-			lines := strings.Split(strings.TrimSuffix(yamlOutput, "\n"), "\n")
-			for i, line := range lines {
-				if i == 0 {
-					_, _ = writer.WriteString(fmt.Sprintf("- %s\n", line))
-				} else {
-					_, _ = writer.WriteString(fmt.Sprintf("  %s\n", line))
-				}
-			}
+	for i, doc := range documents {
+		if i > 0 {
+			_, _ = writer.WriteString("---\n")
 		}
-		_, _ = writer.WriteString("\n")
+
+		// Convert the document to YAML
+		ytbx.RestructureObject(doc)
+		yamlOutput, err := neat.NewOutputProcessor(false, true, nil).ToYAML(doc)
+		if err != nil {
+			return fmt.Errorf("failed to convert document to YAML: %w", err)
+		}
+
+		_, _ = writer.WriteString(yamlOutput)
 	}
 
 	return nil
 }
 
-// extractChangedEntries analyzes the diff report to find complete entries that were changed
-func (report *ChangedEntriesReport) extractChangedEntries() map[string][]*yamlv3.Node {
-	modifiedEntries := make(map[string][]*yamlv3.Node)
-	entryPaths := make(map[string]bool) // Track unique entry paths to avoid duplicates
+// buildChangedDocuments creates new documents containing only the changed fields with their final values
+func (report *ChangedEntriesReport) buildChangedDocuments() []*yamlv3.Node {
+	var documents []*yamlv3.Node
+
+	// Group changed paths by document index
+	docChanges := make(map[int]map[string]*yamlv3.Node)
 
 	for _, diff := range report.Diffs {
 		if diff.Path == nil {
@@ -88,171 +80,201 @@ func (report *ChangedEntriesReport) extractChangedEntries() map[string][]*yamlv3
 		}
 
 		pathStr := diff.Path.String()
+		docIndex := 0
+		if diff.Path.RootDescription() != "" && strings.Contains(diff.Path.RootDescription(), "#2") {
+			docIndex = 1
+		}
+
+		// Initialize document changes if not exists
+		if docChanges[docIndex] == nil {
+			docChanges[docIndex] = make(map[string]*yamlv3.Node)
+		}
 
 		for _, detail := range diff.Details {
-			if detail.Kind == ADDITION && detail.To != nil {
-				// Check if this is a list entry addition
-				if detail.To.Kind == yamlv3.SequenceNode {
-					// This is a sequence of entries being added
-					listPath := pathStr
-
-					// Extract all entries from the added sequence
-					for _, entry := range detail.To.Content {
-						if entry.Kind == yamlv3.MappingNode {
-							entryKey := report.getEntryKey(listPath, entry)
-							if !entryPaths[entryKey] {
-								modifiedEntries[listPath] = append(modifiedEntries[listPath], entry)
-								entryPaths[entryKey] = true
-							}
-						}
-					}
+			if detail.Kind == MODIFICATION || detail.Kind == ADDITION || detail.Kind == ORDERCHANGE {
+				// Get the final value from the "To" document
+				finalValue := report.getFinalValueAtPath(pathStr, docIndex)
+				if finalValue != nil {
+					docChanges[docIndex][pathStr] = finalValue
+					
+					// Also capture parent objects to include all sibling fields
+					report.captureParentPath(pathStr, docIndex, docChanges[docIndex])
 				}
-			} else if detail.Kind == MODIFICATION {
-				// For field modifications, extract the complete entry from the "To" document
-				entryPath := report.extractEntryPathFromFieldPath(pathStr)
-				if entryPath != "" {
-					entry := report.findEntryByPath(entryPath)
-					if entry != nil {
-						listPath := report.extractListPath(entryPath)
-						entryKey := report.getEntryKey(listPath, entry)
-						if !entryPaths[entryKey] {
-							modifiedEntries[listPath] = append(modifiedEntries[listPath], entry)
-							entryPaths[entryKey] = true
-						}
-					}
+			} else if detail.Kind == REMOVAL && detail.To != nil {
+				// For root level removals that result in additions (like list changes)
+				finalValue := report.getFinalValueAtPath(pathStr, docIndex)
+				if finalValue != nil {
+					docChanges[docIndex][pathStr] = finalValue
 				}
 			}
 		}
 	}
 
-	return modifiedEntries
-}
-
-// extractEntryPathFromFieldPath extracts entry path from a field modification path
-// e.g., "/allowed/image=name/container/tag" -> "/allowed/image=name/container"
-func (report *ChangedEntriesReport) extractEntryPathFromFieldPath(fieldPath string) string {
-	lastSlash := strings.LastIndex(fieldPath, "/")
-	if lastSlash == -1 {
-		return ""
-	}
-	return fieldPath[:lastSlash]
-}
-
-// extractListPath extracts the list name from an entry path
-// e.g., "/allowed/image=name/container" -> "/allowed"
-func (report *ChangedEntriesReport) extractListPath(entryPath string) string {
-	parts := strings.Split(entryPath, "/")
-	if len(parts) < 3 {
-		return entryPath
-	}
-	return "/" + parts[1]
-}
-
-// getEntryKey creates a unique key for an entry to avoid duplicates
-func (report *ChangedEntriesReport) getEntryKey(listPath string, entry *yamlv3.Node) string {
-	identifier := report.getEntryIdentifier(entry)
-	return fmt.Sprintf("%s/%s", listPath, identifier)
-}
-
-// getEntryIdentifier extracts the identifier for a list entry
-func (report *ChangedEntriesReport) getEntryIdentifier(entry *yamlv3.Node) string {
-	if entry.Kind != yamlv3.MappingNode {
-		return ""
-	}
-
-	// Common identifier fields to check
-	identifierFields := []string{"image", "name", "id", "key", "digest"}
-
-	for i := 0; i < len(entry.Content); i += 2 {
-		if i+1 < len(entry.Content) {
-			key := entry.Content[i].Value
-			value := entry.Content[i+1].Value
-
-			for _, field := range identifierFields {
-				if key == field {
-					return fmt.Sprintf("%s=%s", key, value)
-				}
+	// Build output documents
+	for docIndex := 0; docIndex < len(report.To.Documents); docIndex++ {
+		if changes, hasChanges := docChanges[docIndex]; hasChanges && len(changes) > 0 {
+			doc := report.buildDocumentFromChanges(changes, docIndex)
+			if doc != nil {
+				documents = append(documents, doc)
 			}
 		}
 	}
 
-	return "unknown"
+	return documents
 }
 
-// findEntryByPath finds the complete entry node at the specified path in the "To" document
-func (report *ChangedEntriesReport) findEntryByPath(entryPath string) *yamlv3.Node {
-	// Parse paths like "/allowed/image=name/container"
-	if !strings.HasPrefix(entryPath, "/") {
-		return nil
-	}
-
-	// Remove leading slash
-	pathWithoutSlash := entryPath[1:]
-
-	// Find the first slash - everything before is the list name
-	firstSlash := strings.Index(pathWithoutSlash, "/")
-	if firstSlash == -1 {
-		return nil
-	}
-
-	listName := pathWithoutSlash[:firstSlash]
-	remainder := pathWithoutSlash[firstSlash+1:]
-
-	// Now find the identifier key=value
-	equalIndex := strings.Index(remainder, "=")
-	if equalIndex == -1 {
-		return nil
-	}
-
-	identifierKey := remainder[:equalIndex]
-	identifierValue := remainder[equalIndex+1:]
-
-	// Start from the root of the "To" document
-	if len(report.To.Documents) == 0 {
-		return nil
-	}
-
-	current := report.To.Documents[0]
-	if current.Kind != yamlv3.DocumentNode || len(current.Content) == 0 {
-		return nil
-	}
-
-	current = current.Content[0] // Get the actual document content
-
-	// Find the list in the document
-	if current.Kind == yamlv3.MappingNode {
-		for i := 0; i < len(current.Content); i += 2 {
-			if current.Content[i].Value == listName && i+1 < len(current.Content) {
-				listNode := current.Content[i+1]
-				if listNode.Kind == yamlv3.SequenceNode {
-					// Look for the entry with the matching identifier
-					return report.findEntryInSequenceByIdentifier(listNode, identifierKey, identifierValue)
-				}
+// captureParentPath captures the parent object when a child field changes
+func (report *ChangedEntriesReport) captureParentPath(pathStr string, docIndex int, changes map[string]*yamlv3.Node) {
+	// For paths like "/nil-tests/something", capture "/nil-tests" as well
+	parts := strings.Split(strings.TrimPrefix(pathStr, "/"), "/")
+	if len(parts) > 1 {
+		parentPath := "/" + strings.Join(parts[:len(parts)-1], "/")
+		if _, exists := changes[parentPath]; !exists {
+			parentValue := report.getFinalValueAtPath(parentPath, docIndex)
+			if parentValue != nil {
+				changes[parentPath] = parentValue
 			}
 		}
 	}
-
-	return nil
 }
 
-// findEntryInSequenceByIdentifier finds an entry in a sequence by identifier key-value pair
-func (report *ChangedEntriesReport) findEntryInSequenceByIdentifier(sequence *yamlv3.Node, identifierKey, identifierValue string) *yamlv3.Node {
-	if sequence.Kind != yamlv3.SequenceNode {
+// getFinalValueAtPath extracts the final value at the given path from the "To" document
+func (report *ChangedEntriesReport) getFinalValueAtPath(pathStr string, docIndex int) *yamlv3.Node {
+	if docIndex >= len(report.To.Documents) {
 		return nil
 	}
 
-	for _, item := range sequence.Content {
-		if item.Kind == yamlv3.MappingNode {
-			// Look for the identifier key-value pair in this mapping
-			for i := 0; i < len(item.Content); i += 2 {
-				if i+1 < len(item.Content) &&
-					item.Content[i].Value == identifierKey &&
-					item.Content[i+1].Value == identifierValue {
-					return item
-				}
+	doc := report.To.Documents[docIndex]
+	if doc.Kind != yamlv3.DocumentNode || len(doc.Content) == 0 {
+		return nil
+	}
+
+	// Remove leading slash for ytbx.Grab
+	path := strings.TrimPrefix(pathStr, "/")
+	if path == "" {
+		// Root level change
+		return doc.Content[0]
+	}
+
+	value, err := ytbx.Grab(doc, "/"+path)
+	if err != nil {
+		return nil
+	}
+
+	return value
+}
+
+// buildDocumentFromChanges constructs a new document containing only the changed paths
+func (report *ChangedEntriesReport) buildDocumentFromChanges(changes map[string]*yamlv3.Node, docIndex int) *yamlv3.Node {
+	root := &yamlv3.Node{
+		Kind: yamlv3.MappingNode,
+		Tag:  "!!map",
+	}
+
+	// Process each changed path in sorted order to ensure deterministic output
+	var sortedPaths []string
+	for pathStr := range changes {
+		sortedPaths = append(sortedPaths, pathStr)
+	}
+	sort.Strings(sortedPaths)
+	
+	for _, pathStr := range sortedPaths {
+		value := changes[pathStr]
+		report.setValueAtPath(root, pathStr, value)
+	}
+
+	// Return nil if no content was added
+	if len(root.Content) == 0 {
+		return nil
+	}
+
+	return root
+}
+
+// setValueAtPath sets a value at the specified path in the target node
+func (report *ChangedEntriesReport) setValueAtPath(target *yamlv3.Node, pathStr string, value *yamlv3.Node) {
+	path := strings.TrimPrefix(pathStr, "/")
+	if path == "" {
+		// Root level - copy content directly
+		if value.Kind == yamlv3.SequenceNode {
+			// Copy the sequence content
+			*target = *value
+		}
+		return
+	}
+
+	parts := strings.Split(path, "/")
+	current := target
+
+	// Navigate/create the path
+	for i, part := range parts {
+		isLast := i == len(parts)-1
+
+		if current.Kind != yamlv3.MappingNode {
+			current.Kind = yamlv3.MappingNode
+			current.Tag = "!!map"
+		}
+
+		// Find existing key or create new one
+		var valueNode *yamlv3.Node
+		found := false
+
+		for j := 0; j < len(current.Content); j += 2 {
+			if current.Content[j].Value == part {
+				valueNode = current.Content[j+1]
+				found = true
+				break
 			}
+		}
+
+		if !found {
+			keyNode := &yamlv3.Node{
+				Kind:  yamlv3.ScalarNode,
+				Tag:   "!!str",
+				Value: part,
+			}
+			valueNode = &yamlv3.Node{
+				Kind: yamlv3.MappingNode,
+				Tag:  "!!map",
+			}
+			current.Content = append(current.Content, keyNode, valueNode)
+		}
+
+		if isLast {
+			// Set the final value
+			*valueNode = *report.cloneNode(value)
+		} else {
+			current = valueNode
+		}
+	}
+}
+
+// cloneNode creates a deep copy of a YAML node
+func (report *ChangedEntriesReport) cloneNode(node *yamlv3.Node) *yamlv3.Node {
+	if node == nil {
+		return nil
+	}
+
+	clone := &yamlv3.Node{
+		Kind:        node.Kind,
+		Style:       node.Style,
+		Tag:         node.Tag,
+		Value:       node.Value,
+		Anchor:      node.Anchor,
+		Alias:       node.Alias,
+		HeadComment: node.HeadComment,
+		LineComment: node.LineComment,
+		FootComment: node.FootComment,
+		Line:        node.Line,
+		Column:      node.Column,
+	}
+
+	if node.Content != nil {
+		clone.Content = make([]*yamlv3.Node, len(node.Content))
+		for i, child := range node.Content {
+			clone.Content[i] = report.cloneNode(child)
 		}
 	}
 
-	return nil
+	return clone
 }
