@@ -1,11 +1,11 @@
 # δyƒƒ /ˈdʏf/
 
-[![License](https://img.shields.io/github/license/homeport/dyff.svg)](https://github.com/homeport/dyff/blob/main/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/homeport/dyff)](https://goreportcard.com/report/github.com/homeport/dyff)
-[![Tests](https://github.com/homeport/dyff/workflows/Tests/badge.svg)](https://github.com/homeport/dyff/actions?query=workflow%3A%22Tests%22)
+[![License](https://img.shields.io/github/license/homeport/dyff.svg)](https://github.com/tonur/dyff/blob/main/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tonur/dyff)](https://goreportcard.com/report/github.com/tonur/dyff)
+[![Tests](https://github.com/tonur/dyff/workflows/Tests/badge.svg)](https://github.com/tonur/dyff/actions?query=workflow%3A%22Tests%22)
 [![Codecov](https://img.shields.io/codecov/c/github/homeport/dyff/main.svg)](https://codecov.io/gh/homeport/dyff)
-[![Go Reference](https://pkg.go.dev/badge/github.com/homeport/dyff.svg)](https://pkg.go.dev/github.com/homeport/dyff)
-[![Release](https://img.shields.io/github/release/homeport/dyff.svg)](https://github.com/homeport/dyff/releases/latest)
+[![Go Reference](https://pkg.go.dev/badge/github.com/tonur/dyff.svg)](https://pkg.go.dev/github.com/tonur/dyff)
+[![Release](https://img.shields.io/github/release/homeport/dyff.svg)](https://github.com/tonur/dyff/releases/latest)
 [![Packaging status](https://repology.org/badge/tiny-repos/dyff.svg)](https://repology.org/project/dyff/versions)
 
 ![dyff](.docs/logo.png?raw=true "dyff logo - the letters d, y, and f in the colors green, yellow and red")
@@ -141,7 +141,7 @@ sudo port install dyff
 
 ### Pre-built binaries in GitHub
 
-Prebuilt binaries can be [downloaded from the GitHub Releases section](https://github.com/homeport/dyff/releases/latest).
+Prebuilt binaries can be [downloaded from the GitHub Releases section](https://github.com/tonur/dyff/releases/latest).
 
 ### Curl To Shell Convenience Script
 
@@ -156,7 +156,7 @@ curl --silent --location https://git.io/JYfAY | bash
 Starting with Go 1.17, you can install `dyff` from source using `go install`:
 
 ```bash
-go install github.com/homeport/dyff/cmd/dyff@latest
+go install github.com/tonur/dyff/cmd/dyff@latest
 ```
 
 _Please note:_ This will install `dyff` based on the latest available code base. Even though the goal is that the latest commit on the `main` branch should always be a stable and usable version, this is not the recommended way to install and use `dyff`. If you find an issue with this version, please make sure to note the commit SHA or date in the GitHub issue to indicate that it is not based on a released version. The version output will show `dyff version (development)` for `go install` based builds.
@@ -198,4 +198,4 @@ goreleaser build --clean --snapshot
 
 ## License
 
-Licensed under [MIT License](https://github.com/homeport/dyff/blob/main/LICENSE)
+Licensed under [MIT License](https://github.com/tonur/dyff/blob/main/LICENSE)

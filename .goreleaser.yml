@@ -15,7 +15,7 @@ builds:
   flags:
   - -trimpath
   ldflags:
-  - -s -w -extldflags "-static" -X github.com/homeport/dyff/internal/cmd.version={{.Version}}
+  - -s -w -extldflags "-static" -X github.com/tonur/dyff/internal/cmd.version={{.Version}}
   mod_timestamp: '{{ .CommitTimestamp }}'
 
 checksum:
@@ -40,13 +40,13 @@ brews:
     owner: homeport
     name: homebrew-tap
     token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-  url_template: "https://github.com/homeport/dyff/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+  url_template: "https://github.com/tonur/dyff/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
   download_strategy: CurlDownloadStrategy
   commit_author:
     name: GoReleaser Bot
     email: goreleaser@carlosbecker.com
   directory: HomebrewFormula
-  homepage: "https://github.com/homeport/dyff"
+  homepage: "https://github.com/tonur/dyff"
   description: "δyƒƒ /ˈdʏf/ - A diff tool for YAML files, and sometimes JSON"
   license: "MIT"
   skip_upload: false
