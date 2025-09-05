@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/gonvenience/ytbx"
-	"github.com/homeport/dyff/pkg/dyff"
+
+	"github.com/tonur/dyff/pkg/dyff"
 )
 
 func TestChangedEntriesReport_Issue525(t *testing.T) {
