@@ -190,7 +190,7 @@ func (report *HumanReport) generateHumanDetailOutputAddition(detail Detail) (str
 		return "", err
 	}
 
-	report.writeTextBlocks(&output, 2, yamlOutput)
+	report.writeTextBlocks(&output, report.Indent, yamlOutput)
 
 	return output.String(), nil
 }
