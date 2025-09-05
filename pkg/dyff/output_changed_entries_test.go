@@ -7,9 +7,10 @@ import (
 
 	. "github.com/gonvenience/bunt"
 	"github.com/gonvenience/ytbx"
-	"github.com/homeport/dyff/pkg/dyff"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/tonur/dyff/pkg/dyff"
 )
 
 // normalize output (line endings + strip ANSI + trim)
