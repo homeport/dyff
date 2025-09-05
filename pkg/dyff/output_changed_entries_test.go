@@ -2,76 +2,84 @@ package dyff_test
 
 import (
 	"os"
+	"regexp"
 	"strings"
-	"testing"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	. "github.com/gonvenience/bunt"
 	"github.com/gonvenience/ytbx"
+
 	"github.com/homeport/dyff/pkg/dyff"
 )
 
-func TestChangedEntriesReport_Issue525(t *testing.T) {
-	from, to, err := ytbx.LoadFiles(assets("issues/issue-525/from.yaml"), assets("issues/issue-525/to.yaml"))
-	if err != nil {
-		t.Fatalf("load: %v", err)
-	}
-
-	report, err := dyff.CompareInputFiles(from, to)
-	if err != nil {
-		t.Fatalf("compare: %v", err)
-	}
-
-	writer := &dyff.ChangedEntriesReport{Report: report}
-	var b strings.Builder
-	if err := writer.WriteReport(&b); err != nil {
-		t.Fatalf("write: %v", err)
-	}
-
-	got := b.String()
-	expectedBytes, err := os.ReadFile(assets("issues/issue-525/expected.changed-entries"))
-	if err != nil {
-		t.Fatalf("expected: %v", err)
-	}
-	expected := string(expectedBytes)
-
-	if strings.TrimSpace(got) != strings.TrimSpace(expected) {
-		// show diff-like output
-		linesGot := strings.Split(got, "\n")
-		linesExp := strings.Split(expected, "\n")
-		max := len(linesGot)
-		if len(linesExp) > max {
-			max = len(linesExp)
-		}
-		var sb strings.Builder
-		for i := 0; i < max; i++ {
-			var g, e string
-			if i < len(linesExp) {
-				e = linesExp[i]
-			}
-			if i < len(linesGot) {
-				g = linesGot[i]
-			}
-			if e != g {
-				sb.WriteString("-" + e + "\n")
-				sb.WriteString("+" + g + "\n")
-			}
-		}
-		if sb.Len() == 0 {
-			sb.WriteString("whitespace mismatch\n")
-		}
-		// Fail with details
-		if len(got) > 4000 {
-			got = got[:4000] + "..."
-		}
-		if len(expected) > 4000 {
-			expected = expected[:4000] + "..."
-		}
-		// Additional helpful context
-		if !strings.Contains(got, "additional/image") {
-			t.Logf("missing additional/image in output")
-		}
-		if !strings.Contains(got, "oh-look/another-flaky") {
-			t.Logf("missing flaky replacement item")
-		}
-		t.Fatalf("changed-entries output mismatch:\nExpected:\n%s\nGot:\n%s\nDiff:\n%s", expected, got, sb.String())
-	}
+// normalize output (line endings + strip ANSI + trim)
+func normalizeChangedEntriesOutput(s string) string {
+	// Normalize line endings
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
+	// Strip ANSI sequences
+	ansiRE := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+	s = ansiRE.ReplaceAllString(s, "")
+	return strings.TrimSpace(s)
 }
+
+// diffLines returns unified like diff of two multi-line strings (without context)
+func diffLines(expected, got string) string {
+	if expected == got {
+		return ""
+	}
+	eLines := strings.Split(expected, "\n")
+	gLines := strings.Split(got, "\n")
+	max := len(eLines)
+	if len(gLines) > max {
+		max = len(gLines)
+	}
+	var b strings.Builder
+	for i := 0; i < max; i++ {
+		var e, g string
+		if i < len(eLines) {
+			e = eLines[i]
+		}
+		if i < len(gLines) {
+			g = gLines[i]
+		}
+		if e != g {
+			b.WriteString("-" + e + "\n")
+			b.WriteString("+" + g + "\n")
+		}
+	}
+	if b.Len() == 0 {
+		b.WriteString("whitespace mismatch\n")
+	}
+	return b.String()
+}
+
+var _ = Describe("changed entries report", func() {
+	Context("issue-525 regression", func() {
+		BeforeEach(func() { SetColorSettings(OFF, OFF) })
+		AfterEach(func() { SetColorSettings(AUTO, AUTO) })
+
+		It("should show the expected changed entries output", func() {
+			from, to, err := ytbx.LoadFiles(assets("issues/issue-525/from.yaml"), assets("issues/issue-525/to.yaml"))
+			Expect(err).NotTo(HaveOccurred())
+
+			report, err := dyff.CompareInputFiles(from, to)
+			Expect(err).NotTo(HaveOccurred())
+
+			writer := &dyff.ChangedEntriesReport{Report: report}
+			var sb strings.Builder
+			Expect(writer.WriteReport(&sb)).To(Succeed())
+
+			got := normalizeChangedEntriesOutput(sb.String())
+
+			expectedBytes, err := os.ReadFile(assets("issues/issue-525/expected.changed-entries"))
+			Expect(err).NotTo(HaveOccurred())
+			expected := normalizeChangedEntriesOutput(string(expectedBytes))
+
+			if got != expected {
+				Fail("changed entries output mismatch:\n" + diffLines(expected, got))
+			}
+		})
+	})
+})
