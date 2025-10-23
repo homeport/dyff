@@ -1,14 +1,14 @@
 
+bar
+  ± type change from map to <nil>
+    - c: 3
+      d: 4
+    + <nil>
+
 foo
   ± type change from map to list
     - a: 1
       b: 2
     + - 1
       - 2
-
-bar
-  ± type change from map to <nil>
-    - c: 3
-      d: 4
-    + <nil>
 
