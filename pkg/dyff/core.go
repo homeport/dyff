@@ -21,6 +21,7 @@
 package dyff
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -43,6 +44,7 @@ type compareSettings struct {
 	IgnoreWhitespaceChanges                  bool
 	KubernetesEntityDetection                bool
 	DetectRenames                            bool
+	MarshalJsonStrings                       bool
 	AdditionalIdentifiers                    []string
 }
 
@@ -93,6 +95,12 @@ func KubernetesEntityDetection(value bool) CompareOption {
 func DetectRenames(value bool) CompareOption {
 	return func(settings *compareSettings) {
 		settings.DetectRenames = value
+	}
+}
+
+func MarshalJsonStrings(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.MarshalJsonStrings = value
 	}
 }
 
@@ -655,7 +663,25 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdent
 }
 
 func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
-	if strings.Compare(from.Value, to.Value) != 0 {
+	fromValue := from.Value
+	toValue := to.Value
+	// Marshaling strings to Json removes formatting differences as the cause.
+	// This is a cheap way to do this
+	// TODO: Compare Json strings as nodes to be able to do a per-line comparison
+	if compare.settings.MarshalJsonStrings {
+		var fromJson, toJson interface{}
+		// Actually just attempt to marshal the strings to json to fix any formatting diffs. Then can do a string comparison. That's fine.
+		if err := json.Unmarshal([]byte(from.Value), &fromJson); err == nil {
+			out, _ := json.Marshal(fromJson)
+			fromValue = string(out)
+		}
+		if err := json.Unmarshal([]byte(to.Value), &toJson); err == nil {
+			out, _ := json.Marshal(toJson)
+			toValue = string(out)
+		}
+	}
+
+	if strings.Compare(fromValue, toValue) != 0 {
 		// leave and don't report any differences if ignore whitespaces changes is
 		// configured and it is really only a whitespace only change between the strings
 		if compare.settings.IgnoreWhitespaceChanges && isWhitespaceOnlyChange(from.Value, to.Value) {
