@@ -27,6 +27,6 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha }}
 
     - name: golangci-lint
-      uses: golangci/golangci-lint-action@v8
+      uses: golangci/golangci-lint-action@v9
       with:
         only-new-issues: true
