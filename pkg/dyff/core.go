@@ -29,7 +29,6 @@ import (
 	"github.com/gonvenience/idem"
 	"github.com/gonvenience/text"
 	"github.com/gonvenience/ytbx"
-
 	"github.com/mitchellh/hashstructure"
 	yamlv3 "gopkg.in/yaml.v3"
 )
@@ -946,7 +945,15 @@ func (compare *compare) getNonStandardIdentifierFromNamedLists(listA, listB *yam
 	counterA := createKeyCountMap(listA)
 	counterB := createKeyCountMap(listB)
 
-	for keyA, countA := range counterA {
+	// Sort the keys to ensure deterministic order
+	keysA := make([]string, 0, len(counterA))
+	for keyA := range counterA {
+		keysA = append(keysA, keyA)
+	}
+	sort.Strings(keysA)
+
+	for _, keyA := range keysA {
+		countA := counterA[keyA]
 		if countB, ok := counterB[keyA]; ok {
 			if countA == listALength && countB == listBLength && countA > compare.settings.NonStandardIdentifierGuessCountThreshold {
 				return &singleField{keyA}
