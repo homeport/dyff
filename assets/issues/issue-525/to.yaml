@@ -1,0 +1,32 @@
+name: a-type-of-file
+allowed:
+  - digest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+    image: name/container
+    registry: ghcr.io
+    tag: 1.2.4
+    field:
+      - test
+  - digest: sha256:22222222222222222222222222222222222222222222222222222222222222222
+    image: yes/i-am-an-image
+    registry: docker.io
+    tag: 1.2.4-test_with.symbols
+  - digest: sha256:33333333333333333333333333333333333333333333333333333333333333333
+    image: another/image
+    registry: gcr.io
+    tag: 3.2.1
+  - digest: sha256:4444444444444444444444444444444444444444444444444444444444444444
+    image: oh-look/another-flaky
+    registry: quay.io
+    tag: 3.1.2-test-with-dashes
+  - digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    image: you-would-not/guess
+    registry: docker.io
+    tag: 1.3.2
+  - digest: sha256:6666666666666666666666666666666666666666666666666666666666666666
+    image: no-way/this-is-an-image
+    registry: guess.io
+    tag: latest
+  - digest: sha256:6666666666666666666666666666666666666666666666666666666666666666
+    image: additional/image
+    registry: new.io
+    tag: 9.8.7
