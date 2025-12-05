@@ -832,6 +832,44 @@ listY: [ Yo, Yo, Yo ]
 				Expect(report.ExcludeRegexp("/does/not/exist")).To(BeEquivalentTo(report))
 			})
 
+			It("should exclude additions based on regular expressions matching added keys", func() {
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/metadata", dyff.ADDITION, nil, yml(`labels:
+  app: test
+  version: v1`)),
+					singleDiff("/spec", dyff.ADDITION, nil, yml(`replicas: 3`)),
+				}}
+
+				Expect(report.ExcludeRegexp("metadata\\.labels")).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/spec", dyff.ADDITION, nil, yml(`replicas: 3`)),
+				}}))
+			})
+
+			It("should exclude removals based on regular expressions matching removed keys", func() {
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/metadata", dyff.REMOVAL, yml(`labels:
+  app: test
+  version: v1`), nil),
+					singleDiff("/spec", dyff.REMOVAL, yml(`replicas: 3`), nil),
+				}}
+
+				Expect(report.ExcludeRegexp("metadata\\.labels")).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/spec", dyff.REMOVAL, yml(`replicas: 3`), nil),
+				}}))
+			})
+
+			It("should exclude both additions and removals with the same pattern", func() {
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/spec", dyff.ADDITION, nil, yml(`replicas: 3`)),
+					singleDiff("/spec", dyff.REMOVAL, yml(`replicas: 1`), nil),
+					singleDiff("/metadata/name", dyff.MODIFICATION, "old", "new"),
+				}}
+
+				Expect(report.ExcludeRegexp("spec\\.replicas")).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/metadata/name", dyff.MODIFICATION, "old", "new"),
+				}}))
+			})
+
 			It("should ignore changes in values", func() {
 				report := dyff.Report{Diffs: []dyff.Diff{
 					singleDiff("/yaml/map/add", dyff.ADDITION, nil, "added"),
