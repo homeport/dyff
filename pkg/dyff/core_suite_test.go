@@ -392,10 +392,13 @@ func doubleDiff(p string, change1 rune, from1, to1 interface{}, change2 rune, fr
 }
 
 func compare(from *yamlv3.Node, to *yamlv3.Node, compareOptions ...dyff.CompareOption) ([]dyff.Diff, error) {
+	// Enable DetailedListDiff by default for tests
+	options := append([]dyff.CompareOption{dyff.DetailedListDiff(true)}, compareOptions...)
+	
 	report, err := dyff.CompareInputFiles(
 		ytbx.InputFile{Documents: []*yamlv3.Node{from}},
 		ytbx.InputFile{Documents: []*yamlv3.Node{to}},
-		compareOptions...,
+		options...,
 	)
 
 	if err != nil {
