@@ -131,6 +131,14 @@ The `homeport/tap` has macOS and GNU/Linux pre-built binaries available:
 brew install homeport/tap/dyff
 ```
 
+### Mise
+
+Using [mise](https://github.com/jdx/mise) you could do:
+
+```bash
+mise use -g dyff@latest
+```
+
 ### MacPorts
 
 On macOS, `dyff` is also [available via MacPorts](https://ports.macports.org/port/dyff/):
