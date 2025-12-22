@@ -39,7 +39,7 @@ type DiffSyntaxReport struct {
 // WriteReport writes a human readable report to the provided writer
 func (report *DiffSyntaxReport) WriteReport(out io.Writer) error {
 	writer := bufio.NewWriter(out)
-	defer writer.Flush()
+	defer func() { _ = writer.Flush() }()
 
 	// Only show the document index if there is more than one document to show
 	showPathRoot := len(report.From.Documents) > 1

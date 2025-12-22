@@ -46,49 +46,61 @@ func render(format string, a ...interface{}) string {
 	return fmt.Sprintf(format, a...)
 }
 
-func green(format string, a ...interface{}) string {
-	return colored(additionGreen, render(format, a...))
+func green(text string) string {
+	return colored(additionGreen, text)
 }
 
-func red(format string, a ...interface{}) string {
-	return colored(removalRed, render(format, a...))
+func greenf(format string, a ...interface{}) string {
+	return coloredf(additionGreen, format, a...)
 }
 
-func yellow(format string, a ...interface{}) string {
-	return colored(modificationYellow, render(format, a...))
+func red(text string) string {
+	return colored(removalRed, text)
 }
 
-func lightgreen(format string, a ...interface{}) string {
-	return colored(bunt.LightGreen, render(format, a...))
+func redf(format string, a ...interface{}) string {
+	return coloredf(removalRed, format, a...)
 }
 
-func lightred(format string, a ...interface{}) string {
-	return colored(bunt.LightSalmon, render(format, a...))
+func yellowf(format string, a ...interface{}) string {
+	return coloredf(modificationYellow, format, a...)
 }
 
-func dimgray(format string, a ...interface{}) string {
-	return colored(bunt.DimGray, render(format, a...))
+func lightgreen(text string) string {
+	return colored(bunt.LightGreen, text)
 }
 
-func bold(format string, a ...interface{}) string {
-	return bunt.Style(
-		fmt.Sprintf(format, a...),
+func lightred(text string) string {
+	return colored(bunt.LightSalmon, text)
+}
+
+func dimgray(text string) string {
+	return colored(bunt.DimGray, text)
+}
+
+func bold(text string) string {
+	return bunt.Style(text,
 		bunt.EachLine(),
 		bunt.Bold(),
 	)
 }
 
-func italic(format string, a ...interface{}) string {
-	return bunt.Style(
-		render(format, a...),
+func italic(text string) string {
+	return bunt.Style(text,
 		bunt.EachLine(),
 		bunt.Italic(),
 	)
 }
 
-func colored(color colorful.Color, format string, a ...interface{}) string {
-	return bunt.Style(
-		render(format, a...),
+func colored(color colorful.Color, text string) string {
+	return bunt.Style(text,
+		bunt.EachLine(),
+		bunt.Foreground(color),
+	)
+}
+
+func coloredf(color colorful.Color, format string, a ...interface{}) string {
+	return bunt.Style(render(format, a...),
 		bunt.EachLine(),
 		bunt.Foreground(color),
 	)

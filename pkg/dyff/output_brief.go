@@ -44,7 +44,7 @@ type BriefReport struct {
 // WriteReport writes a brief summary to the provided writer
 func (report *BriefReport) WriteReport(out io.Writer) error {
 	writer := bufio.NewWriter(out)
-	defer writer.Flush()
+	defer func() { _ = writer.Flush() }()
 
 	noOfChanges := bunt.Style(text.Plural(len(report.Diffs), "change"), bunt.Bold())
 	niceFrom := ytbx.HumanReadableLocationInformation(report.From)
@@ -59,11 +59,7 @@ func (report *BriefReport) WriteReport(out io.Writer) error {
 		template = twoline
 	}
 
-	_, _ = writer.WriteString(fmt.Sprintf(template,
-		noOfChanges,
-		niceFrom,
-		niceTo,
-	))
+	_, _ = fmt.Fprintf(writer, template, noOfChanges, niceFrom, niceTo)
 
 	// Finish with one last newline so that we do not end next to the prompt
 	_, _ = writer.WriteString("\n")
