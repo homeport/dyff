@@ -37,9 +37,13 @@ type ChangedEntriesReport struct {
 }
 
 // WriteReport writes the changed entries to the provided writer
-func (report *ChangedEntriesReport) WriteReport(out io.Writer) error {
+func (report *ChangedEntriesReport) WriteReport(out io.Writer) (err error) {
 	writer := bufio.NewWriter(out)
-	defer writer.Flush()
+	defer func() {
+		if flushErr := writer.Flush(); err == nil && flushErr != nil {
+			err = flushErr
+		}
+	}()
 
 	documents := report.buildChangedDocuments()
 
