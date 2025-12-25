@@ -82,4 +82,24 @@ var _ = Describe("changed entries report", func() {
 			}
 		})
 	})
+
+	Context("when there are no changes", func() {
+		BeforeEach(func() { SetColorSettings(OFF, OFF) })
+		AfterEach(func() { SetColorSettings(AUTO, AUTO) })
+
+		It("prints a helpful message", func() {
+			// Single trivial YAML document used as both from and to
+			docs, err := ytbx.LoadYAMLDocuments([]byte("---\nkey: value\n"))
+			Expect(err).NotTo(HaveOccurred())
+
+			input := ytbx.InputFile{Documents: docs}
+			report, err := dyff.CompareInputFiles(input, input)
+			Expect(err).NotTo(HaveOccurred())
+
+			writer := &dyff.ChangedEntriesReport{Report: report}
+			var sb strings.Builder
+			Expect(writer.WriteReport(&sb)).To(Succeed())
+			Expect(sb.String()).To(Equal("No changed entries found.\n"))
+		})
+	})
 })
