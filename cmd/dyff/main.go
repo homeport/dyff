@@ -29,7 +29,7 @@ import (
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
 
-	"github.com/homeport/dyff/internal/cmd"
+	"github.com/tonur/dyff/internal/cmd"
 )
 
 func main() {

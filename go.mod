@@ -1,4 +1,4 @@
-module github.com/homeport/dyff
+module github.com/tonur/dyff
 
 go 1.23.0
 

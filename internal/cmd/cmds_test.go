@@ -27,7 +27,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	. "github.com/homeport/dyff/internal/cmd"
+	. "github.com/tonur/dyff/internal/cmd"
 
 	"github.com/gonvenience/term"
 )
@@ -548,7 +548,7 @@ spec.replicas  (apps/v1/Deployment/test)
 			})
 		})
 
-		It("should properly print multi-line strings (https://github.com/homeport/dyff/issues/180)", func() {
+		It("should properly print multi-line strings (https://github.com/tonur/dyff/issues/180)", func() {
 			out, err := dyff("between", "--omit-header", assets("issues", "issue-180", "old.yml"), assets("issues", "issue-180", "new.yml"))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(out).To(BeEquivalentTo(`

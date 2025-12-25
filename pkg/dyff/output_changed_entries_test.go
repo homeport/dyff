@@ -5,12 +5,12 @@ import (
 	"regexp"
 	"strings"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	. "github.com/gonvenience/bunt"
 	"github.com/gonvenience/ytbx"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"github.com/homeport/dyff/pkg/dyff"
+	"github.com/tonur/dyff/pkg/dyff"
 )
 
 // normalize output (line endings + strip ANSI + trim)
