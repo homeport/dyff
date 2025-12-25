@@ -23,6 +23,7 @@ package cmd
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -157,7 +158,7 @@ func (w *OutputWriter) WriteInplace(filename string) error {
 	}
 
 	// Write the buffered output to the provided input file (override in place)
-	bufWriter.Flush()
+	_ = bufWriter.Flush()
 	if err := os.WriteFile(filename, buf.Bytes(), 0644); err != nil {
 		return fmt.Errorf("failed to overwrite %s in place: %w", humanReadableFilename(filename), err)
 	}
@@ -182,10 +183,10 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(writer, "%s\n", output)
+			_, _ = fmt.Fprintln(writer, output)
 
 		case w.PlainMode && w.OutputStyle == "yaml":
-			fmt.Fprintln(writer, "---")
+			_, _ = fmt.Fprintln(writer, "---")
 			encoder := yamlv3.NewEncoder(writer)
 			encoder.SetIndent(2)
 
@@ -202,14 +203,14 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(writer, "%s\n", output)
+			_, _ = fmt.Fprintln(writer, output)
 
 		case w.OutputStyle == "yaml":
 			output, err := neat.NewOutputProcessor(!w.OmitIndentHelper, true, &neat.DefaultColorSchema).ToYAML(document)
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(writer, "%s\n", output)
+			_, _ = fmt.Fprintln(writer, output)
 		}
 	}
 
@@ -301,7 +302,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 		}
 
 	default:
-		return fmt.Errorf("unknown output style %s: %w", reportOptions.style, fmt.Errorf(cmd.UsageString()))
+		return fmt.Errorf("unknown output style %s: %w", reportOptions.style, errors.New(cmd.UsageString()))
 	}
 
 	if err := reportWriter.WriteReport(os.Stdout); err != nil {

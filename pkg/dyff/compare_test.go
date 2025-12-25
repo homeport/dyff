@@ -1124,6 +1124,20 @@ b: bar
 				Expect(results).ToNot(BeNil())
 				Expect(results.Diffs).To(HaveLen(0))
 			})
+
+			It("should produce deterministic results when lists with non-standard identifiers are compared", func() {
+				from, to, err := ytbx.LoadFiles(assets("issues", "issue-525", "from.yaml"), assets("issues", "issue-525", "to.yaml"))
+				Expect(err).To(BeNil())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				for range 100 {
+					results, err := dyff.CompareInputFiles(from, to)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(results).ToNot(BeNil())
+					Expect(results.Diffs).To(HaveLen(4))
+				}
+			})
 		})
 	})
 })
