@@ -399,6 +399,19 @@ list
 `))
 		})
 
+		It("should support changed-entries output style", func() {
+			from := createTestFile(`{"list":[{"name":"one","value":1}]}`)
+			defer os.Remove(from)
+
+			to := createTestFile(`{"list":[{"name":"one","value":2}]}`)
+			defer os.Remove(to)
+
+			out, err := dyff("between", "--output", "changed-entries", from, to)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).ToNot(BeEmpty())
+			Expect(out).To(ContainSubstring("list"))
+		})
+
 		It("should ignore order changes if respective flag is set", func() {
 			from := createTestFile(`{"list":[{"name":"one"},{"name":"two"},{"name":"three"}]}`)
 			defer os.Remove(from)

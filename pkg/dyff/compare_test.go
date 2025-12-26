@@ -21,13 +21,12 @@
 package dyff_test
 
 import (
+	"github.com/gonvenience/ytbx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	yamlv3 "gopkg.in/yaml.v3"
 
 	"github.com/homeport/dyff/pkg/dyff"
-
-	"github.com/gonvenience/ytbx"
-	yamlv3 "gopkg.in/yaml.v3"
 )
 
 var nullNode = &yamlv3.Node{
@@ -355,6 +354,91 @@ list:
 				result, err := compare(from, to)
 				Expect(err).To(BeNil())
 				Expect(result).To(HaveLen(0))
+			})
+		})
+
+		Context("Given named entry lists with grouped output", func() {
+			It("groups changes when DetailedListDiff is disabled", func() {
+				fromYAML := `---
+list:
+- name: one
+  value: 1
+- name: two
+  value: 2
+`
+
+				toYAML := `---
+list:
+- name: one
+  value: 1
+- name: two
+  value: 3
+- name: three
+  value: 4
+`
+
+				fromDocs, err := ytbx.LoadYAMLDocuments([]byte(fromYAML))
+				Expect(err).To(BeNil())
+				toDocs, err := ytbx.LoadYAMLDocuments([]byte(toYAML))
+				Expect(err).To(BeNil())
+
+				report, err := dyff.CompareInputFiles(
+					ytbx.InputFile{Documents: fromDocs},
+					ytbx.InputFile{Documents: toDocs},
+					dyff.DetailedListDiff(false),
+				)
+				Expect(err).To(BeNil())
+				Expect(report.Diffs).NotTo(BeNil())
+
+				var listDiff *dyff.Diff
+				for i := range report.Diffs {
+					if report.Diffs[i].Path != nil && report.Diffs[i].Path.String() == "/list" {
+						listDiff = &report.Diffs[i]
+						break
+					}
+				}
+
+				Expect(listDiff).ToNot(BeNil())
+				Expect(listDiff.Details).To(HaveLen(2))
+				Expect(listDiff.Details[0].Kind).To(Equal(dyff.REMOVAL))
+				Expect(listDiff.Details[1].Kind).To(Equal(dyff.ADDITION))
+
+				// Removed entries: only the old version of "two"
+				Expect(listDiff.Details[0].From.Kind).To(Equal(yamlv3.SequenceNode))
+				Expect(listDiff.Details[0].From.Content).To(HaveLen(1))
+
+				// Added entries: updated "two" plus entirely new "three"
+				Expect(listDiff.Details[1].To.Kind).To(Equal(yamlv3.SequenceNode))
+				Expect(listDiff.Details[1].To.Content).To(HaveLen(2))
+			})
+
+			It("does not report diffs when list entries are unchanged", func() {
+				fromYAML := "---\n" +
+					"list:\n" +
+					"- name: one\n" +
+					"  value: 1\n" +
+					"- name: two\n" +
+					"  value: 2\n"
+
+				toYAML := "---\n" +
+					"list:\n" +
+					"- name: one\n" +
+					"  value: 1\n" +
+					"- name: two\n" +
+					"  value: 2\n"
+
+				fromDocs, err := ytbx.LoadYAMLDocuments([]byte(fromYAML))
+				Expect(err).To(BeNil())
+				toDocs, err := ytbx.LoadYAMLDocuments([]byte(toYAML))
+				Expect(err).To(BeNil())
+
+				report, err := dyff.CompareInputFiles(
+					ytbx.InputFile{Documents: fromDocs},
+					ytbx.InputFile{Documents: toDocs},
+					dyff.DetailedListDiff(false),
+				)
+				Expect(err).To(BeNil())
+				Expect(report.Diffs).To(BeNil())
 			})
 		})
 

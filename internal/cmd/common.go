@@ -58,6 +58,7 @@ type reportConfig struct {
 	excludes                  []string
 	filterRegexps             []string
 	excludeRegexps            []string
+	simpleListDiff            bool
 }
 
 var defaults = reportConfig{
@@ -80,6 +81,7 @@ var defaults = reportConfig{
 	excludes:                  nil,
 	filterRegexps:             nil,
 	excludeRegexps:            nil,
+	simpleListDiff:            false,
 }
 
 var reportOptions reportConfig
@@ -96,9 +98,10 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", defaults.excludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
 	cmd.Flags().BoolVarP(&reportOptions.ignoreValueChanges, "ignore-value-changes", "v", defaults.ignoreValueChanges, "exclude changes in values")
 	cmd.Flags().BoolVar(&reportOptions.detectRenames, "detect-renames", defaults.detectRenames, "enable detection for renames (document level for Kubernetes resources)")
+	cmd.Flags().BoolVar(&reportOptions.simpleListDiff, "simple-list-diff", defaults.simpleListDiff, "show simple overview of changes (removed/added) instead of detailed per-entry diffs for named lists")
 
 	// Main output preferences
-	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
+	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea, changed-entries")
 	cmd.Flags().BoolVar(&reportOptions.useIndentLines, "use-indent-lines", defaults.useIndentLines, "use indent lines in the output")
 	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", defaults.omitHeader, "omit the dyff summary header")
 	cmd.Flags().BoolVarP(&reportOptions.exitWithCode, "set-exit-code", "s", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
@@ -290,6 +293,11 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 
 	case "brief", "short", "summary":
 		reportWriter = &dyff.BriefReport{
+			Report: report,
+		}
+
+	case "changed-entries", "changed", "final", "affected":
+		reportWriter = &dyff.ChangedEntriesReport{
 			Report: report,
 		}
 

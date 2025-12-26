@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -103,6 +104,11 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 		))
 	}
 
+	// Sort diffs by path before processing
+	sort.Slice(report.Diffs, func(i, j int) bool {
+		return getPlainPathString(report.Diffs[i].Path) < getPlainPathString(report.Diffs[j].Path)
+	})
+
 	// Loop over the diff and generate each report into the buffer
 	for _, diff := range report.Diffs {
 		if err := report.generateHumanDiffOutput(writer, diff, report.UseGoPatchPaths, showPathRoot); err != nil {
@@ -113,6 +119,34 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 	// Finish with one last newline so that we do not end next to the prompt
 	_, _ = writer.WriteString("\n")
 	return nil
+}
+
+// getPlainPathString returns a plain path string without styling for sorting purposes
+func getPlainPathString(path *ytbx.Path) string {
+	if path == nil {
+		return ""
+	}
+	if path.PathElements == nil {
+		return ""
+	}
+
+	sections := []string{}
+	for _, element := range path.PathElements {
+		switch {
+		case element.Key == "" && element.Name != "":
+			sections = append(sections, element.Name)
+
+		case element.Key != "" && element.Name != "":
+			sections = append(sections, element.Name)
+
+		case element.Idx >= 0:
+			sections = append(sections, fmt.Sprintf("%d", element.Idx))
+
+		default:
+			sections = append(sections, element.Key)
+		}
+	}
+	return strings.Join(sections, ".")
 }
 
 // generateHumanDiffOutput creates a human readable report of the provided diff and writes this into the given bytes buffer. There is an optional flag to indicate whether the document index (which documents of the input file) should be included in the report of the path of the difference.
