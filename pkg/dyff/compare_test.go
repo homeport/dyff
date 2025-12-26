@@ -26,7 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 	yamlv3 "gopkg.in/yaml.v3"
 
-	"github.com/tonur/dyff/pkg/dyff"
+	"github.com/homeport/dyff/pkg/dyff"
 )
 
 var nullNode = &yamlv3.Node{

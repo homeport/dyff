@@ -24,7 +24,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/tonur/dyff/internal/cmd"
+	"github.com/homeport/dyff/internal/cmd"
 	"github.com/spf13/cobra/doc"
 )
 

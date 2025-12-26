@@ -30,7 +30,7 @@ import (
 
 	"github.com/gonvenience/ytbx"
 
-	"github.com/tonur/dyff/pkg/dyff"
+	"github.com/homeport/dyff/pkg/dyff"
 )
 
 var _ = Describe("human readable report", func() {
@@ -180,7 +180,7 @@ input: |+
 			SetColorSettings(AUTO, AUTO)
 		})
 
-		It("should render path with underscores correctly (https://github.com/tonur/dyff/issues/33)", func() {
+		It("should render path with underscores correctly (https://github.com/homeport/dyff/issues/33)", func() {
 			// Please note: The actual error is in the gonvenience package, this test
 			// case exists to verify the issue from with dyff.
 

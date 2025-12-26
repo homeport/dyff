@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	yamlv3 "gopkg.in/yaml.v3"
 
-	"github.com/tonur/dyff/pkg/dyff"
+	"github.com/homeport/dyff/pkg/dyff"
 )
 
 // lastAppliedCmd represents the lastApplied command
