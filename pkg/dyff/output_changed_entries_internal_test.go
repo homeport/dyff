@@ -1,6 +1,9 @@
 package dyff
 
 import (
+	"bytes"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/gonvenience/ytbx"
@@ -154,6 +157,180 @@ func TestChangedEntriesReport_DefaultAnchorBranch(t *testing.T) {
 	docs := report.buildChangedDocuments()
 	if len(docs) != 0 {
 		t.Fatalf("expected no changed documents for root-level scalar addition, got %d", len(docs))
+	}
+}
+
+// TestWriteReportFlushError ensures the deferred flush error handling branch is
+// executed when the underlying writer fails.
+type failingWriter struct{}
+
+func (w *failingWriter) Write(p []byte) (int, error) {
+	return 0, fmt.Errorf("write failed")
+}
+
+func TestWriteReportFlushError(t *testing.T) {
+	val := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "x"}
+	key := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "k"}
+	root := &yamlv3.Node{Kind: yamlv3.MappingNode, Tag: "!!map", Content: []*yamlv3.Node{key, val}}
+	doc := &yamlv3.Node{Kind: yamlv3.DocumentNode, Content: []*yamlv3.Node{root}}
+
+	report := ChangedEntriesReport{
+		Report: Report{
+			To: ytbx.InputFile{Documents: []*yamlv3.Node{doc}},
+			Diffs: []Diff{{Details: []Detail{{Kind: MODIFICATION, To: val}}}},
+		},
+	}
+
+	var w failingWriter
+	if err := report.WriteReport(&w); err == nil {
+		t.Fatalf("expected error from WriteReport when underlying writer fails")
+	}
+}
+
+// TestWriteReportMultiDocumentSeparator verifies that multi-document output
+// uses the '---' separator and therefore exercises the i>0 branch.
+func TestWriteReportMultiDocumentSeparator(t *testing.T) {
+	aVal := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "1"}
+	aKey := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "a"}
+	aMap := &yamlv3.Node{Kind: yamlv3.MappingNode, Tag: "!!map", Content: []*yamlv3.Node{aKey, aVal}}
+	doc0 := &yamlv3.Node{Kind: yamlv3.DocumentNode, Content: []*yamlv3.Node{aMap}}
+
+	bVal := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "2"}
+	bKey := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "b"}
+	bMap := &yamlv3.Node{Kind: yamlv3.MappingNode, Tag: "!!map", Content: []*yamlv3.Node{bKey, bVal}}
+	doc1 := &yamlv3.Node{Kind: yamlv3.DocumentNode, Content: []*yamlv3.Node{bMap}}
+
+	report := ChangedEntriesReport{
+		Report: Report{
+			To: ytbx.InputFile{Documents: []*yamlv3.Node{doc0, doc1}},
+			Diffs: []Diff{
+				{Path: &ytbx.Path{DocumentIdx: 0}, Details: []Detail{{Kind: MODIFICATION, To: aVal}}},
+				{Path: &ytbx.Path{DocumentIdx: 1}, Details: []Detail{{Kind: MODIFICATION, To: bVal}}},
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	if err := report.WriteReport(&buf); err != nil {
+		t.Fatalf("unexpected error from WriteReport: %v", err)
+	}
+	if !strings.Contains(buf.String(), "---\n") {
+		t.Fatalf("expected multi-document separator '---' in output, got: %q", buf.String())
+	}
+}
+
+// TestBuildChangedDocumentsSkipsNilTo ensures details with To == nil are
+// ignored when collecting targets.
+func TestBuildChangedDocumentsSkipsNilTo(t *testing.T) {
+	val := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "x"}
+	key := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "k"}
+	root := &yamlv3.Node{Kind: yamlv3.MappingNode, Tag: "!!map", Content: []*yamlv3.Node{key, val}}
+	doc := &yamlv3.Node{Kind: yamlv3.DocumentNode, Content: []*yamlv3.Node{root}}
+
+	report := ChangedEntriesReport{
+		Report: Report{
+			To: ytbx.InputFile{Documents: []*yamlv3.Node{doc}},
+			Diffs: []Diff{{
+				Details: []Detail{
+					{Kind: MODIFICATION, To: nil},
+					{Kind: MODIFICATION, To: val},
+				},
+			}},
+		},
+	}
+
+	docs := report.buildChangedDocuments()
+	if len(docs) != 1 {
+		t.Fatalf("expected one changed document when only non-nil detail contributes, got %d", len(docs))
+	}
+}
+
+// TestBuildChangedDocumentsSkipsInvalidDocIndex exercises the guard against
+// out-of-range document indices.
+func TestBuildChangedDocumentsSkipsInvalidDocIndex(t *testing.T) {
+	report := ChangedEntriesReport{
+		Report: Report{
+			To: ytbx.InputFile{Documents: []*yamlv3.Node{}},
+			Diffs: []Diff{{
+				Path:    &ytbx.Path{DocumentIdx: 1},
+				Details: []Detail{{Kind: MODIFICATION, To: &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "x"}}},
+			}},
+		},
+	}
+
+	docs := report.buildChangedDocuments()
+	if len(docs) != 0 {
+		t.Fatalf("expected no changed documents for out-of-range document index, got %d", len(docs))
+	}
+}
+
+// TestBuildChangedDocumentsSkipsNilAnchor ensures the nil-anchor guard is
+// exercised when a sequence of anchors contains a nil element.
+func TestBuildChangedDocumentsSkipsNilAnchor(t *testing.T) {
+	// Build document: list: [ A ]
+	aNode := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "A"}
+	seq := &yamlv3.Node{Kind: yamlv3.SequenceNode, Tag: "!!seq", Content: []*yamlv3.Node{aNode}}
+	key := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "list"}
+	root := &yamlv3.Node{Kind: yamlv3.MappingNode, Tag: "!!map", Content: []*yamlv3.Node{key, seq}}
+	doc := &yamlv3.Node{Kind: yamlv3.DocumentNode, Content: []*yamlv3.Node{root}}
+
+	// Detail.To is a sequence that reuses the same A node plus a nil anchor.
+	seqWithNil := &yamlv3.Node{Kind: yamlv3.SequenceNode, Tag: "!!seq", Content: []*yamlv3.Node{aNode, nil}}
+
+	report := ChangedEntriesReport{
+		Report: Report{
+			To: ytbx.InputFile{Documents: []*yamlv3.Node{doc}},
+			Diffs: []Diff{{
+				Path:    &ytbx.Path{DocumentIdx: 0},
+				Details: []Detail{{Kind: ADDITION, To: seqWithNil}},
+			}},
+		},
+	}
+
+	docs := report.buildChangedDocuments()
+	if len(docs) != 1 {
+		t.Fatalf("expected one changed document when skipping nil anchors, got %d", len(docs))
+	}
+}
+
+// TestAscendPathMissingParent exercises the branch where ascendPath encounters
+// a node without a parent entry in the parent map.
+func TestAscendPathMissingParent(t *testing.T) {
+	target := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "x"}
+	fullRoot := &yamlv3.Node{Kind: yamlv3.MappingNode, Tag: "!!map"}
+	parentMap := map[*yamlv3.Node]*yamlv3.Node{}
+
+	steps := ascendPath(target, parentMap, fullRoot)
+	if len(steps) != 0 {
+		t.Fatalf("expected no steps when parent map does not contain target, got %d", len(steps))
+	}
+}
+
+// TestComparePathStepsEqual ensures the final return-0 path in
+// comparePathSteps is exercised.
+func TestComparePathStepsEqual(t *testing.T) {
+	parent := &yamlv3.Node{Kind: yamlv3.MappingNode}
+	pathA := []pathStep{{parent: parent, key: "k"}}
+	pathB := []pathStep{{parent: parent, key: "k"}}
+	if got := comparePathSteps(pathA, pathB); got != 0 {
+		t.Fatalf("expected equal paths to compare as 0, got %d", got)
+	}
+}
+
+// TestBuildParentMapNilRoot covers the early return in buildParentMap when the
+// root node is nil.
+func TestBuildParentMapNilRoot(t *testing.T) {
+	parentMap := buildParentMap(nil)
+	if len(parentMap) != 0 {
+		t.Fatalf("expected empty parent map for nil root, got %d entries", len(parentMap))
+	}
+}
+
+// TestCloneNodeNil covers the early return in cloneNode when the input node is
+// nil.
+func TestCloneNodeNil(t *testing.T) {
+	if cloneNode(nil) != nil {
+		t.Fatalf("expected cloneNode(nil) to return nil")
 	}
 }
 
