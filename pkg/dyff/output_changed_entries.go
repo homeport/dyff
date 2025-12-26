@@ -36,6 +36,12 @@ type ChangedEntriesReport struct {
 	Report
 }
 
+// marshalToYAML is a small indirection around neat's YAML rendering so tests
+// can inject failures and exercise error-handling branches.
+var marshalToYAML = func(doc *yamlv3.Node) (string, error) {
+	return neat.NewOutputProcessor(false, true, nil).ToYAML(doc)
+}
+
 // WriteReport writes the changed entries to the provided writer
 func (report *ChangedEntriesReport) WriteReport(out io.Writer) (err error) {
 	writer := bufio.NewWriter(out)
@@ -59,7 +65,7 @@ func (report *ChangedEntriesReport) WriteReport(out io.Writer) (err error) {
 
 		// Restructure & render
 		ytbx.RestructureObject(doc)
-		yamlOutput, err := neat.NewOutputProcessor(false, true, nil).ToYAML(doc)
+		yamlOutput, err := marshalToYAML(doc)
 		if err != nil {
 			return fmt.Errorf("failed to convert document to YAML: %w", err)
 		}
@@ -168,9 +174,6 @@ func (report *ChangedEntriesReport) buildChangedDocuments() []*yamlv3.Node {
 			continue
 		}
 		rootDoc := report.To.Documents[docIdx]
-		if rootDoc == nil || len(rootDoc.Content) == 0 {
-			continue
-		}
 		fullRoot := rootDoc.Content[0]
 		parentMap := parentMaps[docIdx]
 

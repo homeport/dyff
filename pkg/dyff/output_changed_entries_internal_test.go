@@ -127,6 +127,9 @@ func TestComparePathSteps(t *testing.T) {
 	if comparePathSteps(mixed1, mixed2) >= 0 {
 		t.Fatalf("expected mapping parent < sequence parent")
 	}
+	if comparePathSteps(mixed2, mixed1) <= 0 {
+		t.Fatalf("expected sequence parent > mapping parent")
+	}
 
 	// length difference
 	short := []pathStep{{parent: mParent, key: "k"}}
@@ -176,14 +179,49 @@ func TestWriteReportFlushError(t *testing.T) {
 
 	report := ChangedEntriesReport{
 		Report: Report{
-			To: ytbx.InputFile{Documents: []*yamlv3.Node{doc}},
+			To:    ytbx.InputFile{Documents: []*yamlv3.Node{doc}},
 			Diffs: []Diff{{Details: []Detail{{Kind: MODIFICATION, To: val}}}},
 		},
 	}
 
+	// Ensure normal YAML rendering is used so the error originates from the
+	// writer flush, not from marshalToYAML.
+	oldMarshal := marshalToYAML
+	marshalToYAML = func(doc *yamlv3.Node) (string, error) {
+		return "ok", nil
+	}
+	defer func() { marshalToYAML = oldMarshal }()
+
 	var w failingWriter
 	if err := report.WriteReport(&w); err == nil {
 		t.Fatalf("expected error from WriteReport when underlying writer fails")
+	}
+}
+
+// TestWriteReportYAMLError ensures the YAML conversion error branch is
+// exercised by injecting a failing marshalToYAML implementation.
+func TestWriteReportYAMLError(t *testing.T) {
+	val := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "x"}
+	key := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "k"}
+	root := &yamlv3.Node{Kind: yamlv3.MappingNode, Tag: "!!map", Content: []*yamlv3.Node{key, val}}
+	doc := &yamlv3.Node{Kind: yamlv3.DocumentNode, Content: []*yamlv3.Node{root}}
+
+	report := ChangedEntriesReport{
+		Report: Report{
+			To:    ytbx.InputFile{Documents: []*yamlv3.Node{doc}},
+			Diffs: []Diff{{Details: []Detail{{Kind: MODIFICATION, To: val}}}},
+		},
+	}
+
+	oldMarshal := marshalToYAML
+	marshalToYAML = func(doc *yamlv3.Node) (string, error) {
+		return "", fmt.Errorf("marshal error")
+	}
+	defer func() { marshalToYAML = oldMarshal }()
+
+	var buf bytes.Buffer
+	if err := report.WriteReport(&buf); err == nil || !strings.Contains(err.Error(), "failed to convert document to YAML") {
+		t.Fatalf("expected YAML conversion error from WriteReport, got: %v", err)
 	}
 }
 
