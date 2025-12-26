@@ -132,3 +132,165 @@ func TestComparePathSteps(t *testing.T) {
 		t.Fatalf("expected shorter path < longer path")
 	}
 }
+
+// TestChangedEntriesReport_DefaultAnchorBranch ensures that the fallback anchor
+// handling path (for additions that are neither sequences nor mappings) is
+// executed without panicking, even though such changes currently do not
+// contribute any entries to the output documents.
+func TestChangedEntriesReport_DefaultAnchorBranch(t *testing.T) {
+	// Single scalar document node used directly as the target of an addition.
+	val := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "x"}
+	doc := &yamlv3.Node{Kind: yamlv3.DocumentNode, Content: []*yamlv3.Node{val}}
+
+	report := ChangedEntriesReport{
+		Report: Report{
+			To: ytbx.InputFile{Documents: []*yamlv3.Node{doc}},
+			Diffs: []Diff{{
+				Details: []Detail{{Kind: ADDITION, To: val}},
+			}},
+		},
+	}
+
+	docs := report.buildChangedDocuments()
+	if len(docs) != 0 {
+		t.Fatalf("expected no changed documents for root-level scalar addition, got %d", len(docs))
+	}
+}
+
+// TestChangedEntriesReport_AdditionInMapping verifies that added mapping entries
+// are turned into a minimal tree containing only the new key.
+func TestChangedEntriesReport_AdditionInMapping(t *testing.T) {
+	fromYAML := "---\n" +
+		"root:\n" +
+		"  a: 1\n"
+	toYAML := "---\n" +
+		"root:\n" +
+		"  a: 1\n" +
+		"  b: 2\n"
+
+	fromDocs, err := ytbx.LoadYAMLDocuments([]byte(fromYAML))
+	if err != nil {
+		t.Fatalf("failed to load from YAML: %v", err)
+	}
+	toDocs, err := ytbx.LoadYAMLDocuments([]byte(toYAML))
+	if err != nil {
+		t.Fatalf("failed to load to YAML: %v", err)
+	}
+
+	report, err := CompareInputFiles(
+		ytbx.InputFile{Documents: fromDocs},
+		ytbx.InputFile{Documents: toDocs},
+	)
+	if err != nil {
+		t.Fatalf("CompareInputFiles failed: %v", err)
+	}
+
+	changed := ChangedEntriesReport{Report: report}
+	docs := changed.buildChangedDocuments()
+	if len(docs) != 1 {
+		t.Fatalf("expected one changed document, got %d", len(docs))
+	}
+
+	rootVal, ok := findValueByKey(docs[0], "root")
+	if !ok {
+		t.Fatalf("expected root mapping in changed document")
+	}
+	if rootVal.Kind != yamlv3.MappingNode {
+		t.Fatalf("expected root value to be mapping, got kind %d", rootVal.Kind)
+	}
+	if len(rootVal.Content) != 2 {
+		t.Fatalf("expected only new key 'b' in root mapping, got %d nodes", len(rootVal.Content))
+	}
+	if rootVal.Content[0].Value != "b" || rootVal.Content[1].Value != "2" {
+		t.Fatalf("unexpected root mapping content: key=%q value=%q", rootVal.Content[0].Value, rootVal.Content[1].Value)
+	}
+}
+
+// TestChangedEntriesReport_AdditionInSimpleList verifies that added list items
+// are included as sequence entries in the result.
+func TestChangedEntriesReport_AdditionInSimpleList(t *testing.T) {
+	fromYAML := "---\n" +
+		"list: [ A, B ]\n"
+	toYAML := "---\n" +
+		"list: [ A, B, C ]\n"
+
+	fromDocs, err := ytbx.LoadYAMLDocuments([]byte(fromYAML))
+	if err != nil {
+		t.Fatalf("failed to load from YAML: %v", err)
+	}
+	toDocs, err := ytbx.LoadYAMLDocuments([]byte(toYAML))
+	if err != nil {
+		t.Fatalf("failed to load to YAML: %v", err)
+	}
+
+	report, err := CompareInputFiles(
+		ytbx.InputFile{Documents: fromDocs},
+		ytbx.InputFile{Documents: toDocs},
+	)
+	if err != nil {
+		t.Fatalf("CompareInputFiles failed: %v", err)
+	}
+
+	changed := ChangedEntriesReport{Report: report}
+	docs := changed.buildChangedDocuments()
+	if len(docs) != 1 {
+		t.Fatalf("expected one changed document, got %d", len(docs))
+	}
+
+	listVal, ok := findValueByKey(docs[0], "list")
+	if !ok {
+		t.Fatalf("expected list key in changed document")
+	}
+	if listVal.Kind != yamlv3.SequenceNode {
+		t.Fatalf("expected list value to be sequence, got kind %d", listVal.Kind)
+	}
+	if len(listVal.Content) != 1 {
+		t.Fatalf("expected only newly added element in list, got %d entries", len(listVal.Content))
+	}
+	if listVal.Content[0].Value != "C" {
+		t.Fatalf("expected added list element 'C', got %q", listVal.Content[0].Value)
+	}
+}
+
+// TestChangedEntriesReport_OrderChangeInSimpleList verifies that order changes
+// in simple lists are reflected in the changed-entries document.
+func TestChangedEntriesReport_OrderChangeInSimpleList(t *testing.T) {
+	fromYAML := "---\n" +
+		"list: [ A, C, B, D ]\n"
+	toYAML := "---\n" +
+		"list: [ A, B, C, D ]\n"
+
+	fromDocs, err := ytbx.LoadYAMLDocuments([]byte(fromYAML))
+	if err != nil {
+		t.Fatalf("failed to load from YAML: %v", err)
+	}
+	toDocs, err := ytbx.LoadYAMLDocuments([]byte(toYAML))
+	if err != nil {
+		t.Fatalf("failed to load to YAML: %v", err)
+	}
+
+	report, err := CompareInputFiles(
+		ytbx.InputFile{Documents: fromDocs},
+		ytbx.InputFile{Documents: toDocs},
+	)
+	if err != nil {
+		t.Fatalf("CompareInputFiles failed: %v", err)
+	}
+
+	changed := ChangedEntriesReport{Report: report}
+	docs := changed.buildChangedDocuments()
+	if len(docs) != 1 {
+		t.Fatalf("expected one changed document, got %d", len(docs))
+	}
+
+	listVal, ok := findValueByKey(docs[0], "list")
+	if !ok {
+		t.Fatalf("expected list key in changed document")
+	}
+	if listVal.Kind != yamlv3.SequenceNode {
+		t.Fatalf("expected list value to be sequence, got kind %d", listVal.Kind)
+	}
+	if len(listVal.Content) != 4 {
+		t.Fatalf("expected four list entries involved in order change, got %d", len(listVal.Content))
+	}
+}
