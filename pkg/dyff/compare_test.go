@@ -21,13 +21,12 @@
 package dyff_test
 
 import (
+	"github.com/gonvenience/ytbx"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	yamlv3 "gopkg.in/yaml.v3"
 
 	"github.com/tonur/dyff/pkg/dyff"
-
-	"github.com/gonvenience/ytbx"
-	yamlv3 "gopkg.in/yaml.v3"
 )
 
 var nullNode = &yamlv3.Node{
@@ -411,6 +410,35 @@ list:
 				// Added entries: updated "two" plus entirely new "three"
 				Expect(listDiff.Details[1].To.Kind).To(Equal(yamlv3.SequenceNode))
 				Expect(listDiff.Details[1].To.Content).To(HaveLen(2))
+			})
+
+			It("does not report diffs when list entries are unchanged", func() {
+				fromYAML := "---\n" +
+					"list:\n" +
+					"- name: one\n" +
+					"  value: 1\n" +
+					"- name: two\n" +
+					"  value: 2\n"
+
+				toYAML := "---\n" +
+					"list:\n" +
+					"- name: one\n" +
+					"  value: 1\n" +
+					"- name: two\n" +
+					"  value: 2\n"
+
+				fromDocs, err := ytbx.LoadYAMLDocuments([]byte(fromYAML))
+				Expect(err).To(BeNil())
+				toDocs, err := ytbx.LoadYAMLDocuments([]byte(toYAML))
+				Expect(err).To(BeNil())
+
+				report, err := dyff.CompareInputFiles(
+					ytbx.InputFile{Documents: fromDocs},
+					ytbx.InputFile{Documents: toDocs},
+					dyff.DetailedListDiff(false),
+				)
+				Expect(err).To(BeNil())
+				Expect(report.Diffs).To(BeNil())
 			})
 		})
 
