@@ -12,7 +12,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/onsi/ginkgo/v2 v2.27.3
-	github.com/onsi/gomega v1.38.3
+	github.com/onsi/gomega v1.39.0
 	github.com/spf13/cobra v1.10.2
 	github.com/texttheater/golang-levenshtein v1.0.1
 	gopkg.in/yaml.v3 v3.0.1
