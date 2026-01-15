@@ -1,0 +1,18 @@
+# Have 2 or more documents here to "force" kubernetes documents detection
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test
+
+data:
+  my-key: "value"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test2
+
+data:
+  my-key: "value"
