@@ -27,7 +27,7 @@ import (
 	"github.com/homeport/dyff/pkg/dyff"
 
 	"github.com/gonvenience/ytbx"
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 )
 
 var nullNode = &yamlv3.Node{
