@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"strings"
 
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 )
 
 // listItemIdentifier defines the contract for an list item identifier

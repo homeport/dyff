@@ -33,7 +33,7 @@ import (
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 
 	"github.com/homeport/dyff/pkg/dyff"
 )

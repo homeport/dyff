@@ -31,7 +31,7 @@ import (
 	"github.com/gonvenience/ytbx"
 
 	"github.com/mitchellh/hashstructure"
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 )
 
 // CompareOption sets a specific compare setting for the object comparison

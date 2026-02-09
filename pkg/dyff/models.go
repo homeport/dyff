@@ -24,7 +24,7 @@ import (
 	"io"
 
 	"github.com/gonvenience/ytbx"
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 )
 
 // Constants to distinguish between the different kinds of differences
