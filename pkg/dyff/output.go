@@ -21,37 +21,21 @@
 package dyff
 
 import (
-	"github.com/gonvenience/bunt"
-	"github.com/gonvenience/neat"
-	"github.com/lucasb-eyer/go-colorful"
+	"go.yaml.in/yaml/v3"
 )
 
 func yamlStringInRedishColors(input interface{}, useIndentLines bool) (string, error) {
-	return neat.NewOutputProcessor(useIndentLines, true, &map[string]colorful.Color{
-		"keyColor":           bunt.FireBrick,
-		"indentLineColor":    {R: 0.2, G: 0, B: 0},
-		"scalarDefaultColor": bunt.LightCoral,
-		"boolColor":          bunt.LightCoral,
-		"floatColor":         bunt.LightCoral,
-		"intColor":           bunt.LightCoral,
-		"multiLineTextColor": bunt.DarkSalmon,
-		"nullColor":          bunt.Salmon,
-		"emptyStructures":    bunt.LightSalmon,
-		"dashColor":          bunt.FireBrick,
-	}).ToYAML(input)
+	data, err := yaml.Marshal(input)
+	if err != nil {
+		return "", err
+	}
+	return lightred(string(data)), nil
 }
 
 func yamlStringInGreenishColors(input interface{}, useIndentLines bool) (string, error) {
-	return neat.NewOutputProcessor(useIndentLines, true, &map[string]colorful.Color{
-		"keyColor":           bunt.Green,
-		"indentLineColor":    {R: 0, G: 0.2, B: 0},
-		"scalarDefaultColor": bunt.LimeGreen,
-		"boolColor":          bunt.LimeGreen,
-		"floatColor":         bunt.LimeGreen,
-		"intColor":           bunt.LimeGreen,
-		"multiLineTextColor": bunt.OliveDrab,
-		"nullColor":          bunt.Olive,
-		"emptyStructures":    bunt.DarkOliveGreen,
-		"dashColor":          bunt.Green,
-	}).ToYAML(input)
+	data, err := yaml.Marshal(input)
+	if err != nil {
+		return "", err
+	}
+	return lightgreen(string(data)), nil
 }

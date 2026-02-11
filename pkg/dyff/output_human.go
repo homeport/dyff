@@ -504,7 +504,7 @@ func highlightRemovals(diffs []diffmatchpatch.Diff, indent int) string {
 			buf.WriteString(lightred(part.Text))
 
 		case diffmatchpatch.DiffDelete:
-			buf.WriteString(bold(red(part.Text)))
+			buf.WriteString(boldred(part.Text))
 		}
 	}
 
@@ -522,7 +522,7 @@ func highlightAdditions(diffs []diffmatchpatch.Diff, indent int) string {
 			buf.WriteString(lightgreen(part.Text))
 
 		case diffmatchpatch.DiffInsert:
-			buf.WriteString(bold(green(part.Text)))
+			buf.WriteString(boldgreen(part.Text))
 		}
 	}
 
@@ -643,9 +643,9 @@ func showWhitespaceCharacters(text string) string {
 	return strings.ReplaceAll(
 		strings.ReplaceAll(text,
 			"\n",
-			bold("↵\n")),
+			"↵\n"),
 		" ",
-		bold("·"),
+		"·",
 	)
 }
 
