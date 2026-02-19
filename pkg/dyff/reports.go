@@ -57,6 +57,38 @@ func (r Report) Exclude(paths ...string) (result Report) {
 	})
 }
 
+func (r Report) FilterDocument(paths ...string) (result Report) {
+	if len(paths) == 0 {
+		return r
+	}
+
+	return r.filter(func(filterPath *ytbx.Path) bool {
+		for _, pathString := range paths {
+			if filterPath != nil && pathString == filterPath.RootDescription() {
+				return true
+			}
+		}
+
+		return false
+	})
+}
+
+func (r Report) ExcludeDocument(paths ...string) (result Report) {
+	if len(paths) == 0 {
+		return r
+	}
+
+	return r.filter(func(filterPath *ytbx.Path) bool {
+		for _, pathString := range paths {
+			if filterPath != nil && pathString == filterPath.RootDescription() {
+				return false
+			}
+		}
+
+		return true
+	})
+}
+
 // FilterRegexp accepts regular expressions as input and returns a new report with differences for matching those patterns
 func (r Report) FilterRegexp(pattern ...string) (result Report) {
 	if len(pattern) == 0 {
@@ -99,6 +131,46 @@ func (r Report) ExcludeRegexp(pattern ...string) (result Report) {
 	})
 }
 
+func (r Report) FilterDocumentRegexp(pattern ...string) (result Report) {
+	if len(pattern) == 0 {
+		return r
+	}
+
+	regexps := make([]*regexp.Regexp, len(pattern))
+	for i := range pattern {
+		regexps[i] = regexp.MustCompile(pattern[i])
+	}
+
+	return r.filter(func(filterPath *ytbx.Path) bool {
+		for _, r := range regexps {
+			if filterPath != nil && r.MatchString(filterPath.RootDescription()) {
+				return true
+			}
+		}
+		return false
+	})
+}
+
+func (r Report) ExcludeDocumentRegexp(pattern ...string) (result Report) {
+	if len(pattern) == 0 {
+		return r
+	}
+
+	regexps := make([]*regexp.Regexp, len(pattern))
+	for i := range pattern {
+		regexps[i] = regexp.MustCompile(pattern[i])
+	}
+
+	return r.filter(func(filterPath *ytbx.Path) bool {
+		for _, r := range regexps {
+			if filterPath != nil && r.MatchString(filterPath.RootDescription()) {
+				return false
+			}
+		}
+		return true
+	})
+}
+
 func (r Report) IgnoreValueChanges() (result Report) {
 	result = Report{
 		From: r.From,
@@ -112,12 +184,12 @@ func (r Report) IgnoreValueChanges() (result Report) {
 				hasValChange = true
 				break
 			}
-  		}
+		}
 
 		if !hasValChange {
 			result.Diffs = append(result.Diffs, diff)
 		}
 	}
 
-	return result	
+	return result
 }

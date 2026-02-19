@@ -58,6 +58,10 @@ type reportConfig struct {
 	excludes                  []string
 	filterRegexps             []string
 	excludeRegexps            []string
+	filterDocuments           []string
+	excludeDocuments          []string
+	filterDocumentRegexps     []string
+	excludeDocumentRegexps    []string
 }
 
 var defaults = reportConfig{
@@ -80,6 +84,10 @@ var defaults = reportConfig{
 	excludes:                  nil,
 	filterRegexps:             nil,
 	excludeRegexps:            nil,
+	filterDocuments:           nil,
+	excludeDocuments:          nil,
+	filterDocumentRegexps:     nil,
+	excludeDocumentRegexps:    nil,
 }
 
 var reportOptions reportConfig
@@ -94,6 +102,10 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", defaults.excludes, "exclude reports from a set of differences based on supplied arguments")
 	cmd.Flags().StringSliceVar(&reportOptions.filterRegexps, "filter-regexp", defaults.filterRegexps, "filter reports to a subset of differences based on supplied regular expressions")
 	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", defaults.excludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
+	cmd.Flags().StringSliceVar(&reportOptions.filterDocuments, "filter-document", defaults.filterDocuments, "filter report to a subset of documents")
+	cmd.Flags().StringSliceVar(&reportOptions.excludeDocuments, "exclude-document", defaults.excludeDocuments, "exclude documents from report")
+	cmd.Flags().StringSliceVar(&reportOptions.filterDocumentRegexps, "filter-document-regexp", defaults.filterDocumentRegexps, "filter report to a subset of documents based on supplied regular expressions")
+	cmd.Flags().StringSliceVar(&reportOptions.excludeDocumentRegexps, "exclude-document-regexp", defaults.excludeDocumentRegexps, "exclude documents from report based on supplied regular expressions")
 	cmd.Flags().BoolVarP(&reportOptions.ignoreValueChanges, "ignore-value-changes", "v", defaults.ignoreValueChanges, "exclude changes in values")
 	cmd.Flags().BoolVar(&reportOptions.detectRenames, "detect-renames", defaults.detectRenames, "enable detection for renames (document level for Kubernetes resources)")
 
