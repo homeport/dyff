@@ -13,16 +13,11 @@ require (
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
+	github.com/sergi/go-diff v1.4.0
 	github.com/spf13/cobra v1.10.2
 	github.com/texttheater/golang-levenshtein v1.0.1
 	go.yaml.in/yaml/v3 v3.0.4
 )
-
-// usage untagged version of go-diff
-// cause https://github.com/sergi/go-diff/issues/123
-// fixed in https://github.com/sergi/go-diff/pull/136
-// but currently not tagged
-require github.com/sergi/go-diff v1.4.0
 
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
