@@ -98,7 +98,7 @@ func applyReportOptionsFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&reportOptions.detectRenames, "detect-renames", defaults.detectRenames, "enable detection for renames (document level for Kubernetes resources)")
 
 	// Main output preferences
-	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
+	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea, yaml-diff")
 	cmd.Flags().BoolVar(&reportOptions.useIndentLines, "use-indent-lines", defaults.useIndentLines, "use indent lines in the output")
 	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", defaults.omitHeader, "omit the dyff summary header")
 	cmd.Flags().BoolVarP(&reportOptions.exitWithCode, "set-exit-code", "s", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
@@ -290,6 +290,11 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 
 	case "brief", "short", "summary":
 		reportWriter = &dyff.BriefReport{
+			Report: report,
+		}
+
+	case "yaml-diff":
+		reportWriter = &dyff.YAMLDiffReport{
 			Report: report,
 		}
 
