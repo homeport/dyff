@@ -29,93 +29,105 @@ import (
 	"os"
 	"strings"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/neat"
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	yamlv3 "go.yaml.in/yaml/v3"
 
 	"github.com/homeport/dyff/pkg/dyff"
 )
 
 type reportConfig struct {
-	style                     string
-	useIndentLines            bool
-	ignoreOrderChanges        bool
-	ignoreWhitespaceChanges   bool
-	kubernetesEntityDetection bool
-	noTableStyle              bool
-	doNotInspectCerts         bool
-	exitWithCode              bool
-	omitHeader                bool
-	useGoPatchPaths           bool
-	ignoreValueChanges        bool
-	detectRenames             bool
-	marshalJsonStrings        bool
-	minorChangeThreshold      float64
-	multilineContextLines     int
-	additionalIdentifiers     []string
-	filters                   []string
-	excludes                  []string
-	filterRegexps             []string
-	excludeRegexps            []string
+	Style          string `envDefault:"human"`
+	UseIndentLines bool   `envDefault:"true"`
+
+	IgnoreOrderChanges      bool `envDefault:"false"`
+	IgnoreWhitespaceChanges bool `envDefault:"false"`
+	IgnoreValueChanges      bool `envDefault:"false"`
+	FormatStrings           bool `envDefault:"true"`
+	DetectRenames           bool `envDefault:"true"`
+
+	NoTableStyle          bool    `envDefault:"false"`
+	DoNotInspectCerts     bool    `envDefault:"false"`
+	UseGoPatchPaths       bool    `envDefault:"false"`
+	MinorChangeThreshold  float64 `envDefault:"0.1"`
+	MultilineContextLines int     `envDefault:"4"`
+
+	KubernetesEntityDetection bool `envDefault:"true"`
+	AdditionalIdentifiers     []string
+	Filters                   []string
+	Excludes                  []string
+	FilterRegexps             []string
+	ExcludeRegexps            []string
+
+	ExitWithCode bool `envDefault:"false"`
+	OmitHeader   bool `envDefault:"false"`
 }
 
-var defaults = reportConfig{
-	style:                     "human",
-	useIndentLines:            true,
-	ignoreOrderChanges:        false,
-	ignoreWhitespaceChanges:   false,
-	kubernetesEntityDetection: true,
-	noTableStyle:              false,
-	doNotInspectCerts:         false,
-	exitWithCode:              false,
-	omitHeader:                false,
-	useGoPatchPaths:           false,
-	ignoreValueChanges:        false,
-	detectRenames:             true,
-	marshalJsonStrings:        false,
-	minorChangeThreshold:      0.1,
-	multilineContextLines:     4,
-	additionalIdentifiers:     nil,
-	filters:                   nil,
-	excludes:                  nil,
-	filterRegexps:             nil,
-	excludeRegexps:            nil,
+func initReportConfig() reportConfig {
+	return env.Must(env.ParseAsWithOptions[reportConfig](env.Options{
+		Prefix:                "DYFF_",
+		UseFieldNameByDefault: true,
+	}))
 }
 
-var reportOptions reportConfig
+var reportOptions = initReportConfig()
 
-func applyReportOptionsFlags(cmd *cobra.Command) {
-	// Compare options
-	cmd.Flags().BoolVarP(&reportOptions.ignoreOrderChanges, "ignore-order-changes", "i", defaults.ignoreOrderChanges, "ignore order changes in lists")
-	cmd.Flags().BoolVar(&reportOptions.ignoreWhitespaceChanges, "ignore-whitespace-changes", defaults.ignoreWhitespaceChanges, "ignore leading or trailing whitespace changes")
-	cmd.Flags().BoolVarP(&reportOptions.kubernetesEntityDetection, "detect-kubernetes", "", defaults.kubernetesEntityDetection, "detect kubernetes entities")
-	cmd.Flags().StringArrayVar(&reportOptions.additionalIdentifiers, "additional-identifier", defaults.additionalIdentifiers, "use additional identifier candidates in named entry lists")
-	cmd.Flags().StringSliceVar(&reportOptions.filters, "filter", defaults.filters, "filter reports to a subset of differences based on supplied arguments")
-	cmd.Flags().StringSliceVar(&reportOptions.excludes, "exclude", defaults.excludes, "exclude reports from a set of differences based on supplied arguments")
-	cmd.Flags().StringSliceVar(&reportOptions.filterRegexps, "filter-regexp", defaults.filterRegexps, "filter reports to a subset of differences based on supplied regular expressions")
-	cmd.Flags().StringSliceVar(&reportOptions.excludeRegexps, "exclude-regexp", defaults.excludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
-	cmd.Flags().BoolVarP(&reportOptions.ignoreValueChanges, "ignore-value-changes", "v", defaults.ignoreValueChanges, "exclude changes in values")
-	cmd.Flags().BoolVar(&reportOptions.detectRenames, "detect-renames", defaults.detectRenames, "enable detection for renames (document level for Kubernetes resources)")
-	cmd.Flags().BoolVar(&reportOptions.marshalJsonStrings, "marshal-json-strings", defaults.marshalJsonStrings, "marshal Json strings for comparison, otherwise compare unformatted strings")
+func flagSet(name string, f ...func(*pflag.FlagSet)) *pflag.FlagSet {
+	var flatSet = pflag.NewFlagSet(name, pflag.ExitOnError)
+	flatSet.SortFlags = false
 
-	// Main output preferences
-	cmd.Flags().StringVarP(&reportOptions.style, "output", "o", defaults.style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
-	cmd.Flags().BoolVar(&reportOptions.useIndentLines, "use-indent-lines", defaults.useIndentLines, "use indent lines in the output")
-	cmd.Flags().BoolVarP(&reportOptions.omitHeader, "omit-header", "b", defaults.omitHeader, "omit the dyff summary header")
-	cmd.Flags().BoolVarP(&reportOptions.exitWithCode, "set-exit-code", "s", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
+	for _, fn := range f {
+		fn(flatSet)
+	}
 
-	// Human/BOSH output related flags
-	cmd.Flags().BoolVarP(&reportOptions.noTableStyle, "no-table-style", "l", defaults.noTableStyle, "do not place blocks next to each other, always use one row per text block")
-	cmd.Flags().BoolVarP(&reportOptions.doNotInspectCerts, "no-cert-inspection", "x", defaults.doNotInspectCerts, "disable x509 certificate inspection, compare as raw text")
-	cmd.Flags().BoolVarP(&reportOptions.useGoPatchPaths, "use-go-patch-style", "g", defaults.useGoPatchPaths, "use Go-Patch style paths in outputs")
-	cmd.Flags().Float64VarP(&reportOptions.minorChangeThreshold, "minor-change-threshold", "", defaults.minorChangeThreshold, "minor change threshold")
-	cmd.Flags().IntVarP(&reportOptions.multilineContextLines, "multi-line-context-lines", "", defaults.multilineContextLines, "multi-line context lines")
+	return flatSet
+}
 
-	// Deprecated
-	cmd.Flags().BoolVar(&reportOptions.exitWithCode, "set-exit-status", defaults.exitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
-	_ = cmd.Flags().MarkDeprecated("set-exit-status", "use --set-exit-code instead")
+func reportOptionsFlags() []*pflag.FlagSet {
+	return []*pflag.FlagSet{
+		flagSet("Output Preferences", func(fs *pflag.FlagSet) {
+			fs.StringVarP(&reportOptions.Style, "output", "o", reportOptions.Style, "specify the output style, supported styles: human, brief, github, gitlab, gitea")
+			fs.BoolVar(&reportOptions.UseIndentLines, "use-indent-lines", reportOptions.UseIndentLines, "use indent lines in the output")
+		}),
+
+		flagSet("Compare Options", func(fs *pflag.FlagSet) {
+			fs.BoolVarP(&reportOptions.IgnoreOrderChanges, "ignore-order-changes", "i", reportOptions.IgnoreOrderChanges, "ignore order changes in lists")
+			fs.BoolVar(&reportOptions.IgnoreWhitespaceChanges, "ignore-whitespace-changes", reportOptions.IgnoreWhitespaceChanges, "ignore leading or trailing whitespace changes")
+			fs.BoolVarP(&reportOptions.IgnoreValueChanges, "ignore-value-changes", "v", reportOptions.IgnoreValueChanges, "exclude changes in values")
+			fs.BoolVar(&reportOptions.DetectRenames, "detect-renames", reportOptions.DetectRenames, "enable detection for renames (document level for Kubernetes resources)")
+			fs.BoolVar(&reportOptions.FormatStrings, "format-strings", reportOptions.FormatStrings, "format strings (i.e. inline JSON) before comparison to avoid formatting differences")
+		}),
+
+		flagSet("Human Output Preferences", func(fs *pflag.FlagSet) {
+			fs.BoolVarP(&reportOptions.NoTableStyle, "no-table-style", "l", reportOptions.NoTableStyle, "do not place blocks next to each other, always use one row per text block")
+			fs.BoolVarP(&reportOptions.DoNotInspectCerts, "no-cert-inspection", "x", reportOptions.DoNotInspectCerts, "disable x509 certificate inspection, compare as raw text")
+			fs.BoolVarP(&reportOptions.UseGoPatchPaths, "use-go-patch-style", "g", reportOptions.UseGoPatchPaths, "use Go-Patch style paths in outputs")
+			fs.Float64VarP(&reportOptions.MinorChangeThreshold, "minor-change-threshold", "", reportOptions.MinorChangeThreshold, "minor change threshold")
+			fs.IntVarP(&reportOptions.MultilineContextLines, "multi-line-context-lines", "", reportOptions.MultilineContextLines, "multi-line context lines")
+		}),
+
+		flagSet("Filter Options", func(fs *pflag.FlagSet) {
+			fs.BoolVarP(&reportOptions.KubernetesEntityDetection, "detect-kubernetes", "", reportOptions.KubernetesEntityDetection, "detect kubernetes entities")
+			fs.StringArrayVar(&reportOptions.AdditionalIdentifiers, "additional-identifier", reportOptions.AdditionalIdentifiers, "use additional identifier candidates in named entry lists")
+			fs.StringSliceVar(&reportOptions.Filters, "filter", reportOptions.Filters, "filter reports to a subset of differences based on supplied arguments")
+			fs.StringSliceVar(&reportOptions.Excludes, "exclude", reportOptions.Excludes, "exclude reports from a set of differences based on supplied arguments")
+			fs.StringSliceVar(&reportOptions.FilterRegexps, "filter-regexp", reportOptions.FilterRegexps, "filter reports to a subset of differences based on supplied regular expressions")
+			fs.StringSliceVar(&reportOptions.ExcludeRegexps, "exclude-regexp", reportOptions.ExcludeRegexps, "exclude reports from a set of differences based on supplied regular expressions")
+		}),
+
+		flagSet("General Options", func(fs *pflag.FlagSet) {
+			fs.BoolVarP(&reportOptions.OmitHeader, "omit-header", "b", reportOptions.OmitHeader, "omit the dyff summary header")
+			fs.BoolVarP(&reportOptions.ExitWithCode, "set-exit-code", "s", reportOptions.ExitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
+
+			// Deprecated
+			fs.BoolVar(&reportOptions.ExitWithCode, "set-exit-status", reportOptions.ExitWithCode, "set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error")
+			_ = fs.MarkDeprecated("set-exit-status", "use --set-exit-code instead")
+		}),
+	}
 }
 
 // OutputWriter encapsulates the required fields to define the look and feel of
@@ -219,18 +231,18 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 
 func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	var reportWriter dyff.ReportWriter
-	switch strings.ToLower(reportOptions.style) {
+	switch strings.ToLower(reportOptions.Style) {
 	case "human", "bosh":
 		reportWriter = &dyff.HumanReport{
 			Report:                report,
 			Indent:                2,
-			UseIndentLines:        reportOptions.useIndentLines,
-			DoNotInspectCerts:     reportOptions.doNotInspectCerts,
-			NoTableStyle:          reportOptions.noTableStyle,
-			OmitHeader:            reportOptions.omitHeader,
-			UseGoPatchPaths:       reportOptions.useGoPatchPaths,
-			MinorChangeThreshold:  reportOptions.minorChangeThreshold,
-			MultilineContextLines: reportOptions.multilineContextLines,
+			UseIndentLines:        reportOptions.UseIndentLines,
+			DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
+			NoTableStyle:          reportOptions.NoTableStyle,
+			OmitHeader:            reportOptions.OmitHeader,
+			UseGoPatchPaths:       reportOptions.UseGoPatchPaths,
+			MinorChangeThreshold:  reportOptions.MinorChangeThreshold,
+			MultilineContextLines: reportOptions.MultilineContextLines,
 			PrefixMultiline:       false,
 		}
 
@@ -242,13 +254,13 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
-				UseIndentLines:        reportOptions.useIndentLines,
-				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
+				UseIndentLines:        reportOptions.UseIndentLines,
+				DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
-				UseGoPatchPaths:       reportOptions.useGoPatchPaths,
-				MinorChangeThreshold:  reportOptions.minorChangeThreshold,
-				MultilineContextLines: reportOptions.multilineContextLines,
+				UseGoPatchPaths:       reportOptions.UseGoPatchPaths,
+				MinorChangeThreshold:  reportOptions.MinorChangeThreshold,
+				MultilineContextLines: reportOptions.MultilineContextLines,
 				PrefixMultiline:       true,
 			},
 		}
@@ -261,13 +273,13 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
-				UseIndentLines:        reportOptions.useIndentLines,
-				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
+				UseIndentLines:        reportOptions.UseIndentLines,
+				DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
-				UseGoPatchPaths:       reportOptions.useGoPatchPaths,
-				MinorChangeThreshold:  reportOptions.minorChangeThreshold,
-				MultilineContextLines: reportOptions.multilineContextLines,
+				UseGoPatchPaths:       reportOptions.UseGoPatchPaths,
+				MinorChangeThreshold:  reportOptions.MinorChangeThreshold,
+				MultilineContextLines: reportOptions.MultilineContextLines,
 				PrefixMultiline:       true,
 			},
 		}
@@ -280,13 +292,13 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
-				UseIndentLines:        reportOptions.useIndentLines,
-				DoNotInspectCerts:     reportOptions.doNotInspectCerts,
+				UseIndentLines:        reportOptions.UseIndentLines,
+				DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
 				NoTableStyle:          true,
 				OmitHeader:            true,
-				UseGoPatchPaths:       reportOptions.useGoPatchPaths,
-				MinorChangeThreshold:  reportOptions.minorChangeThreshold,
-				MultilineContextLines: reportOptions.multilineContextLines,
+				UseGoPatchPaths:       reportOptions.UseGoPatchPaths,
+				MinorChangeThreshold:  reportOptions.MinorChangeThreshold,
+				MultilineContextLines: reportOptions.MultilineContextLines,
 				PrefixMultiline:       true,
 			},
 		}
@@ -297,7 +309,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 		}
 
 	default:
-		return fmt.Errorf("unknown output style %s: %w", reportOptions.style, errors.New(cmd.UsageString()))
+		return fmt.Errorf("unknown output style %s: %w", reportOptions.Style, errors.New(cmd.UsageString()))
 	}
 
 	if err := reportWriter.WriteReport(os.Stdout); err != nil {
@@ -305,7 +317,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	}
 
 	// If configured, make sure `dyff` exists with an exit status
-	if reportOptions.exitWithCode {
+	if reportOptions.ExitWithCode {
 		switch len(report.Diffs) {
 		case 0:
 			return errorWithExitCode{value: 0}

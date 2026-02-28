@@ -21,6 +21,7 @@
 package dyff
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -44,7 +45,7 @@ type compareSettings struct {
 	IgnoreWhitespaceChanges                  bool
 	KubernetesEntityDetection                bool
 	DetectRenames                            bool
-	MarshalJsonStrings                       bool
+	FormatStrings                            bool
 	AdditionalIdentifiers                    []string
 }
 
@@ -98,9 +99,9 @@ func DetectRenames(value bool) CompareOption {
 	}
 }
 
-func MarshalJsonStrings(value bool) CompareOption {
+func FormatStrings(value bool) CompareOption {
 	return func(settings *compareSettings) {
-		settings.MarshalJsonStrings = value
+		settings.FormatStrings = value
 	}
 }
 
@@ -663,39 +664,44 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdent
 }
 
 func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
-	fromValue := from.Value
-	toValue := to.Value
-	// Marshaling strings to Json removes formatting differences as the cause.
-	// This is a cheap way to do this
-	// TODO: Compare Json strings as nodes to be able to do a per-line comparison
-	if compare.settings.MarshalJsonStrings {
-		var fromJson, toJson interface{}
-		// Actually just attempt to marshal the strings to json to fix any formatting diffs. Then can do a string comparison. That's fine.
-		if err := json.Unmarshal([]byte(from.Value), &fromJson); err == nil {
-			out, _ := json.Marshal(fromJson)
-			fromValue = string(out)
+	if compare.settings.FormatStrings {
+		var jsonFormat = func(input string) (string, bool) {
+			var tmp any
+
+			if err := json.Unmarshal([]byte(input), &tmp); err != nil {
+				return "", false
+			}
+
+			var buf bytes.Buffer
+			var encoder = json.NewEncoder(&buf)
+			encoder.SetIndent("", "  ")
+			if err := encoder.Encode(tmp); err != nil {
+				return "", false
+			}
+
+			return buf.String(), true
 		}
-		if err := json.Unmarshal([]byte(to.Value), &toJson); err == nil {
-			out, _ := json.Marshal(toJson)
-			toValue = string(out)
+
+		if fromValue, ok := jsonFormat(from.Value); ok {
+			if toValue, ok := jsonFormat(to.Value); ok {
+				from.Value = fromValue
+				to.Value = toValue
+			}
 		}
 	}
 
-	if strings.Compare(fromValue, toValue) != 0 {
+	if strings.Compare(from.Value, to.Value) != 0 {
 		// leave and don't report any differences if ignore whitespaces changes is
 		// configured and it is really only a whitespace only change between the strings
 		if compare.settings.IgnoreWhitespaceChanges && isWhitespaceOnlyChange(from.Value, to.Value) {
 			return nil, nil
 		}
 
-		return []Diff{{
-			&path,
-			[]Detail{{
-				Kind: MODIFICATION,
-				From: from,
-				To:   to,
-			}},
-		}}, nil
+		return []Diff{{&path, []Detail{{
+			Kind: MODIFICATION,
+			From: from,
+			To:   to,
+		}}}}, nil
 	}
 
 	return nil, nil
@@ -1129,22 +1135,6 @@ func sortNode(node *yamlv3.Node) {
 
 		return len(a.Content) < len(b.Content)
 	})
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
 }
 
 func isList(node *yamlv3.Node) bool {

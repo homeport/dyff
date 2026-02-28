@@ -844,6 +844,18 @@ listY: [ Yo, Yo, Yo ]
 					singleDiff("/yaml/map/removed", dyff.REMOVAL, nil, "removed"),
 				}}))
 			})
+
+			It("should format strings to rule out formatting differences", func() {
+				report, err := dyff.CompareInputFiles(
+					file(assets("format-json-strings/from.yml")),
+					file(assets("format-json-strings/to.yml")),
+					dyff.FormatStrings(true),
+				)
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(report).NotTo(BeNil())
+				Expect(report.Diffs).To(HaveLen(0))
+			})
 		})
 
 		Context("change root for comparison", func() {
