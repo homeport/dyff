@@ -21,13 +21,19 @@
 package cmd
 
 import (
+	_ "embed"
 	"fmt"
 
+	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/ytbx"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/homeport/dyff/pkg/dyff"
 )
+
+//go:embed between-usage-template.txt
+var betweenCmdUsageTemplate string
 
 type betweenCmdOptions struct {
 	swap                     bool
@@ -72,48 +78,48 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 
 		// Change root of 'from' input file if change root flag for 'from' is set
 		if betweenCmdSettings.chrootFrom != "" {
-			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, reportOptions.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
+			if err = dyff.ChangeRoot(&from, betweenCmdSettings.chrootFrom, reportOptions.UseGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
 				return fmt.Errorf("failed to change root of %s to path %s: %w", from.Location, betweenCmdSettings.chrootFrom, err)
 			}
 		}
 
 		// Change root of 'to' input file if change root flag for 'to' is set
 		if betweenCmdSettings.chrootTo != "" {
-			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, reportOptions.useGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
+			if err = dyff.ChangeRoot(&to, betweenCmdSettings.chrootTo, reportOptions.UseGoPatchPaths, betweenCmdSettings.translateListToDocuments); err != nil {
 				return fmt.Errorf("failed to change root of %s to path %s: %w", to.Location, betweenCmdSettings.chrootTo, err)
 			}
 		}
 
 		report, err := dyff.CompareInputFiles(from, to,
-			dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges),
-			dyff.IgnoreWhitespaceChanges(reportOptions.ignoreWhitespaceChanges),
-			dyff.KubernetesEntityDetection(reportOptions.kubernetesEntityDetection),
-			dyff.AdditionalIdentifiers(reportOptions.additionalIdentifiers...),
-			dyff.DetectRenames(reportOptions.detectRenames),
-			dyff.MarshalJsonStrings(reportOptions.marshalJsonStrings),
+			dyff.IgnoreOrderChanges(reportOptions.IgnoreOrderChanges),
+			dyff.IgnoreWhitespaceChanges(reportOptions.IgnoreWhitespaceChanges),
+			dyff.KubernetesEntityDetection(reportOptions.KubernetesEntityDetection),
+			dyff.AdditionalIdentifiers(reportOptions.AdditionalIdentifiers...),
+			dyff.DetectRenames(reportOptions.DetectRenames),
+			dyff.FormatStrings(reportOptions.FormatStrings),
 		)
 
 		if err != nil {
 			return fmt.Errorf("failed to compare input files: %w", err)
 		}
 
-		if reportOptions.filters != nil {
-			report = report.Filter(reportOptions.filters...)
+		if reportOptions.Filters != nil {
+			report = report.Filter(reportOptions.Filters...)
 		}
 
-		if reportOptions.filterRegexps != nil {
-			report = report.FilterRegexp(reportOptions.filterRegexps...)
+		if reportOptions.FilterRegexps != nil {
+			report = report.FilterRegexp(reportOptions.FilterRegexps...)
 		}
 
-		if reportOptions.excludes != nil {
-			report = report.Exclude(reportOptions.excludes...)
+		if reportOptions.Excludes != nil {
+			report = report.Exclude(reportOptions.Excludes...)
 		}
 
-		if reportOptions.excludeRegexps != nil {
-			report = report.ExcludeRegexp(reportOptions.excludeRegexps...)
+		if reportOptions.ExcludeRegexps != nil {
+			report = report.ExcludeRegexp(reportOptions.ExcludeRegexps...)
 		}
 
-		if reportOptions.ignoreValueChanges {
+		if reportOptions.IgnoreValueChanges {
 			report = report.IgnoreValueChanges()
 		}
 
@@ -124,14 +130,23 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 func init() {
 	rootCmd.AddCommand(betweenCmd)
 
+	var groups = []*pflag.FlagSet{
+		flagSet("Input Documents Handling", func(fs *pflag.FlagSet) {
+			fs.BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
+			fs.StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
+			fs.StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
+			fs.StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
+			fs.BoolVar(&betweenCmdSettings.translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
+		}),
+	}
+
+	groups = append(groups, reportOptionsFlags()...)
+
 	betweenCmd.Flags().SortFlags = false
+	for _, group := range groups {
+		betweenCmd.Flags().AddFlagSet(group)
+	}
 
-	applyReportOptionsFlags(betweenCmd)
-
-	// Input documents modification flags
-	betweenCmd.Flags().BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
-	betweenCmd.Flags().StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
-	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
-	betweenCmd.Flags().StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
-	betweenCmd.Flags().BoolVar(&betweenCmdSettings.translateListToDocuments, "chroot-list-to-documents", false, "in case the change root points to a list, treat this list as a set of documents and not as the list itself")
+	betweenCmd.SetUsageTemplate(bunt.Sprint(betweenCmdUsageTemplate))
+	cobra.AddTemplateFunc("flagGroups", func() []*pflag.FlagSet { return groups })
 }

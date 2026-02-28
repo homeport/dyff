@@ -60,7 +60,7 @@ func NewRootCmd() *cobra.Command {
 // ResetSettings resets command settings to default. This is only required by
 // the test suite to make sure that the flag parsing works correctly.
 func ResetSettings() {
-	reportOptions = defaults
+	reportOptions = initReportConfig()
 	betweenCmdSettings = betweenCmdOptions{}
 	yamlCmdSettings = yamlCmdOptions{}
 	jsonCmdSettings = jsonCmdOptions{}
@@ -94,13 +94,13 @@ func Execute() error {
 		os.Args = rearrange()
 
 		// Enable Kubernetes specific entity detection implicitly
-		reportOptions.kubernetesEntityDetection = true
+		reportOptions.KubernetesEntityDetection = true
 
 		// Add implicit exclude for metadata.managedFields as this cannot
 		// be configured via a command-line flag using KUBECTL_EXTERNAL_DIFF
 		// due to an bug/feature in kubectl that ignore command-line flags
 		// in the diff environment variable with non alphanumeric characters
-		reportOptions.excludeRegexps = append(reportOptions.excludeRegexps, "^/metadata/managedFields")
+		reportOptions.ExcludeRegexps = append(reportOptions.ExcludeRegexps, "^/metadata/managedFields")
 	}
 
 	if err := rootCmd.Execute(); err != nil {

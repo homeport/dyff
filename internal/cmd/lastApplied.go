@@ -58,7 +58,7 @@ to compare it against the current configuration.
 
 		purgeWellKnownMetadataEntries(inputFile.Documents[0])
 
-		report, err := dyff.CompareInputFiles(lastConfiguration, inputFile, dyff.IgnoreOrderChanges(reportOptions.ignoreOrderChanges))
+		report, err := dyff.CompareInputFiles(lastConfiguration, inputFile, dyff.IgnoreOrderChanges(reportOptions.IgnoreOrderChanges))
 		if err != nil {
 			return fmt.Errorf("failed to compare input files: %w", err)
 		}
@@ -72,7 +72,9 @@ func init() {
 
 	lastAppliedCmd.Flags().SortFlags = false
 
-	applyReportOptionsFlags(lastAppliedCmd)
+	for _, group := range reportOptionsFlags() {
+		lastAppliedCmd.Flags().AddFlagSet(group)
+	}
 }
 
 func lookUpLastAppliedConfiguration(inputFile ytbx.InputFile) (ytbx.InputFile, error) {

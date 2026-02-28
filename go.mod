@@ -3,6 +3,7 @@ module github.com/homeport/dyff
 go 1.25.0
 
 require (
+	github.com/caarlos0/env/v11 v11.4.0
 	github.com/gonvenience/bunt v1.4.3
 	github.com/gonvenience/idem v0.0.3
 	github.com/gonvenience/neat v1.3.17
@@ -15,6 +16,7 @@ require (
 	github.com/onsi/gomega v1.39.1
 	github.com/sergi/go-diff v1.4.0
 	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.10
 	github.com/texttheater/golang-levenshtein v1.0.1
 	go.yaml.in/yaml/v3 v3.0.4
 )
@@ -34,7 +36,6 @@ require (
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/mod v0.33.0 // indirect
