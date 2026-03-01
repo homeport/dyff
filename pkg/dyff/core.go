@@ -523,11 +523,8 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 }
 
 func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
-	removals := make([]*yamlv3.Node, 0)
-	additions := make([]*yamlv3.Node, 0)
-
-	fromLength := len(from.Content)
-	toLength := len(to.Content)
+	var removals, additions []*yamlv3.Node
+	var fromLength, toLength = len(from.Content), len(to.Content)
 
 	// Special case if both lists only contain one entry, then directly compare
 	// the two entries with each other
@@ -539,12 +536,25 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 		)
 	}
 
-	fromLookup := compare.createLookUpMap(from)
-	toLookup := compare.createLookUpMap(to)
+	var createLookUpMap = func(sequenceNode *yamlv3.Node) map[uint64][]int {
+		var result = make(map[uint64][]int, len(sequenceNode.Content))
+		for idx, entry := range sequenceNode.Content {
+			var hash = compare.calcNodeHash(entry)
+			if _, ok := result[hash]; !ok {
+				result[hash] = []int{}
+			}
+
+			result[hash] = append(result[hash], idx)
+		}
+
+		return result
+	}
+
+	fromLookup := createLookUpMap(from)
+	toLookup := createLookUpMap(to)
 
 	// Fill two lists with the hashes of the entries of each list
-	fromCommon := make([]*yamlv3.Node, 0, fromLength)
-	toCommon := make([]*yamlv3.Node, 0, toLength)
+	var fromCommon, toCommon []*yamlv3.Node
 
 	for idxPos, fromValue := range from.Content {
 		hash := compare.calcNodeHash(fromValue)
@@ -1038,20 +1048,6 @@ func isEmptyDocument(node *yamlv3.Node) bool {
 	return false
 }
 
-func (compare *compare) createLookUpMap(sequenceNode *yamlv3.Node) map[uint64][]int {
-	result := make(map[uint64][]int, len(sequenceNode.Content))
-	for idx, entry := range sequenceNode.Content {
-		hash := compare.calcNodeHash(entry)
-		if _, ok := result[hash]; !ok {
-			result[hash] = []int{}
-		}
-
-		result[hash] = append(result[hash], idx)
-	}
-
-	return result
-}
-
 func (compare *compare) basicType(node *yamlv3.Node) interface{} {
 	switch node.Kind {
 	case yamlv3.DocumentNode:
@@ -1098,7 +1094,7 @@ func (compare *compare) calcNodeHash(node *yamlv3.Node) (hash uint64) {
 		hash, err = hashstructure.Hash(compare.basicType(node), nil)
 
 	case yamlv3.ScalarNode:
-		hash, err = hashstructure.Hash(node.Value, nil)
+		hash, err = hashstructure.Hash(node.Tag+"/"+node.Value, nil)
 
 	case yamlv3.AliasNode:
 		hash = compare.calcNodeHash(followAlias(node))
