@@ -6,7 +6,7 @@ require (
 	github.com/caarlos0/env/v11 v11.4.0
 	github.com/gonvenience/bunt v1.4.3
 	github.com/gonvenience/idem v0.0.3
-	github.com/gonvenience/neat v1.3.17
+	github.com/gonvenience/neat v1.3.18
 	github.com/gonvenience/term v1.0.5
 	github.com/gonvenience/text v1.0.10
 	github.com/gonvenience/ytbx v1.4.8

@@ -326,7 +326,7 @@ type-change-1
 
 type-change-2
   ± type change from string to int
-    - 12
+    - "12"
     + 12
 
 whitespaces

@@ -29,6 +29,8 @@ github.com/gonvenience/idem v0.0.3 h1:rZ2f17JU5GHa3b5M5R2fClz0dYN3EFGhHHGo3AZz/1
 github.com/gonvenience/idem v0.0.3/go.mod h1:ChZ+RP8e30+uCBcCIzN/0di6lTO2PucjemgKfzQUQEw=
 github.com/gonvenience/neat v1.3.17 h1:S/F0XNE4sc/b3APfLDqC9xM476Or55WhXZ7F/Sy07QY=
 github.com/gonvenience/neat v1.3.17/go.mod h1:h+b8M0LFDZUKS5D4xaoPd2qTLrVpX+bDRlDJphOAS/s=
+github.com/gonvenience/neat v1.3.18 h1:WxWoXhsTHA6CStNrGgSEjGTt5MwIm+7Xs+VZmQIuXZA=
+github.com/gonvenience/neat v1.3.18/go.mod h1:DTaEyHIOjSkMa066EoZZl3k5KCG/rFGE67n0cjm/9qk=
 github.com/gonvenience/term v1.0.5 h1:PYfBH7FB1V+tuuJl4KYrqG/tzAOUnvTy8IFa9YqYrJY=
 github.com/gonvenience/term v1.0.5/go.mod h1:CYvcU7H3nE6eOP0gvGfYz4BjGJzM1GeNp+fx4IBWKLs=
 github.com/gonvenience/text v1.0.10 h1:QRqtC/KMk57K7y4jHi4HjLxf8u+tg+/tIRCS5afywNE=
