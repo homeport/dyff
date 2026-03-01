@@ -49,7 +49,7 @@ type singleField struct {
 	IdentifierFieldName string
 }
 
-var _ listItemIdentifier = &singleField{}
+var _ listItemIdentifier = (*singleField)(nil)
 
 func (sf *singleField) FindNodeByName(sequenceNode *yamlv3.Node, name string) (*yamlv3.Node, error) {
 	for _, mappingNode := range sequenceNode.Content {
@@ -67,12 +67,14 @@ func (sf *singleField) FindNodeByName(sequenceNode *yamlv3.Node, name string) (*
 }
 
 func (sf *singleField) Name(mappingNode *yamlv3.Node) (string, error) {
-	result, err := grab(mappingNode, sf.IdentifierFieldName)
-	if err != nil {
-		return "", err
+	for i := 0; i < len(mappingNode.Content); i += 2 {
+		k, v := mappingNode.Content[i], mappingNode.Content[i+1]
+		if k.Value == sf.IdentifierFieldName {
+			return followAlias(v).Value, nil
+		}
 	}
 
-	return followAlias(result).Value, nil
+	return "", fmt.Errorf("no key %q found in map", sf.IdentifierFieldName)
 }
 
 func (sf *singleField) String() string {
@@ -85,7 +87,7 @@ func (sf *singleField) String() string {
 // api version, kind, and name field to be used
 type k8sItemIdentifier struct{}
 
-var k8sItem listItemIdentifier = &k8sItemIdentifier{}
+var k8sItem listItemIdentifier = (*k8sItemIdentifier)(nil)
 
 func (i *k8sItemIdentifier) FindNodeByName(sequenceNode *yamlv3.Node, name string) (*yamlv3.Node, error) {
 	for _, mappingNode := range sequenceNode.Content {
