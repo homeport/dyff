@@ -150,6 +150,15 @@ input: |+
 				dyff.DetectRenames(true),
 			)
 		})
+
+		It("should compare against empty document for kubernetes documents", func() {
+			compareAgainstExpectedHuman(
+				assets("kubernetes/empty/from.yaml"),
+				assets("kubernetes/empty/to.yaml"),
+				assets("kubernetes/empty/expected-dyff.human"),
+				false,
+			)
+		})
 	})
 
 	Context("nicely colored human readable differences", func() {

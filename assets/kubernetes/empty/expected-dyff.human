@@ -1,0 +1,22 @@
+
+(root level)
++ one document added:
+  ---
+  # Have 2 or more documents here to "force" kubernetes documents detection
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: test
+  data:
+    my-key: value
+
+(root level)
++ one document added:
+  ---
+  apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: test2
+  data:
+    my-key: value
+

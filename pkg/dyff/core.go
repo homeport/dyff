@@ -1041,8 +1041,12 @@ func isEmptyDocument(node *yamlv3.Node) bool {
 	switch len(node.Content) {
 	case 1:
 		// special case: content is just null (scalar)
-		return node.Content[0].Kind == yamlv3.ScalarNode &&
+		isNull := node.Content[0].Kind == yamlv3.ScalarNode &&
 			node.Content[0].Tag == "!!null"
+		// special case: content is just an empty mapping (no keys)
+		isEmptyMap := node.Content[0].Kind == yamlv3.MappingNode &&
+			len(node.Content[0].Content) == 0
+		return isNull || isEmptyMap
 	}
 
 	return false
