@@ -601,10 +601,8 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 }
 
 func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdentifier, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
-	removals := make([]*yamlv3.Node, 0)
-	additions := make([]*yamlv3.Node, 0)
-
-	result := make([]Diff, 0)
+	var removals, additions []*yamlv3.Node
+	var result []Diff
 
 	// Fill two lists with the names of the entries that are common in both lists
 	fromLength := len(from.Content)

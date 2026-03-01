@@ -1023,6 +1023,19 @@ b: bar
 				Expect(results).ToNot(BeNil())
 				Expect(results.Diffs).To(HaveLen(0))
 			})
+
+			It("should work with non-standard identifier containing dots and slashes in named entry lists", func() {
+				assets()
+				from, to, err := ytbx.LoadFiles(assets("issues/issue-605/from.yml"), assets("issues/issue-605/to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := dyff.CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(results.Diffs).To(HaveLen(0))
+			})
 		})
 
 		Context("input files containing Kubernetes resources", func() {
