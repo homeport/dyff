@@ -32,7 +32,7 @@ import (
 	"github.com/gonvenience/text"
 	"github.com/gonvenience/ytbx"
 
-	"github.com/mitchellh/hashstructure"
+	"github.com/mitchellh/hashstructure/v2"
 	yamlv3 "go.yaml.in/yaml/v3"
 )
 
@@ -1091,10 +1091,10 @@ func (compare *compare) calcNodeHash(node *yamlv3.Node) (hash uint64) {
 
 	switch node.Kind {
 	case yamlv3.MappingNode, yamlv3.SequenceNode:
-		hash, err = hashstructure.Hash(compare.basicType(node), nil)
+		hash, err = hashstructure.Hash(compare.basicType(node), hashstructure.FormatV2, nil)
 
 	case yamlv3.ScalarNode:
-		hash, err = hashstructure.Hash(node.Tag+"/"+node.Value, nil)
+		hash, err = hashstructure.Hash(node.Tag+"/"+node.Value, hashstructure.FormatV2, nil)
 
 	case yamlv3.AliasNode:
 		hash = compare.calcNodeHash(followAlias(node))
