@@ -49,6 +49,7 @@ type reportConfig struct {
 	IgnoreValueChanges      bool `envDefault:"false"`
 	FormatStrings           bool `envDefault:"true"`
 	DetectRenames           bool `envDefault:"true"`
+	SimpleListDiff			bool `envDefault:"false"`
 
 	NoTableStyle          bool    `envDefault:"false"`
 	DoNotInspectCerts     bool    `envDefault:"false"`
