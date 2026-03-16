@@ -25,6 +25,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	yamlv3 "gopkg.in/yaml.v3"
+	"github.com/gonvenience/ytbx"
+	yamlv3 "go.yaml.in/yaml/v3"
 
 	"github.com/homeport/dyff/pkg/dyff"
 )
@@ -928,6 +930,18 @@ listY: [ Yo, Yo, Yo ]
 					singleDiff("/yaml/map/removed", dyff.REMOVAL, nil, "removed"),
 				}}))
 			})
+
+			It("should format strings to rule out formatting differences", func() {
+				report, err := dyff.CompareInputFiles(
+					file(assets("format-json-strings/from.yml")),
+					file(assets("format-json-strings/to.yml")),
+					dyff.FormatStrings(true),
+				)
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(report).NotTo(BeNil())
+				Expect(report.Diffs).To(HaveLen(0))
+			})
 		})
 
 		Context("change root for comparison", func() {
@@ -1009,7 +1023,7 @@ b: bar
 			})
 		})
 
-		Context("checking known issues of compare", func() {
+		Context("checking known/reported compare issues", func() {
 			It("should not return order change differences in case the named-entry list does not have unique identifiers", func() {
 				from, to, err := ytbx.LoadFiles("../../assets/issues/issue-38/from.yml", "../../assets/issues/issue-38/to.yml")
 				Expect(err).To(BeNil())
@@ -1094,6 +1108,30 @@ b: bar
 				Expect(err).ToNot(HaveOccurred())
 				Expect(results).ToNot(BeNil())
 				Expect(results.Diffs).To(HaveLen(0))
+			})
+
+			It("should work with non-standard identifier containing dots and slashes in named entry lists", func() {
+				from, to, err := ytbx.LoadFiles(assets("issues/issue-605/from.yml"), assets("issues/issue-605/to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := dyff.CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(results.Diffs).To(HaveLen(0))
+			})
+
+			It("should differentiate correctly between number as string and number", func() {
+				from, to, err := ytbx.LoadFiles(assets("issues/issue-580/from.yml"), assets("issues/issue-580/to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := dyff.CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(results.Diffs).To(HaveLen(1))
 			})
 		})
 

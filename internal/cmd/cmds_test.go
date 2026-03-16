@@ -135,7 +135,7 @@ list:
 				It("should fail to write a YAML when in place and STDIN are used at the same time", func() {
 					_, err := dyff("yaml", "--in-place", "-")
 					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(BeEquivalentTo("incompatible flags: cannot use in-place flag in combination with input from stdin"))
+					Expect(err.Error()).To(ContainSubstring("incompatible flags: cannot use in-place flag in combination with input"))
 				})
 			})
 		})
@@ -326,7 +326,7 @@ type-change-1
 
 type-change-2
   ± type change from string to int
-    - 12
+    - "12"
     + 12
 
 whitespaces

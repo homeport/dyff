@@ -1,0 +1,11 @@
+---
+foo:
+  bar: |
+    {
+      "foo": "bar",
+      "list": [1, 2, 3],
+      "mapping": {
+        "foo": "bar",
+        "bar": "foo"
+      }
+    }

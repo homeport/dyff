@@ -17,25 +17,26 @@ dyff last-applied [flags]
 ### Options
 
 ```
+  -o, --output string                       specify the output style, supported styles: human, brief, github, gitlab, gitea (default "human")
+      --use-indent-lines                    use indent lines in the output
   -i, --ignore-order-changes                ignore order changes in lists
       --ignore-whitespace-changes           ignore leading or trailing whitespace changes
+  -v, --ignore-value-changes                exclude changes in values
+      --detect-renames                      enable detection for renames (document level for Kubernetes resources) (default true)
+      --format-strings                      format strings (i.e. inline JSON) before comparison to avoid formatting differences (default true)
+  -l, --no-table-style                      do not place blocks next to each other, always use one row per text block
+  -x, --no-cert-inspection                  disable x509 certificate inspection, compare as raw text
+  -g, --use-go-patch-style                  use Go-Patch style paths in outputs
+      --minor-change-threshold float        minor change threshold (default 0.1)
+      --multi-line-context-lines int        multi-line context lines (default 10)
       --detect-kubernetes                   detect kubernetes entities (default true)
       --additional-identifier stringArray   use additional identifier candidates in named entry lists
       --filter strings                      filter reports to a subset of differences based on supplied arguments
       --exclude strings                     exclude reports from a set of differences based on supplied arguments
       --filter-regexp strings               filter reports to a subset of differences based on supplied regular expressions
       --exclude-regexp strings              exclude reports from a set of differences based on supplied regular expressions
-  -v, --ignore-value-changes                exclude changes in values
-      --detect-renames                      enable detection for renames (document level for Kubernetes resources) (default true)
-  -o, --output string                       specify the output style, supported styles: human, brief, github, gitlab, gitea (default "human")
-      --use-indent-lines                    use indent lines in the output (default true)
   -b, --omit-header                         omit the dyff summary header
   -s, --set-exit-code                       set program exit code, with 0 meaning no difference, 1 for differences detected, and 255 for program error
-  -l, --no-table-style                      do not place blocks next to each other, always use one row per text block
-  -x, --no-cert-inspection                  disable x509 certificate inspection, compare as raw text
-  -g, --use-go-patch-style                  use Go-Patch style paths in outputs
-      --minor-change-threshold float        minor change threshold (default 0.1)
-      --multi-line-context-lines int        multi-line context lines (default 4)
   -h, --help                                help for last-applied
 ```
 

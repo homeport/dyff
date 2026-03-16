@@ -1,0 +1,13 @@
+# secrets.yaml
+apiVersion: secrets/v1alpha1
+kind: SecretsAccess
+metadata:
+  name: secrets-access
+  namespace: default
+spec:
+  podSelector:
+    - app.kubernetes.io/name: argocd-repo-server
+    - app.kubernetes.io/name: argocd-server
+    - app.kubernetes.io/name: argocd-application-controller
+    - app.kubernetes.io/name: argocd-redis
+    - app.kubernetes.io/name: argocd-dex-server

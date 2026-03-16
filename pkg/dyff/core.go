@@ -21,9 +21,13 @@
 package dyff
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
+// CompareOption sets a specific compare setting for the object comparison
+type CompareOption func(*compareSettings
 
 	"github.com/gonvenience/bunt"
 	"github.com/gonvenience/idem"
@@ -32,8 +36,6 @@ import (
 	"github.com/mitchellh/hashstructure"
 	yamlv3 "gopkg.in/yaml.v3"
 )
-
-// CompareOption sets a specific compare setting for the object comparison
 type CompareOption func(*compareSettings)
 
 type compareSettings struct {
@@ -42,6 +44,7 @@ type compareSettings struct {
 	IgnoreWhitespaceChanges                  bool
 	KubernetesEntityDetection                bool
 	DetectRenames                            bool
+	FormatStrings                            bool
 	AdditionalIdentifiers                    []string
 	DetailedListDiff                         bool
 }
@@ -100,6 +103,12 @@ func DetectRenames(value bool) CompareOption {
 func DetailedListDiff(value bool) CompareOption {
 	return func(settings *compareSettings) {
 		settings.DetailedListDiff = value
+	}
+}
+
+func FormatStrings(value bool) CompareOption {
+	return func(settings *compareSettings) {
+		settings.FormatStrings = value
 	}
 }
 
@@ -522,11 +531,8 @@ func (compare *compare) sequenceNodes(path ytbx.Path, from *yamlv3.Node, to *yam
 }
 
 func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
-	removals := make([]*yamlv3.Node, 0)
-	additions := make([]*yamlv3.Node, 0)
-
-	fromLength := len(from.Content)
-	toLength := len(to.Content)
+	var removals, additions []*yamlv3.Node
+	var fromLength, toLength = len(from.Content), len(to.Content)
 
 	// Special case if both lists only contain one entry, then directly compare
 	// the two entries with each other
@@ -538,12 +544,25 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 		)
 	}
 
-	fromLookup := compare.createLookUpMap(from)
-	toLookup := compare.createLookUpMap(to)
+	var createLookUpMap = func(sequenceNode *yamlv3.Node) map[uint64][]int {
+		var result = make(map[uint64][]int, len(sequenceNode.Content))
+		for idx, entry := range sequenceNode.Content {
+			var hash = compare.calcNodeHash(entry)
+			if _, ok := result[hash]; !ok {
+				result[hash] = []int{}
+			}
+
+			result[hash] = append(result[hash], idx)
+		}
+
+		return result
+	}
+
+	fromLookup := createLookUpMap(from)
+	toLookup := createLookUpMap(to)
 
 	// Fill two lists with the hashes of the entries of each list
-	fromCommon := make([]*yamlv3.Node, 0, fromLength)
-	toCommon := make([]*yamlv3.Node, 0, toLength)
+	var fromCommon, toCommon []*yamlv3.Node
 
 	for idxPos, fromValue := range from.Content {
 		hash := compare.calcNodeHash(fromValue)
@@ -600,10 +619,8 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 }
 
 func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdentifier, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
-	removals := make([]*yamlv3.Node, 0)
-	additions := make([]*yamlv3.Node, 0)
-
-	result := make([]Diff, 0)
+	var removals, additions []*yamlv3.Node
+	var result []Diff
 
 	// Fill two lists with the names of the entries that are common in both lists
 	fromLength := len(from.Content)
@@ -700,6 +717,32 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdent
 }
 
 func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+	if compare.settings.FormatStrings {
+		var jsonFormat = func(input string) (string, bool) {
+			var tmp any
+
+			if err := json.Unmarshal([]byte(input), &tmp); err != nil {
+				return "", false
+			}
+
+			var buf bytes.Buffer
+			var encoder = json.NewEncoder(&buf)
+			encoder.SetIndent("", "  ")
+			if err := encoder.Encode(tmp); err != nil {
+				return "", false
+			}
+
+			return buf.String(), true
+		}
+
+		if fromValue, ok := jsonFormat(from.Value); ok {
+			if toValue, ok := jsonFormat(to.Value); ok {
+				from.Value = fromValue
+				to.Value = toValue
+			}
+		}
+	}
+
 	if strings.Compare(from.Value, to.Value) != 0 {
 		// leave and don't report any differences if ignore whitespaces changes is
 		// configured and it is really only a whitespace only change between the strings
@@ -707,14 +750,11 @@ func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3
 			return nil, nil
 		}
 
-		return []Diff{{
-			&path,
-			[]Detail{{
-				Kind: MODIFICATION,
-				From: from,
-				To:   to,
-			}},
-		}}, nil
+		return []Diff{{&path, []Detail{{
+			Kind: MODIFICATION,
+			From: from,
+			To:   to,
+		}}}}, nil
 	}
 
 	return nil, nil
@@ -1103,20 +1143,6 @@ func isEmptyDocument(node *yamlv3.Node) bool {
 	return false
 }
 
-func (compare *compare) createLookUpMap(sequenceNode *yamlv3.Node) map[uint64][]int {
-	result := make(map[uint64][]int, len(sequenceNode.Content))
-	for idx, entry := range sequenceNode.Content {
-		hash := compare.calcNodeHash(entry)
-		if _, ok := result[hash]; !ok {
-			result[hash] = []int{}
-		}
-
-		result[hash] = append(result[hash], idx)
-	}
-
-	return result
-}
-
 func (compare *compare) basicType(node *yamlv3.Node) interface{} {
 	switch node.Kind {
 	case yamlv3.DocumentNode:
@@ -1160,10 +1186,10 @@ func (compare *compare) calcNodeHash(node *yamlv3.Node) (hash uint64) {
 
 	switch node.Kind {
 	case yamlv3.MappingNode, yamlv3.SequenceNode:
-		hash, err = hashstructure.Hash(compare.basicType(node), nil)
+		hash, err = hashstructure.Hash(compare.basicType(node), hashstructure.FormatV2, nil)
 
 	case yamlv3.ScalarNode:
-		hash, err = hashstructure.Hash(node.Value, nil)
+		hash, err = hashstructure.Hash(node.Tag+"/"+node.Value, hashstructure.FormatV2, nil)
 
 	case yamlv3.AliasNode:
 		hash = compare.calcNodeHash(followAlias(node))
@@ -1198,22 +1224,6 @@ func sortNode(node *yamlv3.Node) {
 
 		return len(a.Content) < len(b.Content)
 	})
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
 }
 
 func isList(node *yamlv3.Node) bool {

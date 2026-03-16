@@ -1,0 +1,23 @@
+*Usage:*{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}
+  
+{{if gt (len .Aliases) 0 -}}
+*Aliases:*
+  {{.NameAndAliases}}
+{{- end}}
+
+{{if .HasExample -}}
+*Examples:*
+{{.Example}}
+{{end -}}
+
+*Flags:* {{ range $i, $name := flagGroups }}
+_  {{ .Name }}_
+{{ .FlagUsages | trimTrailingWhitespaces }}
+{{ end -}}
+
+{{if .HasAvailableInheritedFlags }}
+*Global Flags:*
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}
+{{ end}}

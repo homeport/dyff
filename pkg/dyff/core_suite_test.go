@@ -37,7 +37,7 @@ import (
 
 	"github.com/gonvenience/term"
 	"github.com/gonvenience/ytbx"
-	yamlv3 "gopkg.in/yaml.v3"
+	yamlv3 "go.yaml.in/yaml/v3"
 
 	"github.com/homeport/dyff/pkg/dyff"
 )
