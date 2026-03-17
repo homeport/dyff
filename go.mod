@@ -9,7 +9,7 @@ require (
 	github.com/gonvenience/neat v1.3.18
 	github.com/gonvenience/term v1.0.5
 	github.com/gonvenience/text v1.0.10
-	github.com/gonvenience/ytbx v1.4.8
+	github.com/gonvenience/ytbx v1.4.9
 	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/onsi/ginkgo/v2 v2.28.1
