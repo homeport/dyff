@@ -1047,6 +1047,18 @@ b: bar
 				Expect(results).ToNot(BeNil())
 				Expect(results.Diffs).To(HaveLen(1))
 			})
+
+			It("should threat an empty file as an empty document (null scalar)", func() {
+				from, to, err := ytbx.LoadFiles(assets("edge/empty/from.yml"), assets("edge/empty/to.yml"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(from).ToNot(BeNil())
+				Expect(to).ToNot(BeNil())
+
+				results, err := dyff.CompareInputFiles(from, to)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).ToNot(BeNil())
+				Expect(results.Diffs).To(HaveLen(2))
+			})
 		})
 
 		Context("input files containing Kubernetes resources", func() {
