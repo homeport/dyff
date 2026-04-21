@@ -49,6 +49,7 @@ type reportConfig struct {
 	IgnoreValueChanges      bool `envDefault:"false"`
 	FormatStrings           bool `envDefault:"true"`
 	DetectRenames           bool `envDefault:"true"`
+	SimpleListDiff			bool `envDefault:"false"`
 
 	NoTableStyle          bool    `envDefault:"false"`
 	DoNotInspectCerts     bool    `envDefault:"false"`
@@ -305,6 +306,11 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 
 	case "brief", "short", "summary":
 		reportWriter = &dyff.BriefReport{
+			Report: report,
+		}
+
+	case "changed-entries", "changed", "final", "affected":
+		reportWriter = &dyff.ChangedEntriesReport{
 			Report: report,
 		}
 
