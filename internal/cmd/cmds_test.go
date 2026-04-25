@@ -554,8 +554,8 @@ spec.replicas  (apps/v1/Deployment/test)
 			Expect(out).To(BeEquivalentTo(`
 (root level)
 + four map entries added:
-  kind: ConfigMap
   apiVersion: v1
+  kind: ConfigMap
   metadata:
     name: atlantis-repo-config
     namespace: default
