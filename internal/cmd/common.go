@@ -133,10 +133,11 @@ func reportOptionsFlags() []*pflag.FlagSet {
 // OutputWriter encapsulates the required fields to define the look and feel of
 // the output
 type OutputWriter struct {
-	PlainMode        bool
-	Restructure      bool
-	OmitIndentHelper bool
-	OutputStyle      string
+	PlainMode                  bool
+	Restructure                bool
+	OmitIndentHelper           bool
+	EnforceDocumentStartMarker bool
+	OutputStyle                string
 }
 
 func humanReadableFilename(filename string) string {
@@ -191,14 +192,20 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 
 		switch {
 		case w.PlainMode && w.OutputStyle == "json":
-			output, err := neat.NewOutputProcessor(false, false, &neat.DefaultColorSchema).ToCompactJSON(document)
+			outputProcessor := neat.NewOutputProcessorWithDefaults()
+
+			output, err := outputProcessor.ToCompactJSON(document)
 			if err != nil {
 				return err
 			}
+
 			_, _ = fmt.Fprintln(writer, output)
 
 		case w.PlainMode && w.OutputStyle == "yaml":
-			_, _ = fmt.Fprintln(writer, "---")
+			if len(inputFile.Documents) != 1 || w.EnforceDocumentStartMarker {
+				_, _ = fmt.Fprintln(writer, "---")
+			}
+
 			encoder := yamlv3.NewEncoder(writer)
 			encoder.SetIndent(2)
 
@@ -211,17 +218,30 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 			}
 
 		case w.OutputStyle == "json":
-			output, err := neat.NewOutputProcessor(!w.OmitIndentHelper, true, &neat.DefaultColorSchema).ToJSON(document)
+			outputProcessor := neat.NewOutputProcessorWithDefaults().
+				UseIndentLines(!w.OmitIndentHelper).
+				BoldKeys(true).
+				ColorSchema(neat.DefaultColorSchema)
+
+			output, err := outputProcessor.ToJSON(document)
 			if err != nil {
 				return err
 			}
+
 			_, _ = fmt.Fprintln(writer, output)
 
 		case w.OutputStyle == "yaml":
-			output, err := neat.NewOutputProcessor(!w.OmitIndentHelper, true, &neat.DefaultColorSchema).ToYAML(document)
+			outputProcessor := neat.NewOutputProcessorWithDefaults().
+				UseIndentLines(!w.OmitIndentHelper).
+				BoldKeys(true).
+				EnforceDocumentStartMarker(len(inputFile.Documents) > 1).
+				ColorSchema(neat.DefaultColorSchema)
+
+			output, err := outputProcessor.ToYAML(document)
 			if err != nil {
 				return err
 			}
+
 			_, _ = fmt.Fprintln(writer, output)
 		}
 	}

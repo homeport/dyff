@@ -6,7 +6,6 @@ metadata  (v1/Service/foo)
 
 (root level)  (v1/Service/foo-2)
 - one document removed:
-  ---
   apiVersion: v1
   kind: Service
   metadata:
@@ -17,7 +16,6 @@ metadata  (v1/Service/foo)
 
 (root level)  (v1/Service/bar)
 + one document added:
-  ---
   apiVersion: v1
   kind: Service
   metadata:
@@ -28,7 +26,6 @@ metadata  (v1/Service/foo)
 
 (root level)  (v1/Service/baz)
 + one document added:
-  ---
   apiVersion: v1
   kind: Service
   metadata:

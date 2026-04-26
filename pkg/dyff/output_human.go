@@ -619,7 +619,10 @@ func yamlString(input interface{}) (string, error) {
 		}
 	}
 
-	return neat.NewOutputProcessor(false, true, nil).ToYAML(input)
+	return neat.NewOutputProcessorWithDefaults().
+		UseIndentLines(false).
+		BoldKeys(true).
+		ToYAML(input)
 }
 
 func isMinorChange(from string, to string, minorChangeThreshold float64) bool {
