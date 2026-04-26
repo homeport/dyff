@@ -30,10 +30,12 @@ import (
 )
 
 type yamlCmdOptions struct {
-	plainMode        bool
-	restructure      bool
-	omitIndentHelper bool
-	inplace          bool
+	restructure bool
+	inplace     bool
+
+	plainMode                  bool
+	omitIndentHelper           bool
+	enforceDocumentStartMarker bool
 }
 
 var yamlCmdSettings yamlCmdOptions
@@ -50,10 +52,11 @@ Converts input document into YAML format while preserving the order of all keys.
 
 	RunE: func(cmd *cobra.Command, args []string) error {
 		writer := &OutputWriter{
-			OutputStyle:      "yaml",
-			PlainMode:        yamlCmdSettings.plainMode,
-			Restructure:      yamlCmdSettings.restructure,
-			OmitIndentHelper: yamlCmdSettings.omitIndentHelper,
+			OutputStyle:                "yaml",
+			PlainMode:                  yamlCmdSettings.plainMode,
+			Restructure:                yamlCmdSettings.restructure,
+			OmitIndentHelper:           yamlCmdSettings.omitIndentHelper,
+			EnforceDocumentStartMarker: yamlCmdSettings.enforceDocumentStartMarker,
 		}
 
 		var errs []error
@@ -88,6 +91,8 @@ func init() {
 
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
-	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
+
+	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
+	yamlCmd.Flags().BoolVar(&yamlCmdSettings.enforceDocumentStartMarker, "enforce-document-start-marker", false, "print YAML document start marker even when not necessarily required")
 }

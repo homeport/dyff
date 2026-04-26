@@ -160,31 +160,41 @@ func (c *BuntColorizer) StylizeHeader(header string) string {
 }
 
 func (c *BuntColorizer) YAMLInRedishColors(input interface{}, useIndentLines bool) (string, error) {
-	return neat.NewOutputProcessor(useIndentLines, true, &map[string]colorful.Color{
-		"keyColor":           bunt.FireBrick,
-		"indentLineColor":    {R: 0.2, G: 0, B: 0},
-		"scalarDefaultColor": bunt.LightCoral,
-		"boolColor":          bunt.LightCoral,
-		"floatColor":         bunt.LightCoral,
-		"intColor":           bunt.LightCoral,
-		"multiLineTextColor": bunt.DarkSalmon,
-		"nullColor":          bunt.Salmon,
-		"emptyStructures":    bunt.LightSalmon,
-		"dashColor":          bunt.FireBrick,
-	}).ToYAML(input)
+	return neat.NewOutputProcessorWithDefaults().
+		BoldKeys(true).
+		UseIndentLines(useIndentLines).
+		EnforceDocumentStartMarker(false).
+		ColorSchema(map[string]colorful.Color{
+			"keyColor":           bunt.FireBrick,
+			"indentLineColor":    {R: 0.2, G: 0, B: 0},
+			"scalarDefaultColor": bunt.LightCoral,
+			"boolColor":          bunt.LightCoral,
+			"floatColor":         bunt.LightCoral,
+			"intColor":           bunt.LightCoral,
+			"multiLineTextColor": bunt.DarkSalmon,
+			"nullColor":          bunt.Salmon,
+			"emptyStructures":    bunt.LightSalmon,
+			"dashColor":          bunt.FireBrick,
+		}).
+		ToYAML(input)
 }
 
 func (c *BuntColorizer) YAMLInGreenishColors(input interface{}, useIndentLines bool) (string, error) {
-	return neat.NewOutputProcessor(useIndentLines, true, &map[string]colorful.Color{
-		"keyColor":           bunt.Green,
-		"indentLineColor":    {R: 0, G: 0.2, B: 0},
-		"scalarDefaultColor": bunt.LimeGreen,
-		"boolColor":          bunt.LimeGreen,
-		"floatColor":         bunt.LimeGreen,
-		"intColor":           bunt.LimeGreen,
-		"multiLineTextColor": bunt.OliveDrab,
-		"nullColor":          bunt.Olive,
-		"emptyStructures":    bunt.DarkOliveGreen,
-		"dashColor":          bunt.Green,
-	}).ToYAML(input)
+	return neat.NewOutputProcessorWithDefaults().
+		BoldKeys(true).
+		UseIndentLines(useIndentLines).
+		EnforceDocumentStartMarker(false).
+		ColorSchema(map[string]colorful.Color{
+			"keyColor":           bunt.Green,
+			"indentLineColor":    {R: 0, G: 0.2, B: 0},
+			"scalarDefaultColor": bunt.LimeGreen,
+			"boolColor":          bunt.LimeGreen,
+			"floatColor":         bunt.LimeGreen,
+			"intColor":           bunt.LimeGreen,
+			"multiLineTextColor": bunt.OliveDrab,
+			"nullColor":          bunt.Olive,
+			"emptyStructures":    bunt.DarkOliveGreen,
+			"dashColor":          bunt.Green,
+		}).
+		ToYAML(input)
 }

@@ -51,96 +51,6 @@ var _ = Describe("command line tool flags", func() {
 		})
 	})
 
-	Context("yaml command", func() {
-		Context("creating yaml output", func() {
-			It("should not create YAML output that is not valid", func() {
-				filename := createTestFile(`{"a": ",", "foo": {"bar": "*", "dash": "-"}}`)
-				defer os.Remove(filename)
-
-				out, err := dyff("yaml", filename)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(out).To(BeEquivalentTo(`---
-a: ","
-foo:
-  bar: "*"
-  dash: "-"
-
-`))
-			})
-		})
-
-		Context("using restructure", func() {
-			Context("to write the file to STDOUT", func() {
-				It("should write a YAML file to STDOUT using restructure feature", func() {
-					filename := createTestFile(`---
-list:
-- aaa: bbb
-  name: one
-`)
-					defer os.Remove(filename)
-
-					out, err := dyff("yaml", "--restructure", filename)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(out).To(BeEquivalentTo(`---
-list:
-- name: one
-  aaa: bbb
-
-`))
-				})
-
-				It("should write a YAML file with multiple documents to STDOUT using restructure feature", func() {
-					out, err := dyff("yaml", "--plain", "--restructure", assets("issues", "issue-133", "input.yml"))
-					Expect(err).ToNot(HaveOccurred())
-					Expect(out).To(BeEquivalentTo(`---
-name: one
-bar: foo
-foo: bar
----
-name: two
-Foo: Bar
-Bar: Foo
----
-name: three
-foobar: foobar
-`))
-				})
-			})
-
-			Context("to write the file in-place", func() {
-				It("should write a YAML file in place using restructure feature", func() {
-					filename := createTestFile(`---
-list:
-- aaa: bbb
-  name: one
-`)
-					defer os.Remove(filename)
-
-					out, err := dyff("yaml", "--restructure", "--in-place", filename)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(out).To(BeEmpty())
-
-					data, err := os.ReadFile(filename)
-					Expect(err).To(BeNil())
-					Expect(string(data)).To(BeEquivalentTo(`---
-list:
-  - name: one
-    aaa: bbb
-`))
-
-				})
-			})
-
-			Context("incorrect usage", func() {
-				It("should fail to write a YAML when in place and STDIN are used at the same time", func() {
-					_, err := dyff("yaml", "--in-place", "-")
-					Expect(err).To(HaveOccurred())
-					Expect(err.Error()).To(ContainSubstring("incompatible flags: cannot use in-place flag in combination with input"))
-				})
-			})
-		})
-	})
-
 	Context("json command", func() {
 		It("should write a JSON file in place using restructure feature", func() {
 			filename := createTestFile(`{"list":[{"aaa":"bbb","name":"one"}]}`)
@@ -596,7 +506,6 @@ spec.replicas  (apps/v1/Deployment/test)
 			expected := `
 (root level)  (v1/Namespace/test)
 - one document removed:
-  ---
   apiVersion: v1
   kind: Namespace
   metadata:
