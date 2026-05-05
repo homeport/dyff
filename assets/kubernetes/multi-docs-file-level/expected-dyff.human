@@ -1,9 +1,4 @@
 
-metadata  (v1/Service/foo)
-  + one map entry added:
-    annotations:
-      foo: bar
-
 (root level)  (v1/Service/foo-2)
 - one document removed:
   apiVersion: v1
@@ -33,4 +28,9 @@ metadata  (v1/Service/foo)
   spec:
     selector:
       kubernetes.io/app: baz
+
+metadata  (v1/Service/foo)
+  + one map entry added:
+    annotations:
+      foo: bar
 
