@@ -291,6 +291,25 @@ func humanDiff(diff dyff.Diff) string {
 	return buf.String()
 }
 
+func humanDiffWithLineNumbers(diff dyff.Diff) string {
+	reporter := dyff.HumanReport{
+		Report:             dyff.Report{Diffs: []dyff.Diff{diff}},
+		Indent:             2,
+		UseIndentLines:     true,
+		DoNotInspectCerts:  false,
+		NoTableStyle:       false,
+		OmitHeader:         true,
+		IncludeLineNumbers: true,
+	}
+
+	var buf bytes.Buffer
+	if err := reporter.WriteReport(&buf); err != nil {
+		Fail(err.Error())
+	}
+
+	return buf.String()
+}
+
 func diffSyntaxDiff(diff dyff.Diff) string {
 	reporter := dyff.DiffSyntaxReport{
 		PathPrefix:            "@@",
