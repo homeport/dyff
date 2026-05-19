@@ -21,6 +21,7 @@
 package dyff_test
 
 import (
+	"bytes"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -29,6 +30,7 @@ import (
 	. "github.com/gonvenience/bunt"
 
 	"github.com/gonvenience/ytbx"
+	yamlv3 "go.yaml.in/yaml/v3"
 
 	"github.com/homeport/dyff/pkg/dyff"
 )
@@ -265,4 +267,129 @@ variables.ROUTER_TLS_PEM.options
 			)
 		})
 	})
+
+	Context("line number output", func() {
+		BeforeEach(func() {
+			SetColorSettings(OFF, OFF)
+		})
+
+		AfterEach(func() {
+			SetColorSettings(AUTO, AUTO)
+		})
+
+		It("should show both from and to line numbers for modifications", func() {
+			from := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "old-value", Line: 5}
+			to := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "new-value", Line: 8}
+
+			diff := dyff.Diff{
+				Path: path("/some/key"),
+				Details: []dyff.Detail{{
+					Kind: dyff.MODIFICATION,
+					From: from,
+					To:   to,
+				}},
+			}
+
+			output := humanDiffWithLineNumbers(diff)
+			Expect(output).To(ContainSubstring("(line 5 -> 8)"))
+			Expect(output).To(ContainSubstring("± value change"))
+		})
+
+		It("should show only to-line number for additions", func() {
+			to := &yamlv3.Node{
+				Kind: yamlv3.SequenceNode,
+				Tag:  "!!seq",
+				Line: 10,
+				Content: []*yamlv3.Node{
+					{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "new-entry"},
+				},
+			}
+
+			diff := dyff.Diff{
+				Path: path("/some/list"),
+				Details: []dyff.Detail{{
+					Kind: dyff.ADDITION,
+					From: nil,
+					To:   to,
+				}},
+			}
+
+			output := humanDiffWithLineNumbers(diff)
+			Expect(output).To(ContainSubstring("(line 10)"))
+			Expect(output).NotTo(ContainSubstring("->"))
+		})
+
+		It("should show only from-line number for removals", func() {
+			from := &yamlv3.Node{
+				Kind: yamlv3.SequenceNode,
+				Tag:  "!!seq",
+				Line: 15,
+				Content: []*yamlv3.Node{
+					{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "old-entry"},
+				},
+			}
+
+			diff := dyff.Diff{
+				Path: path("/some/list"),
+				Details: []dyff.Detail{{
+					Kind: dyff.REMOVAL,
+					From: from,
+					To:   nil,
+				}},
+			}
+
+			output := humanDiffWithLineNumbers(diff)
+			Expect(output).To(ContainSubstring("(line 15)"))
+			Expect(output).NotTo(ContainSubstring("->"))
+		})
+
+		It("should not show line numbers when nodes have no line info", func() {
+			diff := singleDiff("/some/key", dyff.MODIFICATION, "old", "new")
+
+			output := humanDiffWithLineNumbers(diff)
+			Expect(output).NotTo(ContainSubstring("(line"))
+		})
+
+		It("should not show line numbers when IncludeLineNumbers is disabled", func() {
+			from := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "old", Line: 5}
+			to := &yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "new", Line: 8}
+
+			diff := dyff.Diff{
+				Path: path("/some/key"),
+				Details: []dyff.Detail{{
+					Kind: dyff.MODIFICATION,
+					From: from,
+					To:   to,
+				}},
+			}
+
+			// humanDiff does NOT set IncludeLineNumbers
+			output := humanDiff(diff)
+			Expect(output).NotTo(ContainSubstring("(line"))
+		})
+
+		It("should show line numbers from real parsed YAML files", func() {
+			from, to := loadFiles("../../assets/testbed/from.yml", "../../assets/testbed/to.yml")
+
+			report, err := dyff.CompareInputFiles(from, to)
+			Expect(err).To(BeNil())
+			Expect(len(report.Diffs)).To(BeNumerically(">", 0))
+
+			reporter := &dyff.HumanReport{
+				Report:             report,
+				Indent:             2,
+				OmitHeader:         true,
+				IncludeLineNumbers: true,
+			}
+
+			var buf bytes.Buffer
+			Expect(reporter.WriteReport(&buf)).To(BeNil())
+
+			output := buf.String()
+			// The testbed files are real parsed YAML, so go-yaml should
+			// populate Line fields and we should see at least one "(line"
+			Expect(output).To(ContainSubstring("(line"))
+		})
+	})
 })
+

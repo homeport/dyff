@@ -52,6 +52,7 @@ type stringWriter interface {
 type HumanReport struct {
 	Report
 	Indent                int
+	IncludeLineNumbers    bool
 	UseIndentLines        bool
 	MinorChangeThreshold  float64
 	MultilineContextLines int
@@ -112,6 +113,14 @@ func (report *HumanReport) WriteReport(out io.Writer) error {
 func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Diff, useGoPatchPaths bool, showPathRoot bool) error {
 	_, _ = output.WriteString("\n")
 	_, _ = output.WriteString(pathToString(diff.Path, useGoPatchPaths, showPathRoot))
+
+	if report.IncludeLineNumbers {
+		if lineInfo := report.lineNumberInfo(diff); lineInfo != "" {
+			_, _ = output.WriteString("  ")
+			_, _ = output.WriteString(report.colorizer().DimGray(lineInfo))
+		}
+	}
+
 	_, _ = output.WriteString("\n")
 
 	blocks := make([]string, len(diff.Details))
@@ -133,6 +142,37 @@ func (report *HumanReport) generateHumanDiffOutput(output stringWriter, diff Dif
 
 	report.writeTextBlocks(output, indent, blocks...)
 	return nil
+}
+
+// lineNumberInfo returns a string describing the line numbers of the change
+// based on the From and To nodes of the first detail in the diff.
+func (report *HumanReport) lineNumberInfo(diff Diff) string {
+	if len(diff.Details) == 0 {
+		return ""
+	}
+
+	detail := diff.Details[0]
+	fromLine := 0
+	toLine := 0
+
+	if detail.From != nil && detail.From.Line > 0 {
+		fromLine = detail.From.Line
+	}
+
+	if detail.To != nil && detail.To.Line > 0 {
+		toLine = detail.To.Line
+	}
+
+	switch {
+	case fromLine > 0 && toLine > 0:
+		return fmt.Sprintf("(line %d -> %d)", fromLine, toLine)
+	case fromLine > 0:
+		return fmt.Sprintf("(line %d)", fromLine)
+	case toLine > 0:
+		return fmt.Sprintf("(line %d)", toLine)
+	default:
+		return ""
+	}
 }
 
 // generateHumanDetailOutput only serves as a dispatcher to call the correct sub function for the respective type of change
