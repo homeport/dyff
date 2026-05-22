@@ -55,6 +55,7 @@ type reportConfig struct {
 	UseGoPatchPaths       bool    `envDefault:"false"`
 	MinorChangeThreshold  float64 `envDefault:"0.1"`
 	MultilineContextLines int     `envDefault:"4"`
+	IncludeLineNumbers    bool    `envDefault:"false"`
 
 	KubernetesEntityDetection bool `envDefault:"true"`
 	AdditionalIdentifiers     []string
@@ -108,6 +109,7 @@ func reportOptionsFlags() []*pflag.FlagSet {
 			fs.BoolVarP(&reportOptions.UseGoPatchPaths, "use-go-patch-style", "g", reportOptions.UseGoPatchPaths, "use Go-Patch style paths in outputs")
 			fs.Float64VarP(&reportOptions.MinorChangeThreshold, "minor-change-threshold", "", reportOptions.MinorChangeThreshold, "minor change threshold")
 			fs.IntVarP(&reportOptions.MultilineContextLines, "multi-line-context-lines", "", reportOptions.MultilineContextLines, "multi-line context lines")
+			fs.BoolVarP(&reportOptions.IncludeLineNumbers, "line-numbers", "n", reportOptions.IncludeLineNumbers, "include line numbers in diff output")
 		}),
 
 		flagSet("Filter Options", func(fs *pflag.FlagSet) {
@@ -256,6 +258,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 		reportWriter = &dyff.HumanReport{
 			Report:                report,
 			Indent:                2,
+			IncludeLineNumbers:    reportOptions.IncludeLineNumbers,
 			UseIndentLines:        reportOptions.UseIndentLines,
 			DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
 			NoTableStyle:          reportOptions.NoTableStyle,
@@ -274,6 +277,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				IncludeLineNumbers:    reportOptions.IncludeLineNumbers,
 				UseIndentLines:        reportOptions.UseIndentLines,
 				DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
 				NoTableStyle:          true,
@@ -293,6 +297,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				IncludeLineNumbers:    reportOptions.IncludeLineNumbers,
 				UseIndentLines:        reportOptions.UseIndentLines,
 				DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
 				NoTableStyle:          true,
@@ -312,6 +317,7 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 			HumanReport: dyff.HumanReport{
 				Report:                report,
 				Indent:                0,
+				IncludeLineNumbers:    reportOptions.IncludeLineNumbers,
 				UseIndentLines:        reportOptions.UseIndentLines,
 				DoNotInspectCerts:     reportOptions.DoNotInspectCerts,
 				NoTableStyle:          true,
