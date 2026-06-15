@@ -31,6 +31,7 @@ import (
 type jsonCmdOptions struct {
 	plainMode        bool
 	restructure      bool
+	sort             bool
 	omitIndentHelper bool
 	inplace          bool
 }
@@ -51,6 +52,7 @@ Converts input document into JSON format while preserving the order of all keys.
 			OutputStyle:      "json",
 			PlainMode:        jsonCmdSettings.plainMode,
 			Restructure:      jsonCmdSettings.restructure,
+			SortKeys:         jsonCmdSettings.sort,
 			OmitIndentHelper: jsonCmdSettings.omitIndentHelper,
 		}
 
@@ -86,6 +88,7 @@ func init() {
 
 	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
 	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
+	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.sort, "sort", "s", false, "sort map keys alphabetically (no-op for JSON, which always sorts)")
 	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
 	jsonCmd.Flags().BoolVarP(&jsonCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
 }
