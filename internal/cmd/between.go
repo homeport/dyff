@@ -38,7 +38,7 @@ var betweenCmdUsageTemplate string
 type betweenCmdOptions struct {
 	swap                     bool
 	translateListToDocuments bool
-	sorted                   bool
+	sort                     bool
 	chroot                   string
 	chrootFrom               string
 	chrootTo                 string
@@ -71,9 +71,9 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			return fmt.Errorf("failed to load input files: %w", err)
 		}
 
-		// If the --sorted flag is set, sort mapping keys in both input files
+		// If the --sort flag is set, sort mapping keys in both input files
 		// to ensure consistent key ordering before comparison.
-		if betweenCmdSettings.sorted {
+		if betweenCmdSettings.sort {
 			for i := range from.Documents {
 				sortYAMLKeys(from.Documents[i])
 			}
@@ -145,7 +145,7 @@ func init() {
 	var groups = []*pflag.FlagSet{
 		flagSet("Input Documents Handling", func(fs *pflag.FlagSet) {
 			fs.BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
-			fs.BoolVar(&betweenCmdSettings.sorted, "sorted", false, "Sort YAML map keys alphabetically before comparison to eliminate false order-change entries")
+			fs.BoolVar(&betweenCmdSettings.sort, "sort", false, "Sort YAML map keys alphabetically before comparison to eliminate false order-change entries")
 			fs.StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
 			fs.StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
 			fs.StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")

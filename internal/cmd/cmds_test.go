@@ -563,8 +563,8 @@ foo: bar
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("should sort keys and avoid false order changes with --sorted flag", func() {
-			out, err := dyff("between", "--omit-header", "--sorted",
+		It("should sort keys and avoid false order changes with --sort flag", func() {
+			out, err := dyff("between", "--omit-header", "--sort",
 				assets("issues", "issue-669", "between", "from.yml"),
 				assets("issues", "issue-669", "between", "to.yml"),
 			)
