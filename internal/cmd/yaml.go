@@ -31,6 +31,7 @@ import (
 
 type yamlCmdOptions struct {
 	restructure bool
+	sort        bool
 	inplace     bool
 
 	plainMode                  bool
@@ -55,6 +56,7 @@ Converts input document into YAML format while preserving the order of all keys.
 			OutputStyle:                "yaml",
 			PlainMode:                  yamlCmdSettings.plainMode,
 			Restructure:                yamlCmdSettings.restructure,
+			SortKeys:                   yamlCmdSettings.sort,
 			OmitIndentHelper:           yamlCmdSettings.omitIndentHelper,
 			EnforceDocumentStartMarker: yamlCmdSettings.enforceDocumentStartMarker,
 		}
@@ -91,6 +93,7 @@ func init() {
 
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.plainMode, "plain", "p", false, "output in plain style without any highlighting")
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.restructure, "restructure", "r", false, "restructure map keys in reasonable order")
+	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.sort, "sort", "s", false, "sort map keys alphabetically")
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.inplace, "in-place", "i", false, "overwrite input file with output of this command")
 
 	yamlCmd.Flags().BoolVarP(&yamlCmdSettings.omitIndentHelper, "omit-indent-helper", "O", false, "omit indent helper lines in highlighted output")
