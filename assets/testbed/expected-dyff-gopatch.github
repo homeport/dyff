@@ -1,51 +1,11 @@
 
-@@ /nil-tests/something @@
-# document #1
-! ± type change from <nil> to string
-- <nil>
-+ value
-
-@@ /nil-tests/to-be-reset @@
-# document #1
-! ± type change from string to <nil>
-- value
-+ <nil>
-
-@@ /minor/change @@
-# document #1
-! ± value change
-- VaLue
-+ Value
-
-@@ /string-lengths/textA @@
-# document #1
-! ± value change
-- very long text
-+ shrt txt
-
-@@ /string-lengths/textB @@
-# document #1
-! ± value change
-- shrt txt
-+ very long text
-
-@@ /orderchanges @@
-# document #1
-! ⇆ order changed
-- one, two, four, five, three, six
-+ one, two, three, four, five, six
-
-@@ /multiline @@
-# document #1
-! ± value change in multiline text (one insert, one deletion)
-- Yes,
-- strings
-- can
-- have
-- multiple
-+ Yes, strings
-+ can have multiple
-  lines
+@@ / @@
+# document #2
+! - two list entries removed:
+- - name: one
+- - name: two
+! + one list entry added:
++ - name: three
 
 @@ /certs/data @@
 # document #1
@@ -76,11 +36,51 @@
 + Issuer: www.example.com, My Company Name
 + Serial Number: 12453678034067864896 (0xacd45a3087b33d40)
 
-@@ / @@
-# document #2
-! - two list entries removed:
-- - name: one
-- - name: two
-! + one list entry added:
-+ - name: three
+@@ /minor/change @@
+# document #1
+! ± value change
+- VaLue
++ Value
+
+@@ /multiline @@
+# document #1
+! ± value change in multiline text (one insert, one deletion)
+- Yes,
+- strings
+- can
+- have
+- multiple
++ Yes, strings
++ can have multiple
+  lines
+
+@@ /nil-tests/something @@
+# document #1
+! ± type change from <nil> to string
+- <nil>
++ value
+
+@@ /nil-tests/to-be-reset @@
+# document #1
+! ± type change from string to <nil>
+- value
++ <nil>
+
+@@ /orderchanges @@
+# document #1
+! ⇆ order changed
+- one, two, four, five, three, six
++ one, two, three, four, five, six
+
+@@ /string-lengths/textA @@
+# document #1
+! ± value change
+- very long text
++ shrt txt
+
+@@ /string-lengths/textB @@
+# document #1
+! ± value change
+- shrt txt
++ very long text
 
