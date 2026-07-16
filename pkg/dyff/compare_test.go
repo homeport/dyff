@@ -1187,5 +1187,19 @@ b: bar
 				}
 			})
 		})
+
+		Context("when FormatStrings is enabled", func() {
+			It("should report no differences when comparing identical named-entry lists", func() {
+				doc := yml(`
+spec:
+  items:
+  - id: "1"
+  - id: "2"
+`)
+				results, err := compare(doc, doc, dyff.FormatStrings(true))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(results).To(BeEmpty())
+			})
+		})
 	})
 })
