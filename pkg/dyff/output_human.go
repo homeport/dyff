@@ -396,7 +396,7 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 				if upper <= lower {
 					val = strings.Join(lines, "\n")
 				} else {
-					val = fmt.Sprintf("%s\n\n[%s unchanged)]\n\n%s",
+					val = fmt.Sprintf("%s\n\n[%s unchanged]\n\n%s",
 						strings.Join(lines[:lower], "\n"),
 						text.Plural((upper-lower), "line"),
 						strings.Join(lines[upper:], "\n"))
