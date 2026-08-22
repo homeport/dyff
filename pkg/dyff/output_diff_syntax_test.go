@@ -21,6 +21,8 @@
 package dyff_test
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -137,6 +139,37 @@ input: |+
 				"../../assets/testbed/expected-dyff-gopatch.github",
 				true,
 			)
+		})
+
+		It("should use compact output when OnlyChangedLines is enabled", func() {
+			content := singleDiff("/some/yaml/structure/string", dyff.MODIFICATION, "old", "new")
+
+			reporter := &dyff.DiffSyntaxReport{
+				PathPrefix:            "@@",
+				RootDescriptionPrefix: "#",
+				ChangeTypePrefix:      "!",
+				OnlyChangedLines:      true,
+				HumanReport: dyff.HumanReport{
+					Report:          dyff.Report{Diffs: []dyff.Diff{content}},
+					Indent:          0,
+					UseIndentLines:  true,
+					NoTableStyle:    true,
+					OmitHeader:      true,
+					PrefixMultiline: true,
+				},
+			}
+
+			var buf bytes.Buffer
+			writer := bufio.NewWriter(&buf)
+			Expect(reporter.WriteReport(writer)).To(Succeed())
+			Expect(writer.Flush()).To(Succeed())
+
+			out := buf.String()
+			Expect(out).To(ContainSubstring("@@ some.yaml.structure.string @@"))
+			Expect(out).To(ContainSubstring("! ± value change"))
+			// underlying implementation prints Go node structs, just ensure values appear
+			Expect(out).To(ContainSubstring("old"))
+			Expect(out).To(ContainSubstring("new"))
 		})
 	})
 
