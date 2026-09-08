@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/caarlos0/env/v11"
@@ -135,6 +136,7 @@ func reportOptionsFlags() []*pflag.FlagSet {
 type OutputWriter struct {
 	PlainMode                  bool
 	Restructure                bool
+	SortKeys                   bool
 	OmitIndentHelper           bool
 	EnforceDocumentStartMarker bool
 	OutputStyle                string
@@ -188,6 +190,10 @@ func (w *OutputWriter) write(writer io.Writer, filename string) error {
 	for _, document := range inputFile.Documents {
 		if w.Restructure {
 			ytbx.RestructureObject(document)
+		}
+
+		if w.SortKeys {
+			sortYAMLKeys(document)
 		}
 
 		switch {
@@ -348,4 +354,45 @@ func writeReport(cmd *cobra.Command, report dyff.Report) error {
 	}
 
 	return nil
+}
+
+// sortYAMLKeys recursively sorts mapping node keys alphabetically in place.
+// MappingNode.Content is a flat [key, val, key, val, ...] slice; this function
+// reorders pairs so that keys are in ascending alphabetical order.
+func sortYAMLKeys(node *yamlv3.Node) {
+	switch node.Kind {
+	case yamlv3.DocumentNode:
+		for _, content := range node.Content {
+			sortYAMLKeys(content)
+		}
+
+	case yamlv3.MappingNode:
+		// Collect key-value pairs.
+		type pair struct {
+			key   *yamlv3.Node
+			value *yamlv3.Node
+		}
+		pairs := make([]pair, 0, len(node.Content)/2)
+		for i := 0; i < len(node.Content); i += 2 {
+			pairs = append(pairs, pair{key: node.Content[i], value: node.Content[i+1]})
+		}
+		// Sort by key name.
+		sort.SliceStable(pairs, func(i, j int) bool {
+			return pairs[i].key.Value < pairs[j].key.Value
+		})
+		// Rebuild Content slice.
+		for i, p := range pairs {
+			node.Content[i*2] = p.key
+			node.Content[i*2+1] = p.value
+		}
+		// Recurse into values.
+		for _, p := range pairs {
+			sortYAMLKeys(p.value)
+		}
+
+	case yamlv3.SequenceNode:
+		for i := range node.Content {
+			sortYAMLKeys(node.Content[i])
+		}
+	}
 }
