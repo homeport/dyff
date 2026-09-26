@@ -562,5 +562,20 @@ foo: bar
 			_, err := dyff("last-applied", kubeYAML)
 			Expect(err).To(HaveOccurred())
 		})
+
+		It("should sort keys and avoid false order changes with --sort flag", func() {
+			out, err := dyff("between", "--omit-header", "--sort",
+				assets("issues", "issue-669", "between", "from.yml"),
+				assets("issues", "issue-669", "between", "to.yml"),
+			)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+m_key
+  ± value change
+    - 3
+    + 4
+
+`))
+		})
 	})
 })
