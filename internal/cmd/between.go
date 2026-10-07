@@ -38,6 +38,7 @@ var betweenCmdUsageTemplate string
 type betweenCmdOptions struct {
 	swap                     bool
 	translateListToDocuments bool
+	sort                     bool
 	chroot                   string
 	chrootFrom               string
 	chrootTo                 string
@@ -68,6 +69,17 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 		from, to, err := ytbx.LoadFiles(fromLocation, toLocation)
 		if err != nil {
 			return fmt.Errorf("failed to load input files: %w", err)
+		}
+
+		// If the --sort flag is set, sort mapping keys in both input files
+		// to ensure consistent key ordering before comparison.
+		if betweenCmdSettings.sort {
+			for i := range from.Documents {
+				sortYAMLKeys(from.Documents[i])
+			}
+			for i := range to.Documents {
+				sortYAMLKeys(to.Documents[i])
+			}
 		}
 
 		// If the main change root flag is set, this (re-)sets the individual change roots of the two input files
@@ -133,6 +145,7 @@ func init() {
 	var groups = []*pflag.FlagSet{
 		flagSet("Input Documents Handling", func(fs *pflag.FlagSet) {
 			fs.BoolVar(&betweenCmdSettings.swap, "swap", false, "Swap 'from' and 'to' for comparison")
+			fs.BoolVar(&betweenCmdSettings.sort, "sort", false, "Sort YAML map keys alphabetically before comparison to eliminate false order-change entries")
 			fs.StringVar(&betweenCmdSettings.chroot, "chroot", "", "change the root level of the input file to another point in the document")
 			fs.StringVar(&betweenCmdSettings.chrootFrom, "chroot-of-from", "", "only change the root level of the from input file")
 			fs.StringVar(&betweenCmdSettings.chrootTo, "chroot-of-to", "", "only change the root level of the to input file")
