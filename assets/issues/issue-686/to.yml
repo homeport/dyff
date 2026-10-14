@@ -1,0 +1,15 @@
+data:
+  values.yaml: |
+    image:
+      registry: custom-registry
+    service:
+      port: 80
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 10
+      metrics: {}
+    resources:
+      limits:
+        cpu: 100m
+    priorityClassName: my-priority
