@@ -131,6 +131,24 @@ name: three
 foobar: foobar
 `))
 		})
+
+		It("should sort keys alphabetically with --sort flag", func() {
+			out, err := dyff("yaml", "--plain", "--sort", assets("issues", "issue-669", "input.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`a_key: value_a
+list:
+  - a_item: 2
+    z_item: 1
+  - a_item: 3
+    z_item: 4
+m_key: value_m
+nested:
+  a_nested: 2
+  m_nested: 3
+  z_nested: 1
+z_key: value_z
+`))
+		})
 	})
 
 	Context("writing in-place", func() {
