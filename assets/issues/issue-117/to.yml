@@ -1,0 +1,14 @@
+---
+service:
+  listeners:
+  - protocol: http
+    port: 8080
+    allowed_origins:
+    - example.com
+    - example.org
+    - example.net
+  - protocol: grpc
+    port: 9090
+    max_connections: 100
+    allowed_origins:
+    - example.edu

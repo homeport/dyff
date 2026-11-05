@@ -485,6 +485,29 @@ spec.replicas  (apps/v1/Deployment/test)
 `))
 		})
 
+		It("should compare list entries by position with the index list compare style", func() {
+			out, err := dyff("between", "--omit-header", "--list-compare-style=index", assets("issues", "issue-117", "from.yml"), assets("issues", "issue-117", "to.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(`
+service.listeners.0.allowed_origins
+  + one list entry added:
+    - example.com
+
+`))
+		})
+
+		It("should report whole list entries with the safe list compare style", func() {
+			out, err := dyff("between", "--omit-header", "--list-compare-style=safe", assets("issues", "issue-117", "from.yml"), assets("issues", "issue-117", "to.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(ContainSubstring("service.listeners\n  - one list entry removed:"))
+		})
+
+		It("should fail for an unsupported list compare style", func() {
+			_, err := dyff("between", "--list-compare-style=unsupported", assets("issues", "issue-117", "from.yml"), assets("issues", "issue-117", "to.yml"))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(BeEquivalentTo(`unsupported list compare style "unsupported", supported styles: safe, index`))
+		})
+
 		It("should accept additional identifier candidates for named-entry list processing", func() {
 			out, err := dyff("between", "--additional-identifier=branch", "--ignore-order-changes", "--omit-header", assets("issues", "issue-243", "from.yml"), assets("issues", "issue-243", "to.yml"))
 			Expect(err).ToNot(HaveOccurred())
