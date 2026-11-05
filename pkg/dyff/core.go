@@ -692,8 +692,13 @@ func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3
 
 		if fromValue, ok := jsonFormat(from.Value); ok {
 			if toValue, ok := jsonFormat(to.Value); ok {
-				from.Value = fromValue
-				to.Value = toValue
+				fromCopy := *from
+				fromCopy.Value = fromValue
+				from = &fromCopy
+
+				toCopy := *to
+				toCopy.Value = toValue
+				to = &toCopy
 			}
 		}
 	}
