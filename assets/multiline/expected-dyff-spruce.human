@@ -40,13 +40,6 @@
 
 [1mfiles[0m.[1;3mcomplex[0m.[1mcontent[0m
   [38;2;199;196;63m± value change in multiline text (two inserts, two deletions)[0m
-  [38;2;105;105;105m    Begin line 1[0m
-  [38;2;105;105;105m    Begin line 2[0m
-  [38;2;105;105;105m    Begin line 3[0m
-  [38;2;105;105;105m    Begin line 4[0m
-  [38;2;105;105;105m    [0m
-  [38;2;105;105;105m    [four lines unchanged)][0m
-  [38;2;105;105;105m    [0m
   [38;2;105;105;105m    PreChange line 1[0m
   [38;2;105;105;105m    PreChange line 2[0m
   [38;2;105;105;105m    PreChange line 3[0m
@@ -86,12 +79,5 @@
   [38;2;105;105;105m    PostDelete line 2[0m
   [38;2;105;105;105m    PostDelete line 3[0m
   [38;2;105;105;105m    PostDelete line 4[0m
-  [38;2;105;105;105m    [0m
-  [38;2;105;105;105m    [22 lines unchanged)][0m
-  [38;2;105;105;105m    [0m
-  [38;2;105;105;105m    End line 1[0m
-  [38;2;105;105;105m    End line 2[0m
-  [38;2;105;105;105m    End line 3[0m
-  [38;2;105;105;105m    End line 4[0m
 
 

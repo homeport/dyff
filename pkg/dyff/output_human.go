@@ -368,7 +368,7 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 		var ins, del int
 		var buf bytes.Buffer
 		multilineContextLines := report.MultilineContextLines
-		for _, d := range diff {
+		for i, d := range diff {
 			// color and format each diff by type
 			switch d.Type {
 			case diffmatchpatch.DiffInsert:
@@ -384,6 +384,24 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 				if multilineContextLines <= 0 || len(d.Text) == 0 {
 					continue
 				}
+
+				// Only keep context adjacent to actual changes (issue #686). Leading equal
+				// hunks used to also emit the start of the file; trailing ones the end.
+				hasChangeBefore := false
+				for j := 0; j < i; j++ {
+					if diff[j].Type != diffmatchpatch.DiffEqual {
+						hasChangeBefore = true
+						break
+					}
+				}
+				hasChangeAfter := false
+				for j := i + 1; j < len(diff); j++ {
+					if diff[j].Type != diffmatchpatch.DiffEqual {
+						hasChangeAfter = true
+						break
+					}
+				}
+
 				// add amount of unchanged lines as configured
 				lines := strings.Split(d.Text, "\n")
 				lower := int(math.Min(float64(len(lines)), float64(multilineContextLines)))
@@ -393,9 +411,17 @@ func (report *HumanReport) writeStringDiff(output stringWriter, from string, to 
 					upper--
 				}
 				var val string
-				if upper <= lower {
+				switch {
+				case upper <= lower:
 					val = strings.Join(lines, "\n")
-				} else {
+				case !hasChangeBefore && hasChangeAfter:
+					// Leading equal hunk: context before the following change only.
+					val = strings.Join(lines[upper:], "\n")
+				case hasChangeBefore && !hasChangeAfter:
+					// Trailing equal hunk: context after the preceding change only.
+					val = strings.Join(lines[:lower], "\n")
+				default:
+					// Equal hunk between changes: keep both ends.
 					val = fmt.Sprintf("%s\n\n[%s unchanged)]\n\n%s",
 						strings.Join(lines[:lower], "\n"),
 						text.Plural((upper-lower), "line"),
