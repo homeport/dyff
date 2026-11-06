@@ -1,45 +1,8 @@
 
-/nil-tests/something  (document #1)
-  ± type change from <nil> to string
-    - <nil>
-    + value
-
-/nil-tests/to-be-reset  (document #1)
-  ± type change from string to <nil>
-    - value
-    + <nil>
-
-/minor/change  (document #1)
-  ± value change
-    - VaLue
-    + Value
-
-/string-lengths/textA  (document #1)
-  ± value change
-    - very long text
-    + shrt txt
-
-/string-lengths/textB  (document #1)
-  ± value change
-    - shrt txt
-    + very long text
-
-/orderchanges  (document #1)
-  ⇆ order changed
-    - one, two, four, five, three, six
-    + one, two, three, four, five, six
-
-/multiline  (document #1)
-  ± value change in multiline text (one insert, one deletion)
-    - Yes,
-    - strings
-    - can
-    - have
-    - multiple
-    + Yes, strings
-    + can have multiple
-      lines
-
+/  (document #2)
+- two list entries removed:   + one list entry added:
+  - name: one                   - name: three
+  - name: two
 
 /certs/data  (document #1)
   ± certificate change
@@ -72,8 +35,45 @@
 
 
 
-/  (document #2)
-- two list entries removed:   + one list entry added:
-  - name: one                   - name: three
-  - name: two
+/minor/change  (document #1)
+  ± value change
+    - VaLue
+    + Value
+
+/multiline  (document #1)
+  ± value change in multiline text (one insert, one deletion)
+    - Yes,
+    - strings
+    - can
+    - have
+    - multiple
+    + Yes, strings
+    + can have multiple
+      lines
+
+
+/nil-tests/something  (document #1)
+  ± type change from <nil> to string
+    - <nil>
+    + value
+
+/nil-tests/to-be-reset  (document #1)
+  ± type change from string to <nil>
+    - value
+    + <nil>
+
+/orderchanges  (document #1)
+  ⇆ order changed
+    - one, two, four, five, three, six
+    + one, two, three, four, five, six
+
+/string-lengths/textA  (document #1)
+  ± value change
+    - very long text
+    + shrt txt
+
+/string-lengths/textB  (document #1)
+  ± value change
+    - shrt txt
+    + very long text
 
