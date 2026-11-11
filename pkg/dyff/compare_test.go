@@ -893,6 +893,105 @@ b: bar
 			})
 		})
 
+		Context("Given lists without identifiers and the index list compare style", func() {
+			var (
+				indexStyle = dyff.CompareListsBy(dyff.ListCompareStyleIndex)
+
+				from = `l: [ {x: 1, m: [ a, b ]}, {x: 2, m: [ c ]} ]`
+				to   = `l: [ {x: 1, m: [ z, a, b ]}, {x: 2, m: [ c ]} ]`
+			)
+
+			It("should compare entries by position and point to the changed nested value", func() {
+				results, err := compare(yml(from), yml(to), indexStyle)
+				Expect(err).To(BeNil())
+				Expect(results).To(HaveLen(1))
+				Expect(results[0]).To(BeSameDiffAs(singleDiff("/l/0/m", dyff.ADDITION, nil, list(`[ z ]`))))
+			})
+
+			It("should keep reporting whole entries with the default style", func() {
+				results, err := compare(yml(from), yml(to))
+				Expect(err).To(BeNil())
+				Expect(results).To(HaveLen(1))
+				Expect(results[0]).To(BeSameDiffAs(dyff.Diff{
+					Path: path("/l"),
+					Details: []dyff.Detail{
+						{Kind: dyff.REMOVAL, From: list(`[ {x: 1, m: [ a, b ]} ]`)},
+						{Kind: dyff.ADDITION, To: list(`[ {x: 1, m: [ z, a, b ]} ]`)},
+					},
+				}))
+			})
+
+			It("should treat the safe style the same as the default", func() {
+				explicit, err := compare(yml(from), yml(to), dyff.CompareListsBy(dyff.ListCompareStyleSafe))
+				Expect(err).To(BeNil())
+
+				implicit, err := compare(yml(from), yml(to))
+				Expect(err).To(BeNil())
+
+				Expect(explicit).To(HaveLen(len(implicit)))
+				Expect(explicit[0]).To(BeSameDiffAs(implicit[0]))
+			})
+
+			It("should reach changes in lists nested in lists", func() {
+				results, err := compare(
+					yml(`l: [ {i: [ {y: 1, m: [ a ]}, {y: 2} ]}, {i: [ {y: 3} ]} ]`),
+					yml(`l: [ {i: [ {y: 1, m: [ z, a ]}, {y: 2} ]}, {i: [ {y: 3} ]} ]`),
+					indexStyle,
+				)
+
+				Expect(err).To(BeNil())
+				Expect(results).To(HaveLen(1))
+				Expect(results[0]).To(BeSameDiffAs(singleDiff("/l/0/i/0/m", dyff.ADDITION, nil, list(`[ z ]`))))
+			})
+
+			It("should fall back to the default behavior for lists with different length", func() {
+				results, err := compare(
+					yml(`l: [ {x: 1}, {x: 2} ]`),
+					yml(`l: [ {x: 0}, {x: 1}, {x: 2} ]`),
+					indexStyle,
+				)
+
+				Expect(err).To(BeNil())
+				Expect(results).To(HaveLen(1))
+				Expect(results[0]).To(BeSameDiffAs(singleDiff("/l", dyff.ADDITION, nil, list(`[ {x: 0} ]`))))
+			})
+
+			It("should fall back to the default behavior for lists of scalar values", func() {
+				results, err := compare(
+					yml(`l: [ a, b, c ]`),
+					yml(`l: [ a, z, b, c ]`),
+					indexStyle,
+				)
+
+				Expect(err).To(BeNil())
+				Expect(results).To(HaveLen(1))
+				Expect(results[0]).To(BeSameDiffAs(singleDiff("/l", dyff.ADDITION, nil, list(`[ z ]`))))
+			})
+
+			It("should fall back to the default behavior for entries of different kinds", func() {
+				results, err := compare(
+					yml(`l: [ {x: 1}, foo ]`),
+					yml(`l: [ {x: 1}, bar ]`),
+					indexStyle,
+				)
+
+				Expect(err).To(BeNil())
+				Expect(results).To(HaveLen(1))
+				Expect(results[0].Path.String()).To(Equal("/l"))
+			})
+
+			It("should not override identifier based matching", func() {
+				results, err := compare(
+					yml(`l: [ {name: A, v: 1}, {name: B, v: 2} ]`),
+					yml(`l: [ {name: B, v: 2}, {name: A, v: 3} ]`),
+					indexStyle,
+				)
+
+				Expect(err).To(BeNil())
+				Expect(results).To(ContainElement(BeSameDiffAs(singleDiff("/l/name=A/v", dyff.MODIFICATION, 1, 3))))
+			})
+		})
+
 		Context("two YAML structures with Kubernetes lists", func() {
 			It("should identify individual list entries based on the nested name field in the respective entry metadata", func() {
 				from, to := loadFiles(

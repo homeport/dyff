@@ -39,7 +39,24 @@ import (
 // CompareOption sets a specific compare setting for the object comparison
 type CompareOption func(*compareSettings)
 
+// ListCompareStyle defines how lists without a usable identifier are compared
+type ListCompareStyle string
+
+const (
+	// ListCompareStyleSafe only compares list entries with each other if it can
+	// be assured that they belong together. For lists without identifiers,
+	// this is only the case if both lists contain exactly one entry.
+	ListCompareStyleSafe ListCompareStyle = "safe"
+
+	// ListCompareStyleIndex compares entries by their position in lists without
+	// identifiers, if both lists have the same length and all entries are maps
+	// or lists. The order of the entries is assumed to be relevant, so a
+	// reordered list is reported as modified entries.
+	ListCompareStyleIndex ListCompareStyle = "index"
+)
+
 type compareSettings struct {
+	ListCompareStyle                         ListCompareStyle
 	NonStandardIdentifierGuessCountThreshold int
 	IgnoreOrderChanges                       bool
 	IgnoreWhitespaceChanges                  bool
@@ -68,6 +85,13 @@ func AdditionalIdentifiers(fieldNames ...string) CompareOption {
 func NonStandardIdentifierGuessCountThreshold(nonStandardIdentifierGuessCountThreshold int) CompareOption {
 	return func(settings *compareSettings) {
 		settings.NonStandardIdentifierGuessCountThreshold = nonStandardIdentifierGuessCountThreshold
+	}
+}
+
+// CompareListsBy sets the compare style for lists without a usable identifier
+func CompareListsBy(style ListCompareStyle) CompareOption {
+	return func(settings *compareSettings) {
+		settings.ListCompareStyle = style
 	}
 }
 
@@ -536,6 +560,24 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 		)
 	}
 
+	if compare.settings.ListCompareStyle == ListCompareStyleIndex && indexComparable(from, to) {
+		var result []Diff
+		for idx := range from.Content {
+			diffs, err := compare.objects(
+				ytbx.NewPathWithIndexedListElement(path, idx),
+				followAlias(from.Content[idx]),
+				followAlias(to.Content[idx]),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			result = append(result, diffs...)
+		}
+
+		return result, nil
+	}
+
 	var createLookUpMap = func(sequenceNode *yamlv3.Node) map[uint64][]int {
 		var result = make(map[uint64][]int, len(sequenceNode.Content))
 		for idx, entry := range sequenceNode.Content {
@@ -608,6 +650,23 @@ func (compare *compare) simpleLists(path ytbx.Path, from *yamlv3.Node, to *yamlv
 	}
 
 	return packChangesAndAddToResult([]Diff{}, path, orderChanges, additions, removals)
+}
+
+// indexComparable checks whether two lists can be compared by position: same
+// length, and each pair of entries is either two maps or two lists.
+func indexComparable(from *yamlv3.Node, to *yamlv3.Node) bool {
+	if len(from.Content) != len(to.Content) || len(from.Content) < 2 {
+		return false
+	}
+
+	for idx := range from.Content {
+		fromKind, toKind := followAlias(from.Content[idx]).Kind, followAlias(to.Content[idx]).Kind
+		if fromKind != toKind || (fromKind != yamlv3.MappingNode && fromKind != yamlv3.SequenceNode) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdentifier, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
