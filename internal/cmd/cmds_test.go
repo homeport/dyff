@@ -458,6 +458,26 @@ spec.replicas  (apps/v1/Deployment/test)
 			})
 		})
 
+		It("should exclude differences based on document name and YAML path", func() {
+			expected := `
+metadata.labels.test  (apps/v1/Deployment/test)
+  ± value change
+    - label1
+    + label2
+
+(root level)  (v1/Namespace/test)
+- one document removed:
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: test
+
+`
+			out, err := dyff("between", "--omit-header", "--exclude", "apps/v1/Deployment/test:/spec/replicas", assets("issues", "issue-232", "from.yml"), assets("issues", "issue-232", "to.yml"))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(out).To(BeEquivalentTo(expected))
+		})
+
 		It("should properly print multi-line strings (https://github.com/homeport/dyff/issues/180)", func() {
 			out, err := dyff("between", "--omit-header", assets("issues", "issue-180", "old.yml"), assets("issues", "issue-180", "new.yml"))
 			Expect(err).ToNot(HaveOccurred())

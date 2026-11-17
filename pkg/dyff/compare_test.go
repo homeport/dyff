@@ -832,6 +832,22 @@ listY: [ Yo, Yo, Yo ]
 				Expect(report.ExcludeRegexp("/does/not/exist")).To(BeEquivalentTo(report))
 			})
 
+			It("should exclude differences from my report based on YAML paths", func() {
+				pathString := "/yaml/map/foobar"
+
+				report := dyff.Report{Diffs: []dyff.Diff{
+					singleDiff(pathString, dyff.ADDITION, nil, "foobar"),
+					singleDiff("/yaml/map/barfoo", dyff.ADDITION, nil, "barfoo"),
+				}}
+
+				Expect(report.Exclude()).To(BeEquivalentTo(report))
+				Expect(report.Exclude(pathString)).To(BeEquivalentTo(dyff.Report{Diffs: []dyff.Diff{
+					singleDiff("/yaml/map/barfoo", dyff.ADDITION, nil, "barfoo"),
+				}}))
+
+				Expect(report.Exclude("/does/not/exist")).To(BeEquivalentTo(report))
+			})
+
 			It("should ignore changes in values", func() {
 				report := dyff.Report{Diffs: []dyff.Diff{
 					singleDiff("/yaml/map/add", dyff.ADDITION, nil, "added"),
@@ -1145,6 +1161,49 @@ b: bar
 				result, err := dyff.CompareInputFiles(from, to)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Diffs).To(HaveLen(0))
+			})
+
+			It("should exclude differences by document name and YAML path", func() {
+				from := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/from",
+					Documents: multiDoc(
+						`{"apiVersion": "v1", "kind": "Secret", "metadata": {"namespace": "ns-a", "name": "secret-1"}, "data": {"key": "old-val-1"}}`,
+						`{"apiVersion": "v1", "kind": "Secret", "metadata": {"namespace": "ns-a", "name": "secret-2"}, "data": {"key": "old-val-2"}}`,
+					),
+				}
+
+				to := ytbx.InputFile{
+					Location: "/ginkgo/compare/test/to",
+					Documents: multiDoc(
+						`{"apiVersion": "v1", "kind": "Secret", "metadata": {"namespace": "ns-a", "name": "secret-1"}, "data": {"key": "new-val-1"}}`,
+						`{"apiVersion": "v1", "kind": "Secret", "metadata": {"namespace": "ns-a", "name": "secret-2"}, "data": {"key": "new-val-2"}}`,
+					),
+				}
+
+				report, err := dyff.CompareInputFiles(from, to)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(report.Diffs).To(HaveLen(2))
+
+				By("excluding by YAML path only across all documents", func() {
+					excluded := report.Exclude("/data/key")
+					Expect(excluded.Diffs).To(BeEmpty())
+				})
+
+				By("excluding by document name and YAML path for a specific manifest", func() {
+					excluded := report.Exclude("v1/Secret/ns-a/secret-1:/data/key")
+					Expect(excluded.Diffs).To(HaveLen(1))
+					Expect(excluded.Diffs[0].Path.Root.Names[excluded.Diffs[0].Path.DocumentIdx]).To(Equal("v1/Secret/ns-a/secret-2"))
+				})
+
+				By("excluding with a non-matching document name", func() {
+					excluded := report.Exclude("v1/Secret/ns-a/secret-nonexistent:/data/key")
+					Expect(excluded.Diffs).To(HaveLen(2))
+				})
+
+				By("excluding with a non-matching YAML path", func() {
+					excluded := report.Exclude("v1/Secret/ns-a/secret-1:/data/nonexistent")
+					Expect(excluded.Diffs).To(HaveLen(2))
+				})
 			})
 		})
 
