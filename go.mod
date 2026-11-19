@@ -14,7 +14,7 @@ require (
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/onsi/ginkgo/v2 v2.34.0
 	github.com/onsi/gomega v1.44.0
-	github.com/sergi/go-diff v1.4.0
+	github.com/sergi/go-diff v1.4.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.1.0
 	github.com/texttheater/golang-levenshtein v1.0.1
