@@ -21,6 +21,8 @@
 package dyff_test
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -226,6 +228,40 @@ variables.ROUTER_TLS_PEM.options
 				assets("multiline/expected-dyff-spruce.human"),
 				false,
 			)
+		})
+
+		It("should only keep multiline context adjacent to changes (https://github.com/homeport/dyff/issues/686)", func() {
+			from, to := loadFiles(
+				assets("issues", "issue-686", "from.yml"),
+				assets("issues", "issue-686", "to.yml"),
+			)
+
+			report, err := dyff.CompareInputFiles(from, to)
+			Expect(err).ToNot(HaveOccurred())
+
+			reportWriter := &dyff.HumanReport{
+				Report:                report,
+				Indent:                2,
+				UseIndentLines:        true,
+				OmitHeader:            true,
+				MinorChangeThreshold:  0.1,
+				MultilineContextLines: 2,
+			}
+
+			buffer := &bytes.Buffer{}
+			writer := bufio.NewWriter(buffer)
+			Expect(reportWriter.WriteReport(writer)).To(Succeed())
+			Expect(writer.Flush()).To(Succeed())
+
+			actual := RemoveAllEscapeSequences(buffer.String())
+			Expect(actual).To(ContainSubstring("minReplicas: 2"))
+			Expect(actual).To(ContainSubstring("minReplicas: 3"))
+			Expect(actual).To(ContainSubstring("autoscaling:"))
+			Expect(actual).To(ContainSubstring("maxReplicas: 10"))
+			// Leading/trailing file bookends must not appear when context is local only.
+			Expect(actual).ToNot(ContainSubstring("registry: custom-registry"))
+			Expect(actual).ToNot(ContainSubstring("priorityClassName"))
+			Expect(actual).ToNot(ContainSubstring("unchanged)"))
 		})
 	})
 
