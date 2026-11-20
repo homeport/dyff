@@ -118,6 +118,14 @@ input: |+
 			)
 		})
 
+		It("should indent every line of multi-line comments", func() {
+			compareAgainstExpectedHuman("../../assets/comments/from.yml",
+				"../../assets/comments/to.yml",
+				"../../assets/comments/expected.human",
+				false,
+			)
+		})
+
 		It("should show the testbed results as expected", func() {
 			compareAgainstExpectedHuman("../../assets/testbed/from.yml",
 				"../../assets/testbed/to.yml",

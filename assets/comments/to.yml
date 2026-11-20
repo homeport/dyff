@@ -1,0 +1,8 @@
+rbac:
+  aggregateRoles:
+    # Create the `aggregate-to-view` and `aggregate-to-edit` ClusterRoles that extend the builtin
+    # `view`, `edit` and `admin` roles with read/write access to the ARC custom resources.
+    enabled: true
+  # # This allows ARC to dynamically create a ServiceAccount ...
+  # # by extending ARC's manager role ...
+  # allowGrantingKubernetesContainerModePermissions: true
