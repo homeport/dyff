@@ -2,6 +2,7 @@ package dyff
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/gonvenience/ytbx"
 )
@@ -47,9 +48,24 @@ func (r Report) Exclude(paths ...string) (result Report) {
 
 	return r.filter(func(filterPath *ytbx.Path) bool {
 		for _, pathString := range paths {
+			var documentName string
+			if parts := strings.SplitN(pathString, ":", 2); len(parts) > 1 {
+				documentName = parts[0]
+				pathString = parts[1]
+			}
+
 			path, err := ytbx.ParsePathStringUnsafe(pathString)
 			if err == nil && filterPath != nil && path.String() == filterPath.String() {
-				return false
+				if documentName != "" {
+					if filterPath.Root != nil &&
+						filterPath.DocumentIdx >= 0 &&
+						filterPath.DocumentIdx < len(filterPath.Root.Names) &&
+						filterPath.Root.Names[filterPath.DocumentIdx] == documentName {
+						return false
+					}
+				} else {
+					return false
+				}
 			}
 		}
 
