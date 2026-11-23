@@ -45,7 +45,7 @@
   [38;2;105;105;105m    Begin line 3[0m
   [38;2;105;105;105m    Begin line 4[0m
   [38;2;105;105;105m    [0m
-  [38;2;105;105;105m    [four lines unchanged)][0m
+  [38;2;105;105;105m    [four lines unchanged][0m
   [38;2;105;105;105m    [0m
   [38;2;105;105;105m    PreChange line 1[0m
   [38;2;105;105;105m    PreChange line 2[0m
@@ -60,7 +60,7 @@
   [38;2;105;105;105m    PostChange line 3[0m
   [38;2;105;105;105m    PostChange line 4[0m
   [38;2;105;105;105m    [0m
-  [38;2;105;105;105m    [three lines unchanged)][0m
+  [38;2;105;105;105m    [three lines unchanged][0m
   [38;2;105;105;105m    [0m
   [38;2;105;105;105m    PreAdd line 1[0m
   [38;2;105;105;105m    PreAdd line 2[0m
@@ -73,7 +73,7 @@
   [38;2;105;105;105m    PostAdd line 3[0m
   [38;2;105;105;105m    PostAdd line 4[0m
   [38;2;105;105;105m    [0m
-  [38;2;105;105;105m    [two lines unchanged)][0m
+  [38;2;105;105;105m    [two lines unchanged][0m
   [38;2;105;105;105m    [0m
   [38;2;105;105;105m    PreDelete line 1[0m
   [38;2;105;105;105m    PreDelete line 2[0m
@@ -87,7 +87,7 @@
   [38;2;105;105;105m    PostDelete line 3[0m
   [38;2;105;105;105m    PostDelete line 4[0m
   [38;2;105;105;105m    [0m
-  [38;2;105;105;105m    [22 lines unchanged)][0m
+  [38;2;105;105;105m    [22 lines unchanged][0m
   [38;2;105;105;105m    [0m
   [38;2;105;105;105m    End line 1[0m
   [38;2;105;105;105m    End line 2[0m
