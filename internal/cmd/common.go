@@ -44,11 +44,12 @@ type reportConfig struct {
 	Style          string `envDefault:"human"`
 	UseIndentLines bool   `envDefault:"true"`
 
-	IgnoreOrderChanges      bool `envDefault:"false"`
-	IgnoreWhitespaceChanges bool `envDefault:"false"`
-	IgnoreValueChanges      bool `envDefault:"false"`
-	FormatStrings           bool `envDefault:"true"`
-	DetectRenames           bool `envDefault:"true"`
+	ListCompareStyle        string `envDefault:"safe"`
+	IgnoreOrderChanges      bool   `envDefault:"false"`
+	IgnoreWhitespaceChanges bool   `envDefault:"false"`
+	IgnoreValueChanges      bool   `envDefault:"false"`
+	FormatStrings           bool   `envDefault:"true"`
+	DetectRenames           bool   `envDefault:"true"`
 
 	NoTableStyle          bool    `envDefault:"false"`
 	DoNotInspectCerts     bool    `envDefault:"false"`
@@ -95,6 +96,7 @@ func reportOptionsFlags() []*pflag.FlagSet {
 		}),
 
 		flagSet("Compare Options", func(fs *pflag.FlagSet) {
+			fs.StringVar(&reportOptions.ListCompareStyle, "list-compare-style", reportOptions.ListCompareStyle, "compare style for lists without identifiers: safe (only single-entry lists are compared entry-wise), index (equal-length lists of maps or lists are compared by position)")
 			fs.BoolVarP(&reportOptions.IgnoreOrderChanges, "ignore-order-changes", "i", reportOptions.IgnoreOrderChanges, "ignore order changes in lists")
 			fs.BoolVar(&reportOptions.IgnoreWhitespaceChanges, "ignore-whitespace-changes", reportOptions.IgnoreWhitespaceChanges, "ignore leading or trailing whitespace changes")
 			fs.BoolVarP(&reportOptions.IgnoreValueChanges, "ignore-value-changes", "v", reportOptions.IgnoreValueChanges, "exclude changes in values")

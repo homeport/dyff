@@ -90,7 +90,14 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			}
 		}
 
+		switch style := dyff.ListCompareStyle(reportOptions.ListCompareStyle); style {
+		case dyff.ListCompareStyleSafe, dyff.ListCompareStyleIndex:
+		default:
+			return fmt.Errorf("unsupported list compare style %q, supported styles: %s, %s", style, dyff.ListCompareStyleSafe, dyff.ListCompareStyleIndex)
+		}
+
 		report, err := dyff.CompareInputFiles(from, to,
+			dyff.CompareListsBy(dyff.ListCompareStyle(reportOptions.ListCompareStyle)),
 			dyff.IgnoreOrderChanges(reportOptions.IgnoreOrderChanges),
 			dyff.IgnoreWhitespaceChanges(reportOptions.IgnoreWhitespaceChanges),
 			dyff.KubernetesEntityDetection(reportOptions.KubernetesEntityDetection),
