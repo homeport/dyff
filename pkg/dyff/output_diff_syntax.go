@@ -25,7 +25,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
+
+	"github.com/gonvenience/ytbx"
 )
 
 // DiffSyntaxReport is a reporter with human readable output in mind
@@ -33,6 +36,7 @@ type DiffSyntaxReport struct {
 	PathPrefix            string
 	RootDescriptionPrefix string
 	ChangeTypePrefix      string
+	OnlyChangedLines      bool
 	HumanReport
 }
 
@@ -43,6 +47,13 @@ func (report *DiffSyntaxReport) WriteReport(out io.Writer) error {
 
 	// Only show the document index if there is more than one document to show
 	showPathRoot := len(report.From.Documents) > 1
+
+	// Sort diffs by path for consistent output ordering
+	sort.Slice(report.Diffs, func(i, j int) bool {
+		pathI := getPlainPathString(report.Diffs[i].Path)
+		pathJ := getPlainPathString(report.Diffs[j].Path)
+		return pathI < pathJ
+	})
 
 	// Loop over the diff and generate each report into the buffer
 	for _, diff := range report.Diffs {
@@ -78,7 +89,11 @@ func (report *DiffSyntaxReport) generateDiffSyntaxDiffOutput(output stringWriter
 
 	blocks := make([]string, len(diff.Details))
 	for i, detail := range diff.Details {
-		generatedOutput, err := report.generateDiffSyntaxDetailOutput(detail)
+		var path ytbx.Path
+		if diff.Path != nil {
+			path = *diff.Path
+		}
+		generatedOutput, err := report.generateDiffSyntaxDetailOutput(detail, path)
 		if err != nil {
 			return err
 		}
@@ -98,7 +113,21 @@ func (report *DiffSyntaxReport) generateDiffSyntaxDiffOutput(output stringWriter
 }
 
 // generatedyffSyntaxDetailOutput only serves as a dispatcher to call the correct sub function for the respective type of change
-func (report *DiffSyntaxReport) generateDiffSyntaxDetailOutput(detail Detail) (string, error) {
+func (report *DiffSyntaxReport) generateDiffSyntaxDetailOutput(detail Detail, path ytbx.Path) (string, error) {
+	// If OnlyChangedLines is set, and this is a MODIFICATION, output minimal diff
+	if report.OnlyChangedLines && detail.Kind == MODIFICATION {
+		var b strings.Builder
+		b.WriteString(fmt.Sprintf("@@ %s @@\n", path))
+		b.WriteString("! ± value change\n")
+		if detail.From != nil {
+			b.WriteString(fmt.Sprintf("- %v\n", detail.From))
+		}
+		if detail.To != nil {
+			b.WriteString(fmt.Sprintf("+ %v\n", detail.To))
+		}
+		return b.String(), nil
+	}
+
 	switch detail.Kind {
 	case ADDITION:
 		detailOutput, err := report.generateHumanDetailOutputAddition(detail)
