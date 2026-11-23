@@ -1,0 +1,13 @@
+---
+z_key: value_z
+a_key: value_a
+m_key: value_m
+nested:
+  z_nested: 1
+  a_nested: 2
+  m_nested: 3
+list:
+  - z_item: 1
+    a_item: 2
+  - a_item: 3
+    z_item: 4
