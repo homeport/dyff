@@ -432,7 +432,7 @@ func (compare *compare) mappingNodes(path ytbx.Path, from *yamlv3.Node, to *yaml
 
 	for i := 0; i < len(from.Content); i += 2 {
 		key, fromItem := from.Content[i], from.Content[i+1]
-		if toItem, ok := findValueByKey(to, key.Value); ok {
+		if toItem, ok := findValueByKey(to, key); ok {
 			// `from` and `to` contain the same `key` -> require comparison
 			diffs, err := compare.objects(
 				ytbx.NewPathWithNamedElement(path, key.Value),
@@ -454,7 +454,7 @@ func (compare *compare) mappingNodes(path ytbx.Path, from *yamlv3.Node, to *yaml
 
 	for i := 0; i < len(to.Content); i += 2 {
 		key, toItem := to.Content[i], to.Content[i+1]
-		if _, ok := findValueByKey(from, key.Value); !ok {
+		if _, ok := findValueByKey(from, key); !ok {
 			// `to` contains a `key` that `from` does not have -> addition
 			additions = append(additions, key, toItem)
 		}
@@ -877,10 +877,11 @@ func followAlias(node *yamlv3.Node) *yamlv3.Node {
 	return node
 }
 
-func findValueByKey(mappingNode *yamlv3.Node, key string) (*yamlv3.Node, bool) {
+func findValueByKey(mappingNode *yamlv3.Node, key *yamlv3.Node) (*yamlv3.Node, bool) {
+	key = followAlias(key)
 	for i := 0; i < len(mappingNode.Content); i += 2 {
 		k, v := followAlias(mappingNode.Content[i]), followAlias(mappingNode.Content[i+1])
-		if k.Value == key {
+		if k.Kind == key.Kind && k.Tag == key.Tag && k.Value == key.Value {
 			return v, true
 		}
 	}
