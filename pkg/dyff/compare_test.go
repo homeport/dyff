@@ -146,6 +146,26 @@ some:
 				Expect(result[0]).To(BeSameDiffAs(singleDiff("/some/yaml/structure/enabled", dyff.MODIFICATION, false, true)))
 			})
 
+			It("should return that a key type was modified", func() {
+				from := yml(`---
+root:
+  1: value
+`)
+
+				to := yml(`---
+root:
+  "1": value
+`)
+
+				result, err := compare(from, to)
+				Expect(err).To(BeNil())
+				Expect(result).NotTo(BeNil())
+				Expect(result).To(HaveLen(1))
+				Expect(result[0]).To(BeSameDiffAs(doubleDiff("/root",
+					dyff.REMOVAL, yml(`1: value`), nil,
+					dyff.ADDITION, nil, yml(`"1": value`))))
+			})
+
 			It("should return that one value was added", func() {
 				from := yml(`---
 some:
