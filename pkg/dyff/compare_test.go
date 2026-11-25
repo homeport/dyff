@@ -21,6 +21,8 @@
 package dyff_test
 
 import (
+	"fmt"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -1145,6 +1147,115 @@ b: bar
 				result, err := dyff.CompareInputFiles(from, to)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result.Diffs).To(HaveLen(0))
+			})
+		})
+
+		Context("input files containing ConfigMaps and Secrets with embedded files", func() {
+			var compareEmbeddedReport = func(from, to string, options ...dyff.CompareOption) dyff.Report {
+				report, err := dyff.CompareInputFiles(
+					ytbx.InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc(from)},
+					ytbx.InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc(to)},
+					options...,
+				)
+				Expect(err).ToNot(HaveOccurred())
+				return report
+			}
+
+			var compareEmbedded = func(from, to string, options ...dyff.CompareOption) []string {
+				var paths []string
+				for _, diff := range compareEmbeddedReport(from, to, options...).Diffs {
+					paths = append(paths, diff.Path.ToGoPatchStyle())
+				}
+
+				return paths
+			}
+
+			var configMap = func(key, content string) string {
+				return fmt.Sprintf("{apiVersion: v1, kind: ConfigMap, metadata: {name: x}, data: {%q: %q}}", key, content)
+			}
+
+			It("should compare YAML files in a ConfigMap as structured data", func() {
+				Expect(compareEmbedded(
+					configMap("config.yaml", "# comment\nserver:\n  port: 8080\n  host: a\n"),
+					configMap("config.yaml", "server: {host: a, port: 9090}\n"),
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/data/config.yaml/server/port"}))
+			})
+
+			It("should compare JSON files in a ConfigMap as structured data", func() {
+				Expect(compareEmbedded(
+					configMap("dashboard.json", `{"panels": [{"id": 1, "title": "CPU"}]}`),
+					configMap("dashboard.json", "{\n  \"panels\": [\n    {\"id\": 1, \"title\": \"Memory\"}\n  ]\n}"),
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/data/dashboard.json/panels/id=1/title"}))
+			})
+
+			It("should compare YAML files in a Secret's stringData as structured data", func() {
+				Expect(compareEmbedded(
+					`{apiVersion: v1, kind: Secret, metadata: {name: x}, stringData: {"creds.yml": "user: a"}}`,
+					`{apiVersion: v1, kind: Secret, metadata: {name: x}, stringData: {"creds.yml": "user: b"}}`,
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/stringData/creds.yml/user"}))
+			})
+
+			It("should compare as text when the option is not set", func() {
+				Expect(compareEmbedded(
+					configMap("config.yaml", "port: 8080"),
+					configMap("config.yaml", "port: 9090"),
+				)).To(Equal([]string{"/data/config.yaml"}))
+			})
+
+			It("should compare as text when the key has no YAML or JSON extension", func() {
+				Expect(compareEmbedded(
+					configMap("config.txt", "port: 8080"),
+					configMap("config.txt", "port: 9090"),
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/data/config.txt"}))
+			})
+
+			It("should compare as text when the document is not a ConfigMap or Secret", func() {
+				Expect(compareEmbedded(
+					`{apiVersion: v1, kind: Pod, metadata: {name: x}, data: {"config.yaml": "port: 8080"}}`,
+					`{apiVersion: v1, kind: Pod, metadata: {name: x}, data: {"config.yaml": "port: 9090"}}`,
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/data/config.yaml"}))
+			})
+
+			It("should compare as text when one side does not parse", func() {
+				Expect(compareEmbedded(
+					configMap("config.yaml", "port: 8080"),
+					configMap("config.yaml", "port: [9090"),
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/data/config.yaml"}))
+			})
+
+			It("should compare as text when a file is a plain string", func() {
+				Expect(compareEmbedded(
+					configMap("config.yaml", "just text"),
+					configMap("config.yaml", "other text"),
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/data/config.yaml"}))
+			})
+
+			It("should compare a file with several documents as the list of its documents", func() {
+				Expect(compareEmbedded(
+					configMap("config.yaml", "{name: a, x: 1}\n---\n{name: b, x: 2}\n"),
+					configMap("config.yaml", "{name: a, x: 1}\n---\n{name: b, x: 3}\n"),
+					dyff.EmbeddedFiles(true),
+				)).To(Equal([]string{"/data/config.yaml/name=b/x"}))
+			})
+
+			It("should compare a single document with several as lists of documents", func() {
+				report := compareEmbeddedReport(
+					configMap("config.yaml", "a: 1\n"),
+					configMap("config.yaml", "a: 1\n---\nb: 2\n"),
+					dyff.EmbeddedFiles(true),
+				)
+
+				Expect(report.Diffs).To(HaveLen(1))
+				Expect(report.Diffs[0].Path.ToGoPatchStyle()).To(Equal("/data/config.yaml"))
+				Expect(report.Diffs[0].Details).To(HaveLen(1))
+				Expect(report.Diffs[0].Details[0].Kind).To(Equal(dyff.ADDITION))
 			})
 		})
 

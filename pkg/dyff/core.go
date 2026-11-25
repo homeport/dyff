@@ -46,6 +46,7 @@ type compareSettings struct {
 	KubernetesEntityDetection                bool
 	DetectRenames                            bool
 	FormatStrings                            bool
+	EmbeddedFiles                            bool
 	AdditionalIdentifiers                    []string
 }
 
@@ -672,6 +673,10 @@ func (compare *compare) namedEntryLists(path ytbx.Path, identifier listItemIdent
 }
 
 func (compare *compare) nodeValues(path ytbx.Path, from *yamlv3.Node, to *yamlv3.Node) ([]Diff, error) {
+	if diffs, ok, err := compare.embeddedFiles(path, from, to); ok {
+		return diffs, err
+	}
+
 	if compare.settings.FormatStrings {
 		var jsonFormat = func(input string) (string, bool) {
 			var tmp any
