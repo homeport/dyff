@@ -49,14 +49,31 @@ func (compare *compare) embeddedFiles(path ytbx.Path, from *yamlv3.Node, to *yam
 		return nil, false, nil
 	}
 
-	fromNode, fromOK := parseEmbeddedFile(from.Value)
-	toNode, toOK := parseEmbeddedFile(to.Value)
-	if !fromOK || !toOK || fromNode.Kind != toNode.Kind {
+	fromDocuments, fromOK := parseEmbeddedFile(from.Value)
+	toDocuments, toOK := parseEmbeddedFile(to.Value)
+	if !fromOK || !toOK {
+		return nil, false, nil
+	}
+
+	// A file with several documents is compared as the list of its documents,
+	// and so is the other side, even if it has only one.
+	var fromNode, toNode *yamlv3.Node
+	if len(fromDocuments) == 1 && len(toDocuments) == 1 {
+		fromNode, toNode = fromDocuments[0], toDocuments[0]
+	} else {
+		fromNode, toNode = documentList(fromDocuments), documentList(toDocuments)
+	}
+
+	if fromNode.Kind != toNode.Kind {
 		return nil, false, nil
 	}
 
 	diffs, err := compare.objects(path, fromNode, toNode)
 	return diffs, true, err
+}
+
+func documentList(documents []*yamlv3.Node) *yamlv3.Node {
+	return &yamlv3.Node{Kind: yamlv3.SequenceNode, Tag: "!!seq", Content: documents}
 }
 
 // isEmbeddedFile checks whether the path points to an entry of a ConfigMap's
@@ -99,31 +116,32 @@ func isEmbeddedFile(path ytbx.Path) bool {
 	}
 }
 
-// parseEmbeddedFile parses a file of exactly one document whose content is a
-// map or a list: a plain string is valid YAML too, but nothing to compare
+// parseEmbeddedFile parses a file into its documents, each of which has to be
+// a map or a list: a plain string is valid YAML too, but nothing to compare
 // structurally.
-func parseEmbeddedFile(content string) (*yamlv3.Node, bool) {
+func parseEmbeddedFile(content string) ([]*yamlv3.Node, bool) {
 	decoder := yamlv3.NewDecoder(bytes.NewReader([]byte(content)))
 
-	var document yamlv3.Node
-	if err := decoder.Decode(&document); err != nil {
-		return nil, false
+	var documents []*yamlv3.Node
+	for {
+		var document yamlv3.Node
+		err := decoder.Decode(&document)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil || len(document.Content) != 1 {
+			return nil, false
+		}
+
+		switch node := document.Content[0]; node.Kind {
+		case yamlv3.MappingNode, yamlv3.SequenceNode:
+			documents = append(documents, node)
+
+		default:
+			return nil, false
+		}
 	}
 
-	var next yamlv3.Node
-	if err := decoder.Decode(&next); !errors.Is(err, io.EOF) {
-		return nil, false
-	}
-
-	if len(document.Content) != 1 {
-		return nil, false
-	}
-
-	switch node := document.Content[0]; node.Kind {
-	case yamlv3.MappingNode, yamlv3.SequenceNode:
-		return node, true
-
-	default:
-		return nil, false
-	}
+	return documents, len(documents) > 0
 }

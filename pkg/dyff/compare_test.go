@@ -1151,16 +1151,19 @@ b: bar
 		})
 
 		Context("input files containing ConfigMaps and Secrets with embedded files", func() {
-			var compareEmbedded = func(from, to string, options ...dyff.CompareOption) []string {
+			var compareEmbeddedReport = func(from, to string, options ...dyff.CompareOption) dyff.Report {
 				report, err := dyff.CompareInputFiles(
 					ytbx.InputFile{Location: "/ginkgo/compare/test/from", Documents: multiDoc(from)},
 					ytbx.InputFile{Location: "/ginkgo/compare/test/to", Documents: multiDoc(to)},
 					options...,
 				)
 				Expect(err).ToNot(HaveOccurred())
+				return report
+			}
 
+			var compareEmbedded = func(from, to string, options ...dyff.CompareOption) []string {
 				var paths []string
-				for _, diff := range report.Diffs {
+				for _, diff := range compareEmbeddedReport(from, to, options...).Diffs {
 					paths = append(paths, diff.Path.ToGoPatchStyle())
 				}
 
@@ -1226,18 +1229,33 @@ b: bar
 				)).To(Equal([]string{"/data/config.yaml"}))
 			})
 
-			It("should compare as text when a file is a plain string or has several documents", func() {
+			It("should compare as text when a file is a plain string", func() {
 				Expect(compareEmbedded(
 					configMap("config.yaml", "just text"),
 					configMap("config.yaml", "other text"),
 					dyff.EmbeddedFiles(true),
 				)).To(Equal([]string{"/data/config.yaml"}))
+			})
 
+			It("should compare a file with several documents as the list of its documents", func() {
 				Expect(compareEmbedded(
-					configMap("config.yaml", "a: 1\n---\nb: 2\n"),
-					configMap("config.yaml", "a: 1\n---\nb: 3\n"),
+					configMap("config.yaml", "{name: a, x: 1}\n---\n{name: b, x: 2}\n"),
+					configMap("config.yaml", "{name: a, x: 1}\n---\n{name: b, x: 3}\n"),
 					dyff.EmbeddedFiles(true),
-				)).To(Equal([]string{"/data/config.yaml"}))
+				)).To(Equal([]string{"/data/config.yaml/name=b/x"}))
+			})
+
+			It("should compare a single document with several as lists of documents", func() {
+				report := compareEmbeddedReport(
+					configMap("config.yaml", "a: 1\n"),
+					configMap("config.yaml", "a: 1\n---\nb: 2\n"),
+					dyff.EmbeddedFiles(true),
+				)
+
+				Expect(report.Diffs).To(HaveLen(1))
+				Expect(report.Diffs[0].Path.ToGoPatchStyle()).To(Equal("/data/config.yaml"))
+				Expect(report.Diffs[0].Details).To(HaveLen(1))
+				Expect(report.Diffs[0].Details[0].Kind).To(Equal(dyff.ADDITION))
 			})
 		})
 
