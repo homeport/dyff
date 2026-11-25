@@ -97,6 +97,7 @@ types are: YAML (http://yaml.org/) and JSON (http://json.org/).
 			dyff.AdditionalIdentifiers(reportOptions.AdditionalIdentifiers...),
 			dyff.DetectRenames(reportOptions.DetectRenames),
 			dyff.FormatStrings(reportOptions.FormatStrings),
+			dyff.EmbeddedFiles(reportOptions.EmbeddedFiles),
 		)
 
 		if err != nil {

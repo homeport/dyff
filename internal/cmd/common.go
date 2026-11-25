@@ -48,6 +48,7 @@ type reportConfig struct {
 	IgnoreWhitespaceChanges bool `envDefault:"false"`
 	IgnoreValueChanges      bool `envDefault:"false"`
 	FormatStrings           bool `envDefault:"true"`
+	EmbeddedFiles           bool `envDefault:"true"`
 	DetectRenames           bool `envDefault:"true"`
 
 	NoTableStyle          bool    `envDefault:"false"`
@@ -100,6 +101,7 @@ func reportOptionsFlags() []*pflag.FlagSet {
 			fs.BoolVarP(&reportOptions.IgnoreValueChanges, "ignore-value-changes", "v", reportOptions.IgnoreValueChanges, "exclude changes in values")
 			fs.BoolVar(&reportOptions.DetectRenames, "detect-renames", reportOptions.DetectRenames, "enable detection for renames (document level for Kubernetes resources)")
 			fs.BoolVar(&reportOptions.FormatStrings, "format-strings", reportOptions.FormatStrings, "format strings (i.e. inline JSON) before comparison to avoid formatting differences")
+			fs.BoolVar(&reportOptions.EmbeddedFiles, "embedded-files", reportOptions.EmbeddedFiles, "compare YAML and JSON files in Kubernetes ConfigMaps and Secrets (by key extension) as structured data")
 		}),
 
 		flagSet("Human Output Preferences", func(fs *pflag.FlagSet) {
